@@ -61,7 +61,7 @@ class PatternMatcher:
         print("DEBUG: FIFOs created successfully", file=sys.stderr, flush=True)
 
         # Write syslog-ng configuration
-        config = f"""@version: 4.10
+        config = f"""@version: 4.3
 
 source s_pipe {{
     pipe("{self.input_fifo}" flags(no-parse));
