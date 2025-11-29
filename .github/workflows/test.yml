@@ -6,12 +6,18 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel old runs when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Prevent jobs from hanging indefinitely
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]

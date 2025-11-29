@@ -6,12 +6,18 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel old runs when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 10  # Prevent jobs from hanging indefinitely
 
     steps:
       - uses: actions/checkout@v6
