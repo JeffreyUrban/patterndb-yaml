@@ -23,10 +23,11 @@ Under the hood, patterndb-yaml uses [syslog-ng's patterndb](https://www.syslog-n
 2. Loads the patterns into syslog-ng's high-performance matching engine
 3. Applies patterns to normalize your logs
 
-This gives you:
-- **Battle-tested performance**: syslog-ng processes millions of messages per second
-- **Reliable pattern matching**: Proven in production environments worldwide
-- **Extended capabilities**: Multi-line sequences and simplified syntax
+Benefits:
+
+- **High-performance matching**: Leverages syslog-ng's optimized engine
+- **Proven reliability**: Pattern matching used in production worldwide
+- **Enhanced capabilities**: Multi-line sequences and simplified YAML syntax
 
 ## Writing Normalization Rules
 
@@ -34,13 +35,17 @@ This gives you:
 
 A normalization rule has three required components:
 
+1. **`name`**: Unique identifier for the rule
+2. **`pattern`**: Match criteria (text literals and field captures)
+3. **`output`**: Normalized output format template
+
 ```yaml
 rules:
-  - name: rule_identifier        # Unique rule name
-    pattern:                      # Match criteria
+  - name: rule_identifier        # 1. Unique rule name
+    pattern:                      # 2. Match criteria
       - text: "fixed string"      #   Literal text to match
       - field: variable_data      #   Variable data to capture
-    output: "[tag:{field}]"       # Normalized output format
+    output: "[tag:{field}]"       # 3. Normalized output format
 ```
 
 ### Example: Simple Text Matching
@@ -165,6 +170,7 @@ pattern:
 ```
 
 **Characteristics**:
+
 - Case-sensitive matching
 - ANSI escape codes are automatically stripped before matching
 - Whitespace matters (must match exactly)
@@ -181,6 +187,7 @@ pattern:
 ```
 
 **Field behavior**:
+
 - Fields capture text between delimiters
 - Last field in pattern captures until end of line
 - Field names must be valid YAML identifiers
@@ -197,6 +204,7 @@ pattern:
 ```
 
 **Number parser**:
+
 - Matches one or more digits (`0-9`)
 - Useful for ports, IDs, counts, etc.
 - Fails to match if non-digit characters are encountered
@@ -210,6 +218,7 @@ output: "[event-type:field1={field1},field2={field2}]"
 ```
 
 **Placeholders**:
+
 - `{fieldname}`: Replaced with extracted field value
 - Literal text: Appears as-is in output
 - Format is completely customizable
@@ -270,9 +279,7 @@ Random unstructured text      ← Passed through
 
 Use statistics to see match effectiveness:
 
-```console
-$ patterndb-yaml --rules rules.yaml input.txt > output.txt
-
+```
 Normalization Statistics
 ┌─────────────────┬────────┐
 │ Lines Processed │  1,000 │
@@ -317,6 +324,7 @@ rules:
 ```
 
 **Available transformations**:
+
 - `strip_ansi`: Remove ANSI color/formatting codes
 
 ### Sequences: Multi-Line Pattern Matching
@@ -324,32 +332,39 @@ rules:
 Sequences allow you to group related lines together for atomic processing. This is particularly useful for multi-line log entries like dialogs, stack traces, or multi-part messages.
 
 A sequence consists of:
+
 - **Leader pattern**: The first line that starts the sequence
 - **Follower patterns**: Subsequent lines that belong to the sequence
 - **Buffering behavior**: All sequence lines are buffered and output together
 
 #### Example: Dialog Question-Answer Pairs
 
+This example demonstrates how follower patterns can match lines based on their
+position relative to a leader line. Notice that both answer lines (following
+questions) and non-answer lines start with `- `, but only the answers are
+matched because they follow a question leader.
+
 ???+ note "Input: Interactive dialog logs"
     ```text
     --8<-- "features/rules/fixtures/sequence-input.txt"
     ```
 
-    Question-answer dialog with indented answers following each question.
+    Lines 2, 4-5, 7, and 11 start with `- ` and follow `[Q]` questions.
+    Line 9 also starts with `- ` but does NOT follow a question.
 
 ???+ note "Rules: Match question-answer sequences"
     ```yaml
     --8<-- "features/rules/fixtures/sequence-rules.yaml"
     ```
 
-    Leader pattern matches questions, follower pattern matches indented answers.
+    The follower pattern matches lines starting with `- `, but only when they
+    follow a `[Q]` leader line. This positional matching is key: the same
+    pattern (`- ...`) is treated differently based on context.
 
 === "CLI"
 
-    <!-- verify-file: output.txt expected: sequence-output.txt -->
-    <!-- termynal -->
-    ```console
-    $ patterndb-yaml --rules sequence-rules.yaml sequence-input.txt \
+    ```bash
+    patterndb-yaml --rules sequence-rules.yaml sequence-input.txt \
         --quiet > output.txt
     ```
 
@@ -367,12 +382,17 @@ A sequence consists of:
             processor.process(f, out)
     ```
 
-???+ success "Output: Grouped sequences"
+???+ success "Expected Output: Grouped sequences (specification)"
     ```text
     --8<-- "features/rules/fixtures/sequence-output.txt"
     ```
 
-    Questions normalized, answers buffered with each question group.
+    **Expected behavior**: Questions normalized, follower answers normalized
+    and buffered with each question group.
+
+    **Note**: Full sequence normalization (normalizing follower patterns) is
+    specified but not yet fully implemented. Currently followers are buffered
+    but passed through unchanged.
 
 **How sequences work**:
 
@@ -384,6 +404,7 @@ A sequence consists of:
 This ensures related lines stay together even during streaming processing.
 
 **When to use sequences**:
+
 - Multi-line error messages or stack traces
 - Question-answer pairs or dialogs
 - Header-detail log entries
@@ -456,21 +477,11 @@ Begin with basic patterns and iterate:
 
 Debug pattern matching with `--explain`:
 
-```console
-$ patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 | grep "Line 42"
-
+```
 EXPLAIN: [Line 42] Matched rule 'http_request'
 EXPLAIN: [Line 42] Extracted fields: method='GET', path='/api/users'
 EXPLAIN: [Line 42] Output: [http:GET,/api/users]
 ```
-
-### Test Match Rates
-
-Aim for high match rates to ensure complete normalization:
-
-- **90-100%**: Excellent coverage
-- **70-90%**: Good coverage, may have edge cases
-- **<70%**: Missing common patterns, needs more rules
 
 ### Validate Output
 
@@ -489,19 +500,21 @@ Rules are processed efficiently using syslog-ng's optimized engine:
 - **Cached normalization**: Identical lines normalized once
 - **Sequential matching**: First matching rule wins (no backtracking)
 - **ANSI stripping**: Pre-compiled regex, minimal overhead
-- **syslog-ng performance**: Battle-tested at scale
+- **Mature engine**: Built on syslog-ng's established codebase
 
 **Best practice**: Order rules from most specific to most general for optimal performance.
 
 ## Rule of Thumb
 
 **Write rules that are:**
+
 - **Specific enough** to match intended patterns accurately
 - **General enough** to handle slight variations
 - **Ordered** from specific to general
 - **Tested** with real log data to verify match rates
 
 **Avoid:**
+
 - Overly broad patterns that match unintended lines
 - Duplicate rules with overlapping patterns
 - Complex patterns when simple ones suffice

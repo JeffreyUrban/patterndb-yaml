@@ -51,19 +51,32 @@ By default, statistics are displayed to stderr after processing:
     from patterndb_yaml import PatterndbYaml
     from pathlib import Path
     import sys
+    from io import StringIO
 
     processor = PatterndbYaml(rules_path=Path("rules.yaml"))
 
     with open("input.txt") as f:
         with open("output.txt", "w") as out:
-            # Capture stderr to file
-            old_stderr = sys.stderr
-            with open("stats-table.txt", "w") as err:
-                sys.stderr = err
-                try:
-                    processor.process(f, out)
-                finally:
-                    sys.stderr = old_stderr
+            processor.process(f, out)
+
+    # Capture stats output to file
+    from patterndb_yaml.cli import print_stats
+    from rich.console import Console
+
+    with open("stats-table.txt", "w") as stats_file:
+        console = Console(
+            file=stats_file,
+            force_terminal=False,  # Disable all terminal features
+            legacy_windows=False
+        )
+        # Temporarily replace the module console
+        import patterndb_yaml.cli as cli_module
+        old_console = cli_module.console
+        cli_module.console = console
+        try:
+            print_stats(processor)
+        finally:
+            cli_module.console = old_console
     ```
 
 ???+ success "Statistics: Table format"
@@ -98,20 +111,25 @@ Use `--stats-format json` for programmatic processing:
     ```python
     from patterndb_yaml import PatterndbYaml
     from pathlib import Path
-    import sys
+    import json
 
     processor = PatterndbYaml(rules_path=Path("rules.yaml"))
 
     with open("input.txt") as f:
         with open("output.txt", "w") as out:
-            # Capture stderr to file
-            old_stderr = sys.stderr
-            with open("stats-json.txt", "w") as err:
-                sys.stderr = err
-                try:
-                    processor.process(f, out)
-                finally:
-                    sys.stderr = old_stderr
+            processor.process(f, out)
+
+    # Get statistics and write to file in JSON format
+    stats = processor.get_stats()
+    output = {
+        "statistics": stats,
+        "configuration": {
+            "rules_path": str(processor.rules_path),
+        },
+    }
+
+    with open("stats-json.txt", "w") as f:
+        json.dump(output, f, indent=2)
     ```
 
 ???+ success "Statistics: JSON format"
@@ -220,7 +238,8 @@ match_rate=$(jq -r '.statistics.match_rate' metrics.json)
 
 # Alert if match rate drops
 if (( $(echo "$match_rate < 0.9" | bc -l) )); then
-  echo "Alert: Match rate dropped to ${match_rate}" | mail -s "Low Match Rate" admin@example.com
+  echo "Alert: Match rate dropped to ${match_rate}" \
+    | mail -s "Low Match Rate" admin@example.com
 fi
 ```
 

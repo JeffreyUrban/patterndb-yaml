@@ -7,6 +7,6 @@ rules:
     sequence:
       followers:
         - pattern:
-            - text: "  [A] "
+            - text: "- "
             - field: answer
           output: "[dialog-answer:{answer}]"

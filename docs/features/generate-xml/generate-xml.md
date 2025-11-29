@@ -101,6 +101,31 @@ pattern:
 #       ^field starts    ^delimiter inferred from next element
 ```
 
+### Alternatives Expansion
+
+YAML alternatives are expanded into multiple patterns within a single XML rule:
+
+```yaml
+# YAML - one rule with alternatives
+pattern:
+  - text: "Status: "
+  - alternatives:
+      - - text: "OK"
+      - - text: "SUCCESS"
+
+# Generated XML - one rule with multiple patterns
+<rule id="status_check">
+  <patterns>
+    <pattern>^Status: OK</pattern>
+    <pattern>^Status: SUCCESS</pattern>
+  </patterns>
+  <values>...</values>
+</rule>
+```
+
+Each alternative becomes a separate `<pattern>` element within the same rule's
+`<patterns>` container.
+
 ### Output Format
 
 The generated `MESSAGE` value combines the rule name and extracted fields:
@@ -195,7 +220,6 @@ Some YAML features may not translate perfectly to syslog-ng XML:
 
 - **Transformations**: YAML field transformations (like `strip_ansi`) are not supported in syslog-ng patterns
 - **Sequences**: Multi-line sequences are a patterndb-yaml feature, not available in syslog-ng
-- **Alternatives**: YAML alternatives generate separate XML rules
 
 ### Output Format
 

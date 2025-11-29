@@ -440,6 +440,54 @@ This project uses **pytest exclusively** (not unittest).
 2. Reference `dev-docs/testing/TESTING_STRATEGY.md` and `dev-docs/testing/TEST_COVERAGE.md` to understand test organization and coverage
 3. When tests fail, determine if the change is a fix (regenerate tests) or a regression (fix the code)
 
+### Testable Documentation and Specification Tests
+
+**This project uses documentation as specification through executable examples.**
+
+**Intentional Test Failures:**
+
+Tests SHOULD fail when they document intended behavior that isn't yet implemented:
+
+- **Purpose**: Serve as both specification and test for future implementation
+- **Benefit**: Clear, executable documentation of what SHOULD happen
+- **Identification**: Look for notes in documentation like "specified but not yet fully implemented"
+
+**Example Pattern:**
+```markdown
+???+ success "Expected Output: Feature behavior (specification)"
+    ```text
+    --8<-- "features/example/fixtures/expected-output.txt"
+    ```
+
+    **Expected behavior**: Description of what should happen
+
+    **Note**: This feature is specified but not yet fully implemented.
+    Currently [describe actual behavior].
+```
+
+**When You See Failing Documentation Tests:**
+
+1. **Check if intentional** - Look for specification notes in the documentation
+2. **Intentional failures are CORRECT** - They document requirements, don't "fix" them
+3. **Unintentional failures need fixing** - Missing files, wrong paths, etc. should be resolved
+
+**DO NOT:**
+- ❌ Remove or skip specification tests because they fail
+- ❌ Change expected output to match current (incorrect) behavior
+- ❌ Add workarounds to make specification tests pass when feature isn't implemented
+
+**DO:**
+- ✅ Keep specification tests that document intended behavior
+- ✅ Add notes explaining the gap between expected and actual behavior
+- ✅ Use these tests as implementation guides when building the feature
+
+**Example from this project:**
+
+The sequence follower normalization test (docs/features/rules/rules.md:355) fails because:
+- **Expected**: Follower lines normalized to `[dialog-answer:...]` format
+- **Actual**: Follower lines passed through unchanged as `[A] ...`
+- **Status**: Intentional - documents the specification for future implementation
+
 ## Common Task Checklists
 
 ### Creating New Features

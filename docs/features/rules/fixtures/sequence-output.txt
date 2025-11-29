@@ -6,5 +6,6 @@
 [dialog-question:Where do you live?]
 [dialog-answer:New York]
 Regular log line without question/answer format
+- This line starts with a dash but is not an answer
 [dialog-question:How old are you?]
 [dialog-answer:25]

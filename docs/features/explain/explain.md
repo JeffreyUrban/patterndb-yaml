@@ -149,10 +149,14 @@ EXPLAIN: [Line 1] Applied transform 'strip_ansi' to field 'content':
 Shows multi-line sequence buffering:
 
 ```
-EXPLAIN: [Line 10] Started buffering sequence 'dialog_question' (leader line)
-EXPLAIN: [Line 11] Added follower to sequence 'dialog_question' (buffer: 2 lines)
-EXPLAIN: [Line 12] Line is not a follower - ending sequence 'dialog_question'
-EXPLAIN: [Line 12] Flushed sequence 'dialog_question' (2 lines buffered)
+EXPLAIN: [Line 10] Started buffering sequence 'dialog_question'
+  (leader line)
+EXPLAIN: [Line 11] Added follower to sequence 'dialog_question'
+  (buffer: 2 lines)
+EXPLAIN: [Line 12] Line is not a follower
+  - ending sequence 'dialog_question'
+EXPLAIN: [Line 12] Flushed sequence 'dialog_question'
+  (2 lines buffered)
 ```
 
 **Why useful**: Multi-line sequences are complex; see when buffering starts/ends.
