@@ -30,8 +30,8 @@ jobs:
       - name: Install system dependencies
         timeout-minutes: 3
         run: |
-          sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends syslog-ng-core
+          sudo apt-get update
+          sudo apt-get install -y syslog-ng
 
       - name: Install dependencies
         run: |
