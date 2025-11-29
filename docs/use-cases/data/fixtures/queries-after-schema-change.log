@@ -1,0 +1,7 @@
+2024-11-15 14:15:22.456 [PostgreSQL] duration: 4.891 ms  statement: SELECT id, email FROM users WHERE email='alice@example.com'
+2024-11-15 14:15:22.789 [PostgreSQL] duration: 7.234 ms  statement: INSERT INTO orders (user_id, total, status) VALUES (123, 99.99, 'pending') RETURNING id
+2024-11-15 14:15:23.012 [PostgreSQL] duration: 5.678 ms  statement: UPDATE orders SET status='paid' WHERE id=5001
+2024-11-15 14:15:23.345 [PostgreSQL] duration: 3.456 ms  statement: SELECT * FROM orders WHERE id=5001
+2024-11-15 14:15:23.678 [PostgreSQL] duration: 6.789 ms  statement: INSERT INTO payments (order_id, amount, method) VALUES (5001, 99.99, 'credit_card') RETURNING id
+2024-11-15 14:15:24.001 [PostgreSQL] duration: 4.567 ms  statement: UPDATE orders SET status='shipped' WHERE id=5001
+2024-11-15 14:15:24.334 [PostgreSQL] duration: 11.234 ms  statement: SELECT COUNT(*) FROM orders WHERE status='shipped' AND created_at::date=CURRENT_DATE

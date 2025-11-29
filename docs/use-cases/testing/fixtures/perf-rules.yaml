@@ -1,0 +1,24 @@
+rules:
+  # Performance metric - preserve operation, cache misses, and DB queries
+  - name: perf_metric
+    pattern:
+      - field: timestamp
+      - text: " [PERF] Operation="
+      - field: operation
+      - text: " Duration="
+      - field: duration
+      - text: "ms CacheMisses="
+      - field: cache_misses
+      - text: " DBQueries="
+      - field: db_queries
+    output: "[PERF:{operation},cache_misses={cache_misses},db_queries={db_queries}]"
+
+  # Slow queries
+  - name: slow_query
+    pattern:
+      - field: timestamp
+      - text: " [WARN] SlowQuery: "
+      - field: query
+      - text: " Duration="
+      - field: duration
+    output: "[SLOW-QUERY]"

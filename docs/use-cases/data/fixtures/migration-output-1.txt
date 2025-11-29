@@ -1,0 +1,27 @@
+✓ Migration preserves application behavior
+
+Core operations (7 queries):
+  1. [SELECT:users]
+  2. [INSERT:orders]
+  3. [UPDATE:orders]
+  4. [SELECT:orders]
+  5. [INSERT:payments]
+  6. [UPDATE:orders]
+  7. [SELECT:orders]
+
+============================================================
+Query Distribution Analysis:
+
+Before Migration:
+  INSERT: 2
+  LAST-INSERT-ID: 1
+  SELECT: 3
+  UPDATE: 2
+
+After Migration:
+  INSERT: 2
+  SELECT: 3
+  UPDATE: 2
+
+⚠ Query count differences:
+  LAST-INSERT-ID: 1 → 0

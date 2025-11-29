@@ -26,5 +26,5 @@ This means you can placeholder with placeholder memory.
 
 - **[Quick Start](quick-start.md)** - Try patterndb-yaml with simple examples
 - **[Common Patterns](../guides/common-patterns.md)** - Copy-paste ready examples
-- **[Use Cases](../use-cases/placeholder/placeholder.md)** - See real-world applications
+- **[Use Cases](../use-cases/index.md)** - See real-world applications
 - **[Algorithm Details](../about/algorithm.md)** - Deep dive into how it works

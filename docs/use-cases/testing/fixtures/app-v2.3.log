@@ -1,0 +1,10 @@
+[INFO] 2024-01-15 10:23:45 - Order #1234 processed
+[INFO] 2024-01-15 10:23:46 - Payment received for order #1234 amount=$129.99
+[INFO] 2024-01-15 10:23:47 - Order #1234 shipped to customer
+[WARN] 2024-01-15 10:23:50 - Inventory low for product SKU-789 (5 remaining)
+[INFO] 2024-01-15 10:24:01 - Order #1235 processed
+[INFO] 2024-01-15 10:24:02 - Payment received for order #1235 amount=$45.50
+[ERROR] 2024-01-15 10:24:05 - Payment declined for order #1236
+[INFO] 2024-01-15 10:24:10 - Order #1237 processed
+[INFO] 2024-01-15 10:24:11 - Payment received for order #1237 amount=$299.00
+[INFO] 2024-01-15 10:24:12 - Order #1237 shipped to customer

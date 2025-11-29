@@ -1,0 +1,7 @@
+Contract Coverage Analysis:
+
+✓ DELETE /api/cart/items/{id} → 204
+✓ GET /api/orders/{id} → 200
+✓ GET /api/users/{id} → 200
+✓ POST /api/orders → 201
+✓ PUT /api/orders/{id} → 200

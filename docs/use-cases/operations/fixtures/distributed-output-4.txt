@@ -1,0 +1,9 @@
+Request Dashboard:
+
+Request ID      Status     Services Events
+--------------------------------------------------
+req-abc123      ✓ success   3        7
+req-def456      ✓ success   2        4
+req-ghi789      ✗ failed    3        7
+
+Summary: 3 requests, 2 success, 1 failed (33% failure rate)

@@ -1,0 +1,4 @@
+2024-11-15 10:00:02.123 [MySQL] Query: UPDATE orders SET status='paid' WHERE id=5001 | Duration: 6ms | Rows: 1
+2024-11-15 10:00:03.012 [MySQL] Query: UPDATE orders SET status='shipped' WHERE id=5001 | Duration: 5ms | Rows: 1
+2024-11-15 10:00:04.234 [MySQL] Query: UPDATE payments SET status='completed' WHERE id=1001 | Duration: 8ms | Rows: 1
+2024-11-15 10:00:05.456 [MySQL] Query: UPDATE payments SET processed_at=NOW() WHERE id=1001 | Duration: 7ms | Rows: 1

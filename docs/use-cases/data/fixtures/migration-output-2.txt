@@ -1,0 +1,26 @@
+MySQL Load Test Results:
+  Total queries: 8
+
+  Operations by table:
+    orders:INSERT: 1
+    orders:SELECT: 2
+    orders:UPDATE: 2
+    payments:INSERT: 1
+    users:SELECT: 1
+
+PostgreSQL Load Test Results:
+  Total queries: 7
+
+  Operations by table:
+    orders:INSERT: 1
+    orders:SELECT: 2
+    orders:UPDATE: 2
+    payments:INSERT: 1
+    users:SELECT: 1
+
+Distribution Comparison:
+  ✓ orders:INSERT: MySQL=1, PostgreSQL=1
+  ✓ orders:SELECT: MySQL=2, PostgreSQL=2
+  ✓ orders:UPDATE: MySQL=2, PostgreSQL=2
+  ✓ payments:INSERT: MySQL=1, PostgreSQL=1
+  ✓ users:SELECT: MySQL=1, PostgreSQL=1

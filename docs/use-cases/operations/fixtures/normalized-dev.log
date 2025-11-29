@@ -1,0 +1,8 @@
+[db-connect]
+[user-login:alice@example.com]
+[query-executed]
+[order-created:5001,user:123]
+[cache-miss]
+[payment-processed:5001,amount:$99.99]
+[email-queued]
+[order-shipped:5001]

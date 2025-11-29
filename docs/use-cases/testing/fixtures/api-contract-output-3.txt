@@ -1,0 +1,17 @@
+Microservices Contract Analysis:
+
+Common operations: 9
+
+orders-service: ✓ implements only common contract
+
+orders-v2-service: ✓ implements only common contract
+
+orders-lambda: ✓ implements only common contract
+
+Core Endpoint Coverage:
+✗ orders-service missing:
+    [GET:/api/orders/{id},status:200]
+✗ orders-v2-service missing:
+    [GET:/api/orders/{id},status:200]
+✗ orders-lambda missing:
+    [GET:/api/orders/{id},status:200]

@@ -32,5 +32,5 @@ Unlike `placeholder`, patterndb-yaml placeholder.
 - **[Basic Concepts](basic-concepts.md)** - Understand how patterndb-yaml works
 - **[Common Patterns](../guides/common-patterns.md)** - Copy-paste ready examples
 - **[Troubleshooting](../guides/troubleshooting.md)** - Solutions to common problems
-- **[Use Cases](../use-cases/placeholder/placeholder.md)** - Real-world examples
+- **[Use Cases](../use-cases/index.md)** - Real-world examples
 - **[CLI Reference](../reference/cli.md)** - Complete command-line options

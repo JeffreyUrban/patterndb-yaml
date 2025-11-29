@@ -1,0 +1,6 @@
+2024-11-15 10:00:01.123 [api-gateway] request_id=req-abc123 method=POST path=/orders user=alice@example.com
+2024-11-15 10:00:01.456 [api-gateway] request_id=req-abc123 upstream=order-service status=200 duration=145ms
+2024-11-15 10:00:02.234 [api-gateway] request_id=req-def456 method=GET path=/orders/5001 user=alice@example.com
+2024-11-15 10:00:02.567 [api-gateway] request_id=req-def456 upstream=order-service status=200 duration=23ms
+2024-11-15 10:00:03.345 [api-gateway] request_id=req-ghi789 method=POST path=/orders user=bob@example.com
+2024-11-15 10:00:03.678 [api-gateway] request_id=req-ghi789 upstream=order-service status=500 duration=523ms error="Payment service unavailable"

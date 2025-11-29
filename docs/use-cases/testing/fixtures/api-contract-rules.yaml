@@ -1,0 +1,244 @@
+rules:
+  # v1 format: GET request
+  - name: request_get_v1
+    pattern:
+      - field: timestamp
+      - text: " [REQUEST] GET "
+      - field: path
+      - text: " | Headers: "
+      - field: headers
+      - text: " | Response: "
+      - field: status
+    output: "[GET:{path},status:{status}]"
+
+  # v2 format: GET request
+  - name: request_get_v2
+    pattern:
+      - field: timestamp
+      - text: " [REQUEST] method=GET path="
+      - field: path
+      - text: " auth="
+      - field: auth
+      - text: " status="
+      - field: status
+      - text: " duration="
+      - field: duration
+    output: "[GET:{path},status:{status}]"
+
+  # v1 format: POST request
+  - name: request_post_v1
+    pattern:
+      - field: timestamp
+      - text: " [REQUEST] POST "
+      - field: path
+      - text: " | Headers: "
+      - field: headers
+      - text: " | Response: "
+      - field: status
+    output: "[POST:{path},status:{status}]"
+
+  # v2 format: POST request
+  - name: request_post_v2
+    pattern:
+      - field: timestamp
+      - text: " [REQUEST] method=POST path="
+      - field: path
+      - text: " auth="
+      - field: auth
+      - text: " status="
+      - field: status
+      - text: " duration="
+      - field: duration
+    output: "[POST:{path},status:{status}]"
+
+  # v1 format: PUT request
+  - name: request_put_v1
+    pattern:
+      - field: timestamp
+      - text: " [REQUEST] PUT "
+      - field: path
+      - text: " | Headers: "
+      - field: headers
+      - text: " | Response: "
+      - field: status
+    output: "[PUT:{path},status:{status}]"
+
+  # v2 format: PUT request
+  - name: request_put_v2
+    pattern:
+      - field: timestamp
+      - text: " [REQUEST] method=PUT path="
+      - field: path
+      - text: " auth="
+      - field: auth
+      - text: " status="
+      - field: status
+      - text: " duration="
+      - field: duration
+    output: "[PUT:{path},status:{status}]"
+
+  # v1 format: DELETE request
+  - name: request_delete_v1
+    pattern:
+      - field: timestamp
+      - text: " [REQUEST] DELETE "
+      - field: path
+      - text: " | Headers: "
+      - field: headers
+      - text: " | Response: "
+      - field: status
+    output: "[DELETE:{path},status:{status}]"
+
+  # v2 format: DELETE request
+  - name: request_delete_v2
+    pattern:
+      - field: timestamp
+      - text: " [REQUEST] method=DELETE path="
+      - field: path
+      - text: " auth="
+      - field: auth
+      - text: " status="
+      - field: status
+      - text: " duration="
+      - field: duration
+    output: "[DELETE:{path},status:{status}]"
+
+  # v1 format: Response with user data
+  - name: response_user_v1
+    pattern:
+      - field: timestamp
+      - text: " [RESPONSE] "
+      - field: json_start
+      - text: "\"id\": "
+      - field: id
+      - text: ", \"email\": "
+      - field: email
+      - text: ", \"created\": "
+      - field: created
+      - text: ", \"last_login\": "
+      - field: last_login
+      - text: "}"
+    output: "[RESPONSE:user,fields=id+email+created+last_login]"
+
+  # v2 format: Response with user data (includes api_version)
+  - name: response_user_v2
+    pattern:
+      - field: timestamp
+      - text: " [RESPONSE] body="
+      - field: json_start
+      - text: "\"id\": "
+      - field: id
+      - text: ", \"email\": "
+      - field: email
+      - text: ", \"created\": "
+      - field: created
+      - text: ", \"last_login\": "
+      - field: last_login
+      - text: ", \"api_version\": "
+      - field: api_version
+      - text: "}"
+    output: "[RESPONSE:user,fields=id+email+created+last_login]"
+
+  # v1 format: Response with order created
+  - name: response_order_created_v1
+    pattern:
+      - field: timestamp
+      - text: " [RESPONSE] "
+      - field: json_start
+      - text: "\"id\": "
+      - field: id
+      - text: ", \"user_id\": "
+      - field: user_id
+      - text: ", \"total\": "
+      - field: total
+      - text: ", \"created_at\": "
+      - field: created_at
+      - text: ", \"status\": \"pending\"}"
+    output: "[RESPONSE:order-created,fields=id+user_id+total+status]"
+
+  # v2 format: Response with order created (includes api_version)
+  - name: response_order_created_v2
+    pattern:
+      - field: timestamp
+      - text: " [RESPONSE] body="
+      - field: json_start
+      - text: "\"id\": "
+      - field: id
+      - text: ", \"user_id\": "
+      - field: user_id
+      - text: ", \"total\": "
+      - field: total
+      - text: ", \"created_at\": "
+      - field: created_at
+      - text: ", \"status\": \"pending\", \"api_version\": "
+      - field: api_version
+      - text: "}"
+    output: "[RESPONSE:order-created,fields=id+user_id+total+status]"
+
+  # v1 format: Response with order updated
+  - name: response_order_updated_v1
+    pattern:
+      - field: timestamp
+      - text: " [RESPONSE] "
+      - field: json_start
+      - text: "\"id\": "
+      - field: id
+      - text: ", \"status\": \"paid\", \"updated_at\": "
+      - field: updated_at
+      - text: "}"
+    output: "[RESPONSE:order-updated,fields=id+status]"
+
+  # v2 format: Response with order updated (includes api_version)
+  - name: response_order_updated_v2
+    pattern:
+      - field: timestamp
+      - text: " [RESPONSE] body="
+      - field: json_start
+      - text: "\"id\": "
+      - field: id
+      - text: ", \"status\": \"paid\", \"updated_at\": "
+      - field: updated_at
+      - text: ", \"api_version\": "
+      - field: api_version
+      - text: "}"
+    output: "[RESPONSE:order-updated,fields=id+status]"
+
+  # v1 format: Response with full order
+  - name: response_order_full_v1
+    pattern:
+      - field: timestamp
+      - text: " [RESPONSE] "
+      - field: json_start
+      - text: "\"id\": "
+      - field: id
+      - text: ", \"user_id\": "
+      - field: user_id
+      - text: ", \"total\": "
+      - field: total
+      - text: ", \"status\": \"paid\", \"items\": "
+      - field: items
+      - text: ", \"shipping\": "
+      - field: shipping
+      - text: "}"
+    output: "[RESPONSE:order-full,fields=id+user_id+total+status+items+shipping]"
+
+  # v2 format: Response with full order (includes api_version)
+  - name: response_order_full_v2
+    pattern:
+      - field: timestamp
+      - text: " [RESPONSE] body="
+      - field: json_start
+      - text: "\"id\": "
+      - field: id
+      - text: ", \"user_id\": "
+      - field: user_id
+      - text: ", \"total\": "
+      - field: total
+      - text: ", \"status\": \"paid\", \"items\": "
+      - field: items
+      - text: ", \"shipping\": "
+      - field: shipping
+      - text: ", \"api_version\": "
+      - field: api_version
+      - text: "}"
+    output: "[RESPONSE:order-full,fields=id+user_id+total+status+items+shipping]"

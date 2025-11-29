@@ -64,8 +64,19 @@ nav:
       - Quick Start: getting-started/quick-start.md
       - Basic Concepts: getting-started/basic-concepts.md
   - Use Cases:
-      - placeholder:
-          - placeholder: use-cases/placeholder/placeholder.md
+      - Overview: use-cases/index.md
+      - Testing:
+          - API Contract Testing: use-cases/testing/api-contract.md
+          - Golden Master Testing: use-cases/testing/golden-master.md
+      - DevOps:
+          - CI/CD Build Reproducibility: use-cases/devops/build-reproducibility.md
+      - Operations:
+          - Multi-Environment Validation: use-cases/operations/multi-environment.md
+          - Distributed Systems Troubleshooting: use-cases/operations/distributed-troubleshooting.md
+      - Security:
+          - Security Log Aggregation: use-cases/security/security-aggregation.md
+      - Data:
+          - Database Migration Validation: use-cases/data/migration-validation.md
   - Features:
       - Rules: features/rules/rules.md
       - Explain Mode: features/explain/explain.md

@@ -1,0 +1,80 @@
+rules:
+  # Build started - ignore timestamp and PID
+  - name: build_started
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] Build started (PID: "
+      - field: pid
+      - text: ")"
+    output: "[build-started]"
+
+  # Working directory - ignore temp path
+  - name: working_directory
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] Working directory: "
+      - field: path
+    output: "[working-directory]"
+
+  # Compiler version - keep this, it matters
+  - name: compiler
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] Compiler: "
+      - field: name
+      - text: " "
+      - field: version
+    output: "[compiler:{name},{version}]"
+
+  # Dependencies - keep these, they matter
+  - name: dependency
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] Dependency: "
+      - field: name
+      - text: " "
+      - field: version
+    output: "[dependency:{name},{version}]"
+
+  # Compilation - keep file, ignore timing
+  - name: compilation
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] Compiling "
+      - field: file
+      - text: "... success ("
+      - field: duration
+      - text: ")"
+    output: "[compiled:{file}]"
+
+  # Linking - ignore timing details
+  - name: linking
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] Linking binary... success"
+    output: "[linked]"
+
+  # Binary hash - keep this, it's the build output signature
+  - name: binary_hash
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] Binary hash: "
+      - field: hash
+    output: "[binary-hash:{hash}]"
+
+  # Build completed - ignore total time
+  - name: build_completed
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] Build completed (total: "
+      - field: duration
+      - text: ")"
+    output: "[build-completed]"

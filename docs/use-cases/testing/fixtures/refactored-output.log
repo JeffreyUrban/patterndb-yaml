@@ -1,0 +1,10 @@
+[2024-11-15T14:30:22.456Z] CUSTOMER_PROCESSED customer_id=1001 name="Alice Johnson" email=alice@example.com balance=1234.56
+[2024-11-15T14:30:22.489Z] DISCOUNT_APPLIED discount_pct=10 tier=GOLD compute_time_ms=0.38
+[2024-11-15T14:30:22.501Z] ORDER_SUBTOTAL amount=1111.10
+[2024-11-15T14:30:22.523Z] TAX_CALCULATED state=CA rate_pct=9.5 tax_amount=105.55
+[2024-11-15T14:30:22.545Z] ORDER_TOTAL amount=1216.65
+[2024-11-15T14:30:22.678Z] PAYMENT_PROCESSED method=credit_card last_four=4532 txn_id=TXN-20241115-000456 duration_ms=133
+[2024-11-15T14:30:22.701Z] INVENTORY_UPDATED sku=SKU-ABC-123 prev_qty=50 new_qty=47 location=Building-A/Aisle-3/Shelf-12
+[2024-11-15T14:30:22.734Z] SHIPPING_LABEL_CREATED tracking=1Z999AA10123456784 carrier=UPS service=Ground weight_lbs=2.3 est_delivery=2024-11-20
+[2024-11-15T14:30:22.756Z] ORDER_COMPLETED order_id=ORD-5001 duration_ms=300 server=prod-us-west-2b
+[2024-11-15T14:30:22.789Z] EMAIL_QUEUED recipient=alice@example.com queue=high-priority msg_id=MSG-xyz789ghi012

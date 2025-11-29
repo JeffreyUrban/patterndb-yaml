@@ -1,0 +1,4 @@
+2024-11-15 14:15:23.012 [PostgreSQL] statement: UPDATE orders SET status='paid' WHERE id=5001 duration: 5.678 ms
+2024-11-15 14:15:24.001 [PostgreSQL] statement: UPDATE orders SET status='shipped' WHERE id=5001 duration: 4.567 ms
+2024-11-15 14:15:25.234 [PostgreSQL] statement: UPDATE payments SET status='completed' WHERE id=1001 duration: 7.234 ms
+2024-11-15 14:15:26.456 [PostgreSQL] statement: UPDATE payments SET processed_at=NOW() WHERE id=1001 duration: 6.789 ms

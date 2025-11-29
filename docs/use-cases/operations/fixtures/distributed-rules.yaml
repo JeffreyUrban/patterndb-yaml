@@ -1,0 +1,148 @@
+rules:
+  # API Gateway: Incoming request
+  - name: gateway_request
+    pattern:
+      - field: timestamp
+      - text: " [api-gateway] request_id="
+      - field: request_id
+      - text: " method="
+      - field: method
+      - text: " path="
+      - field: path
+      - text: " user="
+      - field: user
+    output: "[{request_id}] gateway:request:{method}:{path}"
+
+  # API Gateway: Upstream response (success)
+  - name: gateway_response_success
+    pattern:
+      - field: timestamp
+      - text: " [api-gateway] request_id="
+      - field: request_id
+      - text: " upstream="
+      - field: upstream
+      - text: " status="
+      - field: status
+      - text: " duration="
+      - field: duration
+    output: "[{request_id}] gateway:response:status={status}"
+
+  # API Gateway: Upstream response (error)
+  - name: gateway_response_error
+    pattern:
+      - field: timestamp
+      - text: " [api-gateway] request_id="
+      - field: request_id
+      - text: " upstream="
+      - field: upstream
+      - text: " status="
+      - field: status
+      - text: " duration="
+      - field: duration
+      - text: " error="
+      - field: error
+    output: "[{request_id}] gateway:error:status={status}"
+
+  # Order Service: Order created
+  - name: order_created
+    pattern:
+      - field: timestamp
+      - text: " [order-service] trace_id="
+      - field: trace_id
+      - text: " event=order_created order_id="
+      - field: order_id
+      - text: " user_id="
+      - field: user_id
+    output: "[{trace_id}] order:created:order_id={order_id}"
+
+  # Order Service: Calling payment
+  - name: order_calling_payment
+    pattern:
+      - field: timestamp
+      - text: " [order-service] trace_id="
+      - field: trace_id
+      - text: " event=calling_payment_service order_id="
+      - field: order_id
+      - text: " amount="
+      - field: amount
+    output: "[{trace_id}] order:calling_payment"
+
+  # Order Service: Payment success
+  - name: order_payment_success
+    pattern:
+      - field: timestamp
+      - text: " [order-service] trace_id="
+      - field: trace_id
+      - text: " event=payment_success order_id="
+      - field: order_id
+    output: "[{trace_id}] order:payment_ok"
+
+  # Order Service: Payment failed
+  - name: order_payment_failed
+    pattern:
+      - field: timestamp
+      - text: " [order-service] trace_id="
+      - field: trace_id
+      - text: " event=payment_failed order_id="
+      - field: order_id
+      - text: " error="
+      - field: error
+    output: "[{trace_id}] order:payment_failed"
+
+  # Order Service: Order lookup
+  - name: order_lookup
+    pattern:
+      - field: timestamp
+      - text: " [order-service] trace_id="
+      - field: trace_id
+      - text: " event=order_lookup order_id="
+      - field: order_id
+    output: "[{trace_id}] order:lookup:order_id={order_id}"
+
+  # Order Service: Order found
+  - name: order_found
+    pattern:
+      - field: timestamp
+      - text: " [order-service] trace_id="
+      - field: trace_id
+      - text: " event=order_found order_id="
+      - field: order_id
+      - text: " status="
+      - field: status
+    output: "[{trace_id}] order:found:status={status}"
+
+  # Payment Service: Process payment
+  - name: payment_process
+    pattern:
+      - field: timestamp
+      - text: " payment-svc correlation_id="
+      - field: correlation_id
+      - text: " action=process_payment order="
+      - field: order
+      - text: " amount="
+      - field: amount
+    output: "[{correlation_id}] payment:processing"
+
+  # Payment Service: Payment authorized
+  - name: payment_authorized
+    pattern:
+      - field: timestamp
+      - text: " payment-svc correlation_id="
+      - field: correlation_id
+      - text: " action=payment_authorized order="
+      - field: order
+      - text: " txn_id="
+      - field: txn_id
+    output: "[{correlation_id}] payment:authorized"
+
+  # Payment Service: Payment error
+  - name: payment_error
+    pattern:
+      - field: timestamp
+      - text: " payment-svc correlation_id="
+      - field: correlation_id
+      - text: " action=payment_error order="
+      - field: order
+      - text: " error="
+      - field: error
+    output: "[{correlation_id}] payment:error"

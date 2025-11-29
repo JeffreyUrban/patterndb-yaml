@@ -1,0 +1,25 @@
+Distributed Request Analysis:
+
+✓ SUCCESS req-abc123 (7 events)
+    gateway:request:POST:/orders
+    gateway:response:status=200
+    order:created:order_id=5001
+    order:calling_payment
+    order:payment_ok
+    payment:processing
+    payment:authorized
+
+✓ SUCCESS req-def456 (4 events)
+    gateway:request:GET:/orders/5001
+    gateway:response:status=200
+    order:lookup:order_id=5001
+    order:found:status=paid
+
+✗ FAILED req-ghi789 (7 events)
+    gateway:request:POST:/orders
+    gateway:response:status=500
+    order:created:order_id=5002
+    order:calling_payment
+  ⚠ order:payment_failed
+    payment:processing
+  ⚠ payment:error

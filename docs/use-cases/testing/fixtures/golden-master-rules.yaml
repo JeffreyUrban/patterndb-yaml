@@ -1,0 +1,249 @@
+rules:
+  # Legacy: Customer record processing
+  - name: legacy_customer
+    pattern:
+      - text: "Processing customer record: ID="
+      - field: id
+      - text: ", Name="
+      - field: name
+      - text: ", Email="
+      - field: email
+      - text: ", Balance=$"
+      - field: balance
+      - text: " (Timestamp: "
+      - field: timestamp
+      - text: ")"
+    output: "[CUSTOMER:id={id},email={email}]"
+
+  # Refactored: Customer processed
+  - name: refactored_customer
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] CUSTOMER_PROCESSED customer_id="
+      - field: id
+      - text: " name="
+      - field: name
+      - text: " email="
+      - field: email
+      - text: " balance="
+      - field: balance
+    output: "[CUSTOMER:id={id},email={email}]"
+
+  # Legacy: Discount applied
+  - name: legacy_discount
+    pattern:
+      - text: "Applying discount: "
+      - field: pct
+      - text: "% off for loyalty tier "
+      - field: tier
+      - text: " (Calculation time: "
+      - field: time
+      - text: ")"
+    output: "[DISCOUNT:pct={pct},tier={tier}]"
+
+  # Refactored: Discount applied
+  - name: refactored_discount
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] DISCOUNT_APPLIED discount_pct="
+      - field: pct
+      - text: " tier="
+      - field: tier
+      - text: " compute_time_ms="
+      - field: time
+    output: "[DISCOUNT:pct={pct},tier={tier}]"
+
+  # Legacy: Order subtotal
+  - name: legacy_subtotal
+    pattern:
+      - text: "Order total before tax: $"
+      - field: amount
+    output: "[SUBTOTAL:{amount}]"
+
+  # Refactored: Order subtotal
+  - name: refactored_subtotal
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] ORDER_SUBTOTAL amount="
+      - field: amount
+    output: "[SUBTOTAL:{amount}]"
+
+  # Legacy: Tax calculation
+  - name: legacy_tax
+    pattern:
+      - text: "Tax calculation (State: "
+      - field: state
+      - text: ", Rate: "
+      - field: rate
+      - text: "%): Tax=$"
+      - field: tax
+    output: "[TAX:state={state},amount={tax}]"
+
+  # Refactored: Tax calculated
+  - name: refactored_tax
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] TAX_CALCULATED state="
+      - field: state
+      - text: " rate_pct="
+      - field: rate
+      - text: " tax_amount="
+      - field: tax
+    output: "[TAX:state={state},amount={tax}]"
+
+  # Legacy: Order total
+  - name: legacy_total
+    pattern:
+      - text: "Order total after tax: $"
+      - field: amount
+    output: "[TOTAL:{amount}]"
+
+  # Refactored: Order total
+  - name: refactored_total
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] ORDER_TOTAL amount="
+      - field: amount
+    output: "[TOTAL:{amount}]"
+
+  # Legacy: Payment processed
+  - name: legacy_payment
+    pattern:
+      - text: "Payment processed via credit card ending in "
+      - field: last_four
+      - text: " (Transaction ID: "
+      - field: txn_id
+      - text: ", Processing time: "
+      - field: time
+      - text: ")"
+    output: "[PAYMENT:card_last4={last_four}]"
+
+  # Refactored: Payment processed
+  - name: refactored_payment
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] PAYMENT_PROCESSED method=credit_card last_four="
+      - field: last_four
+      - text: " txn_id="
+      - field: txn_id
+      - text: " duration_ms="
+      - field: time
+    output: "[PAYMENT:card_last4={last_four}]"
+
+  # Legacy: Inventory updated
+  - name: legacy_inventory
+    pattern:
+      - text: "Inventory updated: "
+      - field: sku
+      - text: " quantity decreased from "
+      - field: old_qty
+      - text: " to "
+      - field: new_qty
+      - text: " (Warehouse: "
+      - field: location
+      - text: ")"
+    output: "[INVENTORY:sku={sku},qty_change={old_qty}->{new_qty}]"
+
+  # Refactored: Inventory updated
+  - name: refactored_inventory
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] INVENTORY_UPDATED sku="
+      - field: sku
+      - text: " prev_qty="
+      - field: old_qty
+      - text: " new_qty="
+      - field: new_qty
+      - text: " location="
+      - field: location
+    output: "[INVENTORY:sku={sku},qty_change={old_qty}->{new_qty}]"
+
+  # Legacy: Shipping label
+  - name: legacy_shipping
+    pattern:
+      - text: "Shipping label generated: Tracking #"
+      - field: tracking
+      - text: " via "
+      - field: carrier
+      - text: " "
+      - field: service
+      - text: " (Weight: "
+      - field: weight
+      - text: ", Estimated delivery: "
+      - field: delivery
+      - text: ")"
+    output: "[SHIPPING:carrier={carrier},tracking={tracking}]"
+
+  # Refactored: Shipping label
+  - name: refactored_shipping
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] SHIPPING_LABEL_CREATED tracking="
+      - field: tracking
+      - text: " carrier="
+      - field: carrier
+      - text: " service="
+      - field: service
+      - text: " weight_lbs="
+      - field: weight
+      - text: " est_delivery="
+      - field: delivery
+    output: "[SHIPPING:carrier={carrier},tracking={tracking}]"
+
+  # Legacy: Order completed
+  - name: legacy_order_complete
+    pattern:
+      - text: "Order #"
+      - field: order_id
+      - text: " completed successfully (Total processing time: "
+      - field: time
+      - text: ", Server: "
+      - field: server
+      - text: ")"
+    output: "[ORDER_COMPLETE:id={order_id}]"
+
+  # Refactored: Order completed
+  - name: refactored_order_complete
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] ORDER_COMPLETED order_id="
+      - field: order_id
+      - text: " duration_ms="
+      - field: time
+      - text: " server="
+      - field: server
+    output: "[ORDER_COMPLETE:id={order_id}]"
+
+  # Legacy: Email sent
+  - name: legacy_email
+    pattern:
+      - text: "Email confirmation sent to "
+      - field: recipient
+      - text: " (Queue: "
+      - field: queue
+      - text: ", Message ID: "
+      - field: msg_id
+      - text: ")"
+    output: "[EMAIL:to={recipient}]"
+
+  # Refactored: Email queued
+  - name: refactored_email
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] EMAIL_QUEUED recipient="
+      - field: recipient
+      - text: " queue="
+      - field: queue
+      - text: " msg_id="
+      - field: msg_id
+    output: "[EMAIL:to={recipient}]"

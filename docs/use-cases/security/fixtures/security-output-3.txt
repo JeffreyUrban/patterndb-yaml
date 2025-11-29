@@ -1,0 +1,28 @@
+Threat Intelligence Matches:
+
+⚠ KNOWN THREAT: 198.51.100.23
+  Event: [firewall-drop:src=198.51.100.23,dst=192.168.1.100:22,reason=blocked_port]
+
+⚠ KNOWN THREAT: 192.0.2.15
+  Event: [firewall-drop:src=192.0.2.15,dst=192.168.1.100:3389,reason=suspicious_source]
+
+⚠ KNOWN THREAT: 198.51.100.23
+  Event: [ids-sqli:src=198.51.100.23,dst=192.168.1.100:80]
+
+⚠ KNOWN THREAT: 192.0.2.15
+  Event: [ids-portscan:src=192.0.2.15,target=192.168.1.0/24]
+
+⚠ KNOWN THREAT: 198.51.100.23
+  Event: [ids-bruteforce:src=198.51.100.23,dst=192.168.1.100:22]
+
+⚠ KNOWN THREAT: 198.51.100.23
+  Event: [auth-failure:user=admin,ip=198.51.100.23,reason=invalid_password]
+
+⚠ KNOWN THREAT: 198.51.100.23
+  Event: [auth-failure:user=admin,ip=198.51.100.23,reason=invalid_password]
+
+⚠ KNOWN THREAT: 198.51.100.23
+  Event: [auth-failure:user=admin,ip=198.51.100.23,reason=invalid_password]
+
+⚠ KNOWN THREAT: 192.0.2.15
+  Event: [auth-failure:user=root,ip=192.0.2.15,reason=account_disabled]
