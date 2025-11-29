@@ -117,6 +117,104 @@ Documentation should include code and CLI commands and those should be tested. T
 - **Avoid magic numbers** - use named constants
     - Example: `MY_CONSTANT = 0.5` instead of hardcoded `0.5`
 
+### Writing Code That Passes Quality Checks First Time
+
+**This project has strict quality checks. Write code that passes from the start to avoid rework.**
+
+#### Type Checking (mypy --strict)
+
+**Always:**
+- Add type hints to ALL function parameters and return values
+- Use `Optional[Type]` for values that can be `None`
+- Never use `Any` type
+- Import types from `typing` for Python 3.9 compatibility:
+  ```python
+  from typing import Optional, Union  # Not using `Type | None` syntax
+  ```
+
+**Common Issues:**
+```python
+# ❌ Wrong - missing return type
+def process(data):
+    return data
+
+# ✅ Right
+def process(data: str) -> str:
+    return data
+
+# ❌ Wrong - Any type
+def handle(obj: Any) -> None:
+    ...
+
+# ✅ Right - specific type
+def handle(obj: dict[str, str]) -> None:
+    ...
+```
+
+#### Line Length (100 chars max)
+
+**Check before committing:**
+- Code lines: 100 characters maximum
+- Docstring lines: 80 characters maximum (markdown in docs)
+- Use implicit line continuation in parentheses:
+  ```python
+  # ✅ Right
+  result = some_function(
+      long_parameter_name,
+      another_parameter,
+  )
+  ```
+
+#### Formatting (ruff format)
+
+**Let ruff handle it:**
+- Run `ruff format .` before committing
+- Or rely on pre-commit hooks
+- **Don't fight the formatter** - accept its style
+
+#### Imports (ruff check)
+
+**Order:**
+1. Standard library imports
+2. Third-party imports
+3. Local imports
+
+```python
+# ✅ Right
+import sys
+from pathlib import Path
+
+import yaml
+
+from .module import function
+```
+
+#### Docstrings
+
+**Required for public functions/classes:**
+```python
+def public_function(param: str) -> bool:
+    """
+    One-line summary ending with period.
+
+    Longer description if needed.
+
+    Args:
+        param: Description of parameter
+
+    Returns:
+        Description of return value
+    """
+```
+
+**Pre-commit will enforce:**
+- Trailing whitespace removal
+- End-of-file newlines
+- YAML syntax validity
+- Mixed line endings
+
+**Pro tip:** Run `pre-commit run --all-files` before pushing to catch issues early.
+
 ## Documentation Standards
 
 **Three Types of Documentation:**

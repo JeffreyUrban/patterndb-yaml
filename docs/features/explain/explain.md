@@ -68,6 +68,7 @@ With `--explain`, stderr shows why each line was processed the way it was:
     ```python
     from patterndb_yaml import PatterndbYaml
     from pathlib import Path
+    import sys
 
     processor = PatterndbYaml(
         rules_path=Path("rules.yaml"),
@@ -76,7 +77,14 @@ With `--explain`, stderr shows why each line was processed the way it was:
 
     with open("input.txt") as f:
         with open("output.txt", "w") as out:
-            processor.process(f, out)
+            with open("explain.txt", "w") as err:
+                # Redirect stderr to capture explanations
+                old_stderr = sys.stderr
+                sys.stderr = err
+                try:
+                    processor.process(f, out)
+                finally:
+                    sys.stderr = old_stderr
     ```
 
 ## Explanation Message Types
@@ -252,6 +260,7 @@ patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 \
 
 Enable explain mode programmatically:
 
+<!-- verify-file: output.txt expected: expected-output.txt -->
 ```python
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
