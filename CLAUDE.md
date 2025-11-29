@@ -310,6 +310,91 @@ When implementing or fixing features:
 - Document violations of requirements as "limitations" or "TODO" items
 - **Make unsubstantiated causal claims** - only state what is observed, not assumed causes
 
+### Feature Documentation Pattern
+
+**Location**: `docs/features/[feature-name]/[feature-name].md`
+
+**Purpose**: User-facing documentation for individual features with executable examples.
+
+**Template**: Follow the pattern in `docs/features/placeholder/placeholder.md`
+
+**Key Requirements:**
+
+1. **Tabbed CLI/Python Examples** - Show CLI and Python side-by-side, NOT in separate sections:
+   ```markdown
+   === "CLI"
+       <!-- verify-file: output.txt expected: expected-output.txt -->
+       <!-- termynal -->
+       ```console
+       $ patterndb-yaml --rules rules.yaml input.txt > output.txt
+       ```
+
+   === "Python"
+       <!-- verify-file: output.txt expected: expected-output.txt -->
+       ```python
+       from patterndb_yaml import PatterndbYaml
+       from pathlib import Path
+
+       processor = PatterndbYaml(rules_path=Path("rules.yaml"))
+
+       with open("input.txt") as f:
+           with open("output.txt", "w") as out:
+               processor.process(f, out)
+       ```
+   ```
+
+2. **Output to Files** - Code blocks should write output to files, NOT display output inline:
+   - ✅ Right: `patterndb-yaml ... > output.txt`
+   - ❌ Wrong: `patterndb-yaml ...` (showing output in same block)
+
+3. **Display Output from Fixtures** - Use admonitions with file inclusion:
+   ```markdown
+   ???+ success "Output: Description"
+       ```text
+       --8<-- "features/explain/fixtures/expected-output.txt"
+       ```
+   ```
+
+4. **Test Markers** - Include verify-file markers for executable testing:
+   ```markdown
+   <!-- verify-file: output.txt expected: expected-output.txt -->
+   ```
+
+5. **Annotations for Key Concepts** - Use numbered annotations in code:
+   ```python
+   processor = PatterndbYaml(
+       rules_path=Path("rules.yaml"),
+       explain=True  # (1)!
+   )
+   ```
+
+   Then add explanations after the code block:
+   ```markdown
+   1. Explanations are written to stderr automatically
+   ```
+
+6. **Simplified, Realistic Examples** - Focus on the feature being documented:
+   - Don't overcomplicate with multiple features
+   - Use realistic but simple input/output
+   - Highlight what makes this feature useful
+
+7. **Template Headers** - Template docs (not yet written) have:
+   ```markdown
+   # ⚠️ Template doc: Testing disabled ⚠️
+   ```
+
+**Structure:**
+- **What It Does** - Brief overview
+- **Examples** - Tabbed CLI/Python blocks demonstrating the feature
+- **Common Use Cases** - Practical applications
+- **See Also** - Links to related features/docs
+
+**DON'T:**
+- Create separate "Python API" sections (use tabs instead)
+- Show output inline in code blocks (write to files, display separately)
+- Duplicate CLI/Python examples (use tabs to show both approaches)
+- Write documentation for features not yet implemented (use template marker)
+
 **Example violations:**
 
 *Requirement violation:*
