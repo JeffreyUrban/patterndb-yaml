@@ -1,0 +1,23 @@
+[
+  {
+    "name": "placeholder",
+    "description": "placeholder",
+    "generator": {
+      "type": "handcrafted"
+      }
+  },
+  {
+    "name": "placeholder",
+    "description": "placeholder",
+    "generator": {
+      "type": "edge_case"
+      }
+  },
+  {
+    "name": "placeholder",
+    "description": "placeholder",
+    "generator": {
+      "type": "random"
+      }
+  }
+]

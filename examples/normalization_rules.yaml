@@ -1,0 +1,214 @@
+# Normalization rules for diff comparison
+#
+# Rules define how to normalize lines for comparison while preserving original output.
+# Each rule specifies:
+#   - pattern: Simple YAML pattern definition (automatically expanded to syslog-ng XML)
+#   - field_transforms: Python functions to apply to extracted fields
+#   - output: Template for normalized output using {field_name} syntax
+#   - nested_rules: Sub-rules to apply to extracted fields (optional)
+#
+# Architecture:
+#   1. PatternGenerator converts YAML pattern → syslog-ng XML (one-time at startup)
+#   2. Preprocess line (strip binary ANSI formatting codes globally)
+#   3. Match line against patterns (via syslog-ng PatternMatcher)
+#   4. Extract fields from encoded MESSAGE output
+#   5. Apply transformations to fields (optionally recursive)
+#   6. Format normalized output using template
+#
+# The original line is always preserved for output - normalization affects comparison only.
+#
+# Global preprocessing (applied to all lines before pattern matching):
+#   - Binary ANSI codes (ESC sequences like \x1b[38;5;174m) are stripped as formatting-only
+#   - Semantic special characters (like NBSP) are preserved for pattern differentiation
+
+# Transformation functions available (defined in normalization_transforms.py):
+#   - strip_ansi: Remove ANSI escape sequences
+#   - normalize_spinner: Replace any spinner symbol with standard marker
+
+# Pattern element types:
+#   - text: "literal"               # Match exact literal text (may contain {PARSER:field} placeholders)
+#   - serialized: "\uXXXX"         # Serialized characters (no escaping applied, use as-is)
+#   - char: "abc..."               # Match any single character from set
+#   - field: name                   # Extract field value (delimiter inferred from next element)
+#     parser: PARSER                # Explicit parser (NUMBER, FLOAT, etc.) - skips delimiter inference
+#   - alternatives: [...]           # Multiple pattern variants (cartesian product)
+#   - options:                      # Named alternatives (generates one rule per option)
+#       name: field_name            # Name to use in output template
+#       values:                     # List of option values
+#         - text: "Option1"
+#         - text: "Option2"
+#
+# Multi-line sequences (for buffering ordered sequences):
+#   A rule with a 'sequence' field defines a leader pattern that starts a multi-line sequence.
+#   The sequence field specifies follower patterns to match in immediately following lines.
+#
+#   During consolidation, these sequences are:
+#   - Extracted from blocks (leader + all matching followers)
+#   - Buffered across block changes
+#   - Output together only before first block without the sequence
+#
+#   Follower detection is done in code, not via XML pattern generation.
+#
+# Parser placeholders in text:
+#   - {NUMBER:field} → @NUMBER:field@
+#   - {FLOAT:field} → @FLOAT:field@
+#   - etc.
+#
+# Pattern design best practices:
+#   - Use 'alternatives' to combine related patterns into single rule
+#   - Use 'char' for character sets like spinner symbols
+
+rules:
+  # Dialog question - leader for dialog choices sequence
+  # Example: " Do you want to make this edit?"
+  # Followed by numbered choices with optional selection marker
+  - name: dialog_question
+    description: "Dialog question followed by numbered choice options (multi-line sequence)"
+    pattern:
+      - text: " Do you want to "
+      - field: content
+      - text: "?"
+    sequence:
+      followers:
+        - pattern:
+            - alternatives:
+                - - text: " "
+                  - serialized: "\u276f"  # ❯ arrow marker
+                  - text: " "
+                - - text: "   "  # 3 spaces for unselected
+            - field: number
+              parser: NUMBER
+            - text: ". "
+            - field: choice_text
+    output: "[dialog-question:{content}]"
+
+  # Dialog choice - follower line for dialog questions
+  # Examples:
+  #   " ❯ 1. Yes"
+  #   "   2. No"
+  - name: dialog_choice
+    description: "Dialog choice option (follower of dialog_question)"
+    pattern:
+      - alternatives:
+          - - text: " "
+            - serialized: "\u276f"  # ❯ arrow marker
+            - text: " "
+          - - text: "   "  # 3 spaces for unselected
+      - field: number
+        parser: NUMBER
+      - text: ". "
+      - field: choice_text
+    output: "[dialog-choice:{number}]"
+
+  # Task with todos hint, time and tokens
+  # Examples:
+  #   "✢ Creating project structure… (esc to interrupt · ctrl+t to show todos · 13s · ↓ 1.0k tokens)"
+  #   "✢ Creating project structure… (esc to interrupt · ctrl+t to show todos · 13s · ↓ 869 tokens)"
+  - name: task_todos_time_tokens_down
+    description: "Task with todos hint, timing and token count (integer or k suffix)"
+    pattern:
+      - char: "·✢✳✶✻✽"
+      - text: " "
+      - field: task
+      - text: "…"
+      - text: " (esc to interrupt · ctrl+t to show todos · "
+      - field: time
+        parser: NUMBER
+      - text: "s · ↓ "
+      - alternatives:
+          - text: "{NUMBER:tokens} tokens)"
+          - text: "{FLOAT:tokens}k tokens)"
+    output: "[task-todos-time-tokens-down:{task}]"
+
+  # Task with todos hint only (no timing)
+  # Example: "· Creating project structure… (esc to interrupt · ctrl+t to show todos)"
+  - name: task_todos
+    description: "Task with todos hint but no timing information"
+    pattern:
+      - char: "·✢✳✶✻✽"
+      - text: " "
+      - field: task
+      - text: "…"
+      - text: " (esc to interrupt · ctrl+t to show todos)"
+    output: "[task-todos:{task}]"
+
+  # Activity with time and tokens
+  # Examples:
+  #   "✽ Whirlpooling… (esc to interrupt · 16s · ↓ 1.0k tokens)"
+  #   "✽ Slithering… (esc to interrupt · 7s · ↓ 182 tokens)"
+  - name: activity_time_tokens_down
+    description: "Activity with timing and token count (integer or k suffix)"
+    pattern:
+      - char: "·✢✳✶✻✽"
+      - text: " "
+      - field: verb
+      - text: "ing"
+      - text: "… (esc to interrupt · "
+      - field: time
+        parser: NUMBER
+      - text: "s · ↓ "
+      - alternatives:
+          - text: "{NUMBER:tokens} tokens)"
+          - text: "{FLOAT:tokens}k tokens)"
+    output: "[activity-time-tokens-down:{verb}]"
+
+  # Activity spinner lines: ignore spinner symbol variation
+  # After cleaning (ANSI, prefixes, line endings), lines look like: "· Slithering… (esc to interrupt)"
+  - name: activity_spinner
+    description: "Normalize activity lines with rotating spinner symbols"
+    pattern:
+      - char: "·✢✳✶✻✽"
+      - text: " "
+      - field: verb
+      - text: "ing"
+      - text: "… (esc to interrupt)"
+    output: "[activity:{verb}]"
+
+  # Thinking indicator
+  # Example: "∴ Thought for 5s (ctrl+o to show thinking)"
+  - name: thinking
+    description: "Thinking time indicator"
+    pattern:
+      - serialized: "\u2234"  # Therefore symbol ∴
+      - text: " Thought for "
+      - field: time
+        parser: NUMBER
+      - text: "s (ctrl+o to show thinking)"
+    output: "[thinking]"
+
+  # Action in progress - only matches lines WITH the marker
+  # Example: "⏺ Web Search("best weather API 2025 free tier")"
+  # Note: Lines without marker may have 2-3 spaces (from ANSI-colored space or indentation)
+  - name: action
+    description: "Action"
+    pattern:
+      - alternatives:
+        - serialized: "\u23fa"  # Record symbol ⏺
+        - text: " "
+      - text: " "
+      - options:
+          name: action_type
+          values:
+            - text: "Read"
+            - text: "Search"
+            - text: "Web Search"
+            - text: "Bash"
+            - text: "Write"
+      - text: "("
+      - field: content
+      - text: ")"
+    output: "[action:{action_type},content:{content}]"
+
+  # User input prompt - matches any text after "> "
+  # Note: Uses NBSP (U+00A0) after >, not regular space
+  # Examples:
+  #   ">�Let's review line"
+  #   ">�Let's review lines"
+  #   ">�" (empty input)
+  - name: user_input
+    description: "User input prompt with any text"
+    pattern:
+      - text: ">"
+      - serialized: "\u00a0"
+      - field: input
+    output: "[user-input]"

@@ -1,0 +1,93 @@
+# Design Rationale and Trade-offs
+
+**Purpose**: Document why features were included, excluded, or deferred. Explains design decisions and trade-offs.
+
+## Core Design Principles
+
+### 1. Unix Composition Over Feature Bloat
+
+**Principle**: Prefer documented composition patterns over built-in features when composition is efficient and clear.
+
+**Rationale**:
+- Smaller, faster tool with less code to maintain
+- Users leverage existing knowledge of Unix tools
+- Better citizen of Unix ecosystem
+- Easier testing with fewer feature interactions
+
+**Application**:
+- ✅ Keep features when composition is inefficient, complex, or breaks streaming
+- ❌ Cut features when standard tools can achieve the same result simply
+- 📖 Document all composition patterns with tested examples
+
+---
+
+### 2. Streaming First
+
+**Principle**: All features must work with unbounded streams and bounded memory.
+
+**Rationale**:
+- Real-time monitoring (`tail -f | patterndb-yaml`)
+- Predictable memory usage
+- Scalable to any input size
+- True Unix filter behavior
+
+**Application**:
+- History limits (default 100k for stdin, unlimited for files)
+- Configurable via `--unlimited-history` when needed
+- Features that require full input are deferred or cut
+
+---
+
+### 3. Core Competency Focus
+
+**Principle**: Focus on placeholder, not placeholder.
+
+**Rationale**:
+- placeholder
+
+**Application**:
+- ✅ Features that enhance placeholder
+- ❌ Features better served by placeholder
+
+---
+
+## Feature Inclusion Decisions
+
+### ✅ Kept: placeholder
+
+---
+
+## Feature Exclusion Decisions
+
+### ❌ Cut: placeholder
+
+---
+
+## Implementation Trade-offs
+
+### placeholder
+
+---
+
+## Tool Comparisons
+
+### vs. placeholder
+
+---
+
+## Removed Features and Rationale
+
+### placeholder
+
+---
+
+### Features Clarified During Planning
+
+**1. placeholder**
+
+---
+
+## See Also
+
+- **IMPLEMENTATION.md** - Implementation overview
+- **ALGORITHM_DESIGN.md** - Core algorithm details

@@ -1,0 +1,7 @@
+placeholder
+Processing: input.txt
+{
+  "statistics": {
+    "placeholder": placeholder
+  }
+}

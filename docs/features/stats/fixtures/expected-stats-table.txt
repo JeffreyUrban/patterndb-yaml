@@ -1,0 +1,9 @@
+placeholder
+Processing: input.txt
+
+        placeholder Statistics
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ Metric                   ┃     Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ placeholder                     │      placeholder │
+└──────────────────────────┴───────────┘

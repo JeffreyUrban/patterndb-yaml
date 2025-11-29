@@ -1,0 +1,10 @@
+[
+  {
+    "name": "placeholder",
+    "description": "placeholder",
+    "placeholder": 0,
+    "generator": {
+      "type": "random"
+      }
+  }
+]
