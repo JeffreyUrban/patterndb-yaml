@@ -2,9 +2,8 @@
 
 import json
 import sys
-from collections.abc import Iterator
 from pathlib import Path
-from typing import Optional, TextIO
+from typing import Optional
 
 import typer
 import yaml
@@ -39,19 +38,6 @@ def version_callback(value: bool) -> None:
     if value:
         typer.echo(f"patterndb-yaml version {__version__}")
         raise typer.Exit()
-
-
-def placeholder(stream: TextIO) -> Iterator[str]:
-    """Read placeholder from stream
-
-    Args:
-        stream: Input stream (file or stdin)
-
-    Yields:
-        placeholder
-    """
-    for _line in stream:
-        yield "placeholder"
 
 
 def validate_arguments(

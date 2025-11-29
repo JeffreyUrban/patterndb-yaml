@@ -69,7 +69,7 @@ def _match_pattern_components(
                 pos += len(match.group())
             else:
                 # Extract until end of line (ANYSTRING behavior)
-                # TODO: Support delimiter inference for ESTRING behavior
+                # Note: ESTRING delimiter inference is handled in pattern_generator.py
                 if extract_fields:
                     fields[field_name] = line_clean[pos:]
                 pos = len(line_clean)
