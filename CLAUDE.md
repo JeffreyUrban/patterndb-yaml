@@ -56,7 +56,53 @@ The user has invested significant effort designing a complete template. **Respec
 The project is new, all code is new and we need to vet and fix all code for errors and issues that come up.
 There are no 'pre-existing issues'. Avoid overriding any quality checks. When type checking, avoid the `Any` type.
 
-Documentation should include code and CLI commands and those should be tested. These are part of the test suite.
+## Executable Documentation
+
+**CRITICAL: ALL code examples in documentation are executable tests.**
+
+### Core Principles:
+
+1. **Every code example must work** - Documentation code blocks are not illustrations; they are tested code
+2. **Sybil runs all examples** - Python and console code blocks in markdown docs are executed by pytest via Sybil
+3. **Fixture files must exist** - Examples that reference files (YAML rules, log files) require those files in fixtures/ directories
+4. **Test failures mean broken examples** - If a documentation example fails in CI, the example code or fixtures need to be fixed
+
+### When Documentation Tests Fail:
+
+**DO:**
+- Create missing fixture files referenced in the examples
+- Fix the example code to work correctly
+- Add `<!-- verify-file: output.txt expected: expected.txt -->` markers for examples that produce output
+- Ensure examples run from the fixtures directory (conftest.py handles this with verify-file markers)
+
+**DON'T:**
+- Assume examples are "just illustrations" and don't need to work
+- Skip documentation tests by excluding files from conftest.py
+- Mark examples as not needing to execute without explicit user approval
+- Treat documentation code differently from production code
+
+### Example Structure:
+
+```markdown
+<!-- verify-file: output.txt expected: expected-output.txt -->
+```python
+from patterndb_yaml import PatterndbYaml
+from pathlib import Path
+
+processor = PatterndbYaml(rules_path=Path("rules.yaml"))  # File must exist in fixtures/
+with open("input.log") as f:  # File must exist in fixtures/
+    with open("output.txt", "w") as out:
+        processor.process(f, out)
+\```
+```
+
+The verify-file marker tells Sybil to:
+1. Run the code from the fixtures/ directory
+2. Verify output.txt matches expected-output.txt
+3. Clean up output.txt after the test
+
+### Remember:
+**Documentation is code. Documentation examples are tests. Treat them with the same rigor as production code.**
 
 ## Critical Rules
 
