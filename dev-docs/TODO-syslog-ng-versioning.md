@@ -27,6 +27,44 @@ Our usage is minimal - we only use these features:
 
 **Recommendation**: Use `syslog-ng-core` for minimal installation footprint.
 
+## Configuration Requirements for Non-Root Usage
+
+**CRITICAL for deployment**: syslog-ng requires specific configuration to run without root permissions.
+
+**Issues encountered**:
+1. **Capabilities**: syslog-ng tries to set capabilities by default
+   - **Solution**: Use `--no-caps` flag when starting syslog-ng
+
+2. **Persist file permissions**: syslog-ng defaults to `/var/lib/syslog-ng/syslog-ng.persist` (requires root)
+   - **Error**: `Permission denied (13)` creating `/var/lib/syslog-ng/syslog-ng.persist-`
+   - **Solution**: Use `@define persist-file "/path/to/writable/dir/syslog-ng.persist"` in config
+
+**If bundling/installing syslog-ng in deployment**:
+- Must use `--no-caps` flag (or ensure capability management is disabled)
+- Must configure custom persist file location in writable directory
+- Consider using temporary directory for persist file if state persistence not needed
+- Our current implementation uses a temporary directory for both FIFOs and persist file
+
+**Current implementation** (pattern_filter.py:65-68):
+```python
+persist_file = os.path.join(self.temp_dir, "syslog-ng.persist")
+config = f"""@version: 4.3
+
+@define persist-file "{persist_file}"
+```
+
+And command line (pattern_filter.py:98-105):
+```python
+cmd = [
+    "syslog-ng",
+    "-f",
+    self.config_file,
+    "--foreground",
+    "--stderr",
+    "--no-caps",  # Disable capability management (not available in containers)
+]
+```
+
 ## Strategic Questions to Answer
 
 ### 1. Version Detection vs Configuration
