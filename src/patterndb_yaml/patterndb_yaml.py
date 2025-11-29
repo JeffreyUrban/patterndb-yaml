@@ -159,7 +159,7 @@ def _load_sequence_config(rules_path: Path) -> tuple[dict[str, Any], set[str]]:
 def _initialize_engine(
     rules_path: Path,
     explain: bool = False,
-) -> tuple[Optional[NormalizationEngine], dict[str, Any], set[str]]:
+) -> tuple[NormalizationEngine, dict[str, Any], set[str]]:
     """
     Initialize normalization engine and load sequence configurations.
 
@@ -169,9 +169,13 @@ def _initialize_engine(
 
     Returns:
         Tuple of (norm_engine, sequence_configs, sequence_markers)
+
+    Raises:
+        FileNotFoundError: If rules file does not exist
+        RuntimeError: If normalization engine cannot be initialized
     """
     if not rules_path.exists():
-        return None, {}, set()
+        raise FileNotFoundError(f"Rules file not found: {rules_path}")
 
     try:
         norm_engine = NormalizationEngine(rules_path, explain=explain)
@@ -190,8 +194,7 @@ def _initialize_engine(
         return norm_engine, sequence_configs, sequence_markers
 
     except Exception as e:
-        print(f"Warning: Could not initialize normalization engine: {e}", file=sys.stderr)
-        return None, {}, set()
+        raise RuntimeError(f"Failed to initialize normalization engine: {e}") from e
 
 
 class SequenceProcessor:
@@ -312,7 +315,7 @@ class PatterndbYaml:
         self.rules_path = rules_path
         self.explain = explain  # Show explanations to stderr
 
-        # Initialize normalization engine and sequence processor
+        # Initialize normalization engine and sequence processor (raises on failure)
         self.norm_engine, sequence_configs, sequence_markers = _initialize_engine(
             rules_path, explain=explain
         )
@@ -356,16 +359,12 @@ class PatterndbYaml:
             self.lines_processed += 1
 
             # Update line number in normalization engine for explain output
-            if self.norm_engine:
-                self.norm_engine.current_line_number = self.lines_processed
+            self.norm_engine.current_line_number = self.lines_processed
 
             # Normalize the line
-            if self.norm_engine:
-                normalized = self.norm_engine.normalize_cached(line)  # type: ignore[attr-defined]
-                if not normalized.startswith("^"):
-                    self.lines_matched += 1
-            else:
-                normalized = f"^{line}"  # Unmatched marker if no engine
+            normalized = self.norm_engine.normalize_cached(line)  # type: ignore[attr-defined]
+            if not normalized.startswith("^"):
+                self.lines_matched += 1
 
             # Process the line (handles sequence buffering)
             self.seq_processor.process_line(line, normalized, output)
