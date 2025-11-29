@@ -1,0 +1,14 @@
+CEF:0|PatternDB|SecurityAggregator|1.0|firewall-accept|firewall-accept|3|src=203.0.113.45 dst=192.168.1.100 act=firewall-accept
+CEF:0|PatternDB|SecurityAggregator|1.0|firewall-drop|firewall-drop|5|src=198.51.100.23 dst=192.168.1.100 act=firewall-drop
+CEF:0|PatternDB|SecurityAggregator|1.0|firewall-accept|firewall-accept|3|src=203.0.113.67 dst=192.168.1.200 act=firewall-accept
+CEF:0|PatternDB|SecurityAggregator|1.0|firewall-drop|firewall-drop|5|src=192.0.2.15 dst=192.168.1.100 act=firewall-drop
+CEF:0|PatternDB|SecurityAggregator|1.0|firewall-accept|firewall-accept|3|src=203.0.113.45 dst=192.168.1.100 act=firewall-accept
+CEF:0|PatternDB|SecurityAggregator|1.0|ids-sqli|ids-sqli|3|src=198.51.100.23 dst=192.168.1.100 act=ids-sqli
+CEF:0|PatternDB|SecurityAggregator|1.0|ids-portscan|ids-portscan|3|src=192.0.2.15 dst= act=ids-portscan
+CEF:0|PatternDB|SecurityAggregator|1.0|ids-bruteforce|ids-bruteforce|3|src=198.51.100.23 dst=192.168.1.100 act=ids-bruteforce
+CEF:0|PatternDB|SecurityAggregator|1.0|auth-success|auth-success|3|src=203.0.113.45 dst= act=auth-success
+CEF:0|PatternDB|SecurityAggregator|1.0|auth-failure|auth-failure|5|src=198.51.100.23 dst= act=auth-failure
+CEF:0|PatternDB|SecurityAggregator|1.0|auth-success|auth-success|3|src=203.0.113.67 dst= act=auth-success
+CEF:0|PatternDB|SecurityAggregator|1.0|auth-failure|auth-failure|5|src=198.51.100.23 dst= act=auth-failure
+CEF:0|PatternDB|SecurityAggregator|1.0|auth-failure|auth-failure|5|src=198.51.100.23 dst= act=auth-failure
+CEF:0|PatternDB|SecurityAggregator|1.0|auth-failure|auth-failure|5|src=192.0.2.15 dst= act=auth-failure

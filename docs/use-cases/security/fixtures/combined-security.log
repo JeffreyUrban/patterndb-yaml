@@ -1,0 +1,14 @@
+Nov 15 10:23:45 fw01 kernel: ACCEPT IN=eth0 OUT=eth1 SRC=203.0.113.45 DST=192.168.1.100 PROTO=TCP SPT=54321 DPT=443
+Nov 15 10:23:46 fw01 kernel: DROP IN=eth0 OUT= SRC=198.51.100.23 DST=192.168.1.100 PROTO=TCP SPT=12345 DPT=22 REASON=blocked_port
+Nov 15 10:23:47 fw01 kernel: ACCEPT IN=eth0 OUT=eth1 SRC=203.0.113.67 DST=192.168.1.200 PROTO=TCP SPT=43210 DPT=80
+Nov 15 10:23:50 fw01 kernel: DROP IN=eth0 OUT= SRC=192.0.2.15 DST=192.168.1.100 PROTO=TCP SPT=56789 DPT=3389 REASON=suspicious_source
+Nov 15 10:23:52 fw01 kernel: ACCEPT IN=eth0 OUT=eth1 SRC=203.0.113.45 DST=192.168.1.100 PROTO=TCP SPT=54322 DPT=443
+[2024-11-15T10:23:48.123Z] ALERT: SQL Injection attempt from 198.51.100.23 to 192.168.1.100:80 - Signature: "UNION SELECT" detected
+[2024-11-15T10:23:49.456Z] ALERT: Port scan detected from 192.0.2.15 targeting 192.168.1.0/24 - 100 ports scanned in 5 seconds
+[2024-11-15T10:23:51.789Z] ALERT: Brute force login attempt from 198.51.100.23 to 192.168.1.100:22 - 15 failed attempts in 60 seconds
+2024-11-15 10:23:45 [AUTH] user=alice@example.com ip=203.0.113.45 action=login status=success
+2024-11-15 10:23:46 [AUTH] user=admin ip=198.51.100.23 action=login status=failure reason=invalid_password
+2024-11-15 10:23:47 [AUTH] user=bob@example.com ip=203.0.113.67 action=login status=success
+2024-11-15 10:23:48 [AUTH] user=admin ip=198.51.100.23 action=login status=failure reason=invalid_password
+2024-11-15 10:23:49 [AUTH] user=admin ip=198.51.100.23 action=login status=failure reason=invalid_password
+2024-11-15 10:23:50 [AUTH] user=root ip=192.0.2.15 action=login status=failure reason=account_disabled

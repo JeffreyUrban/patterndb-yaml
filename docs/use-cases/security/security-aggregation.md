@@ -89,11 +89,18 @@ Create rules that extract security-relevant fields while normalizing format diff
 
 === "Python"
 
+    <!-- verify-file: output.txt expected: security-output-1.txt -->
     ```python
+    import sys
     from patterndb_yaml import PatterndbYaml
     from pathlib import Path
     from collections import defaultdict
     import re
+
+    # Redirect stdout to file for testing
+    _original_stdout = sys.stdout
+    output_file = open("output.txt", "w")
+    sys.stdout = output_file
 
     # Normalize all security logs
     processor = PatterndbYaml(rules_path=Path("security-rules.yaml"))
@@ -160,6 +167,10 @@ Create rules that extract security-relevant fields while normalizing format diff
             print()
         elif len(event_types) >= 2:
             print(f"⚠ MEDIUM: {ip} - {len(event_types)} event types")
+
+    # Restore stdout and close output file
+    sys.stdout = _original_stdout
+    output_file.close()
     ```
 
 ## Expected Output
@@ -227,11 +238,19 @@ tail -f /var/log/firewall.log /var/log/ids/alerts.log /var/log/app/auth.log | \
 
 Build attack timeline from multiple sources:
 
+<!-- verify-file: output.txt expected: security-output-2.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 from datetime import datetime
+from io import StringIO
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("security-rules.yaml"))
 
@@ -265,6 +284,10 @@ for i, event in enumerate(attacker_events, 1):
         print(f"{i}. [{event_type.upper()}] {event}")
 
 print(f"\nTotal events: {len(attacker_events)}")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 3. Compliance Reporting (Failed Access Attempts)
@@ -298,10 +321,17 @@ grep '^\[ids-' unified.log
 
 Correlate with threat intelligence feeds:
 
+<!-- verify-file: output.txt expected: security-output-3.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 # Known malicious IPs (from threat feed)
 threat_ips = {"198.51.100.23", "192.0.2.15"}
@@ -327,16 +357,27 @@ for event in events:
             print(f"⚠ KNOWN THREAT: {ip}")
             print(f"  Event: {event}")
             print()
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 5. SIEM Integration
 
 Export normalized logs to SIEM in CEF format:
 
+<!-- verify-file: output.txt expected: security-output-4.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("security-rules.yaml"))
 
@@ -383,6 +424,14 @@ with open("combined-security.log") as f:
                 cef_event = to_cef(line)
                 if cef_event:
                     cef_out.write(cef_event + "\n")
+
+# Print the generated CEF log for verification
+with open("security-cef.log") as f:
+    print(f.read(), end='')
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ## Key Benefits

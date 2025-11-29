@@ -1,0 +1,22 @@
+Coordinated Attack Detection:
+
+⚠ HIGH PRIORITY: 198.51.100.23
+  Event types: auth-failure, firewall-drop, ids-bruteforce, ids-sqli
+  Total events: 6
+  Timeline:
+    - [firewall-drop:src=198.51.100.23,dst=192.168.1.100:22,reason=blocked_port]
+    - [ids-sqli:src=198.51.100.23,dst=192.168.1.100:80]
+    - [ids-bruteforce:src=198.51.100.23,dst=192.168.1.100:22]
+    - [auth-failure:user=admin,ip=198.51.100.23,reason=invalid_password]
+    - [auth-failure:user=admin,ip=198.51.100.23,reason=invalid_password]
+
+⚠ MEDIUM: 203.0.113.45 - 2 event types
+⚠ HIGH PRIORITY: 192.0.2.15
+  Event types: auth-failure, firewall-drop, ids-portscan
+  Total events: 3
+  Timeline:
+    - [firewall-drop:src=192.0.2.15,dst=192.168.1.100:3389,reason=suspicious_source]
+    - [ids-portscan:src=192.0.2.15,target=192.168.1.0/24]
+    - [auth-failure:user=root,ip=192.0.2.15,reason=account_disabled]
+
+⚠ MEDIUM: 203.0.113.67 - 2 event types
