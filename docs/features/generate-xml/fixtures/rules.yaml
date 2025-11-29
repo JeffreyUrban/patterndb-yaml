@@ -1,0 +1,18 @@
+rules:
+  - name: ssh_login_success
+    pattern:
+      - text: "Accepted "
+      - field: auth_method
+      - text: " for "
+      - field: user
+      - text: " from "
+      - field: ip_address
+    output: "[ssh-login:user={user},ip={ip_address},method={auth_method}]"
+
+  - name: ssh_login_failed
+    pattern:
+      - text: "Failed password for "
+      - field: user
+      - text: " from "
+      - field: ip_address
+    output: "[ssh-failed:user={user},ip={ip_address}]"
