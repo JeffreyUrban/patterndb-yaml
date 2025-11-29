@@ -19,7 +19,7 @@ Found a bug or have a feature request?
 
 **Command used**:
 ```bash
-patterndb-yaml --placeholder
+patterndb-yaml --rules rules.yaml --explain input.log
 ```
 
 **Sample input** (first 20 lines):
@@ -71,7 +71,7 @@ mkdocs serve
 **Fork and clone**:
 ```bash
 # Fork on GitHub, then:
-git clone https://github.com/YOUR_USERNAME/processor.git
+git clone https://github.com/YOUR_USERNAME/patterndb-yaml.git
 cd patterndb-yaml
 ```
 
@@ -94,7 +94,7 @@ pre-commit install
 pytest
 
 # Run specific test file
-pytest tests/test_deduplicator.py
+pytest tests/test_integration.py
 
 # Run with coverage
 pytest --cov=src --cov-report=html
@@ -106,22 +106,22 @@ pytest --cov=src --cov-report=html
 
 1. **Type hints** for all function signatures:
    ```python
-   def placeholder(self, placeholder, output: TextIO) -> None:
-       """Process placeholder."""
+   def process(self, stream: TextIO, output: TextIO) -> None:
+       """Process input stream and write normalized output."""
        pass
    ```
 
 2. **Docstrings** for public functions/classes:
    ```python
-   def placeholder(placeholder) -> placeholder:
+   def normalize(line: str) -> str:
        """
-       placeholder.
+       Normalize a single log line according to pattern rules.
 
        Args:
-           placeholder: placeholder
+           line: Raw log line to normalize
 
        Returns:
-           placeholder
+           Normalized log line or original if no pattern matches
        """
        pass
    ```
@@ -164,28 +164,33 @@ pytest --cov=src --cov-report=html
 ```python
 import pytest
 from patterndb_yaml import PatterndbYaml
+from pathlib import Path
+from io import StringIO
 
-def test_placeholder():
-    """Test that placeholder."""
-    placeholder = PatterndbYaml(placeholder)
+def test_pattern_matching():
+    """Test that patterns match correctly."""
+    processor = PatterndbYaml(rules_path=Path("tests/fixtures/rules.yaml"))
 
     # Test input
-    placeholder
+    input_data = StringIO("2024-11-15 10:00:01 [INFO] User login\\n")
+    output_data = StringIO()
 
     # Process and collect output
-    output = placeholder
+    processor.process(input_data, output_data)
 
     # Verify
-    assert output == placeholder
+    output_data.seek(0)
+    result = output_data.read().strip()
+    assert result == "[INFO:login]"
 ```
 
 **Running specific tests**:
 ```bash
 # Run by name pattern
-pytest -k "test_placeholder"
+pytest -k "test_normalization"
 
 # Run specific file
-pytest tests/test_placeholder.py
+pytest tests/test_integration.py
 
 # Run with verbose output
 pytest -v
@@ -222,11 +227,11 @@ pytest -x
 
    **Examples**:
    ```
-   Add support for placeholder
+   Add support for custom delimiters
 
-   - Add --placeholder option to CLI
-   - Support placeholder
-   - Add tests for placeholder
+   - Add --delimiter option to CLI
+   - Support custom field delimiters in patterns
+   - Add tests for delimiter functionality
    - Update documentation with examples
    ```
 
@@ -257,14 +262,17 @@ pytest -x
 
 ```
 patterndb-yaml/
-├── src/patterndb-yaml/          # Source code
+├── src/patterndb_yaml/   # Source code
 │   ├── __init__.py
 │   ├── cli.py            # CLI interface (Typer)
-│   ├── processor.py   # Core logic
+│   ├── patterndb_yaml.py # Core normalization logic
+│   ├── normalization_engine.py
+│   ├── pattern_generator.py
 │   └── ...
 ├── tests/                # Test files
-│   ├── test_placeholder.py
+│   ├── test_integration.py
 │   ├── test_cli.py
+│   ├── test_oracle.py
 │   └── fixtures/         # Test data files
 ├── docs/                 # Documentation (MkDocs)
 │   ├── guides/
@@ -356,37 +364,50 @@ python -m cProfile -s cumulative -m patterndb-yaml large-file.log
 
 **Example: Adding a new CLI option**
 
-1. **Add to CLI** (`src/patterndb-yaml/cli.py`):
+1. **Add to CLI** (`src/patterndb_yaml/cli.py`):
    ```python
    @app.command()
    def main(
        # ... existing options ...
-       my_option: int = typer.Option(
-           42,
-           "--my-option",
-           help="Description of what this does"
+       case_sensitive: bool = typer.Option(
+           True,
+           "--case-sensitive/--case-insensitive",
+           help="Enable or disable case-sensitive matching"
        ),
    ):
-       # Implementation
+       # Pass to PatterndbYaml
+       processor = PatterndbYaml(
+           rules_path=rules,
+           case_sensitive=case_sensitive
+       )
    ```
 
-2. **Add to core** (`src/patterndb-yaml/placeholder.py`):
+2. **Add to core** (`src/patterndb_yaml/patterndb_yaml.py`):
    ```python
-   def __init__(self, my_option: int = 42):
-       self.my_option = my_option
+   def __init__(
+       self,
+       rules_path: Path,
+       explain: bool = False,
+       case_sensitive: bool = True
+   ):
+       self.case_sensitive = case_sensitive
+       # Implementation
    ```
 
 3. **Add tests**:
    ```python
-   def test_my_option():
-       dedup = PatterndbYaml(my_option=50)
-       # Test behavior
+   def test_case_insensitive_matching():
+       processor = PatterndbYaml(
+           rules_path=Path("rules.yaml"),
+           case_sensitive=False
+       )
+       # Test that "ERROR" matches "error"
    ```
 
 4. **Add documentation**:
-   - Feature page in `docs/features/my-feature/`
-   - Example in `docs/use-cases/`
-   - Update `docs/reference/cli.md`
+   - Update `docs/reference/cli.md` with new option
+   - Add example in `docs/guides/common-patterns.md`
+   - Document in API reference (`docs/reference/patterndb-yaml.md`)
 
 ### Code Review Process
 
@@ -419,8 +440,11 @@ from patterndb_yaml import PatterndbYaml
 
 def test_new_feature():
     """Test the new feature."""
-    placeholder = PatterndbYaml(new_option=True)
-    # Test code
+    processor = PatterndbYaml(
+        rules_path=Path("tests/fixtures/rules.yaml"),
+        new_option=True
+    )
+    # Test code here
 EOF
 
 # Run the new test
