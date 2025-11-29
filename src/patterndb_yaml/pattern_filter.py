@@ -40,25 +40,16 @@ class PatternMatcher:
 
     def _setup(self) -> None:
         """Set up temporary directory, FIFOs, config, and start syslog-ng."""
-        print("DEBUG: PatternMatcher._setup() starting", file=sys.stderr, flush=True)
-
         # Create temporary directory for our FIFOs and config
         self.temp_dir = tempfile.mkdtemp(prefix="syslog-ng-filter-")
-        print(f"DEBUG: Created temp dir: {self.temp_dir}", file=sys.stderr, flush=True)
 
         self.input_fifo = os.path.join(self.temp_dir, "input.fifo")
         self.output_fifo = os.path.join(self.temp_dir, "output.fifo")
         self.config_file = os.path.join(self.temp_dir, "syslog-ng.conf")
 
         # Create FIFOs
-        print(
-            f"DEBUG: Creating FIFOs: {self.input_fifo}, {self.output_fifo}",
-            file=sys.stderr,
-            flush=True,
-        )
         os.mkfifo(self.input_fifo)
         os.mkfifo(self.output_fifo)
-        print("DEBUG: FIFOs created successfully", file=sys.stderr, flush=True)
 
         # Write syslog-ng configuration
         config = f"""@version: 4.3
@@ -89,10 +80,8 @@ log {{
     destination(d_pipe);
 }};
 """
-        print(f"DEBUG: Writing syslog-ng config to {self.config_file}", file=sys.stderr, flush=True)
         with open(self.config_file, "w") as f:
             f.write(config)
-        print("DEBUG: Config written successfully", file=sys.stderr, flush=True)
 
         # Start syslog-ng process
         # Use temp_dir for persist file to avoid permission issues
@@ -107,7 +96,6 @@ log {{
             "--persist-file",
             persist_file,
         ]
-        print(f"DEBUG: Starting syslog-ng: {cmd}", file=sys.stderr, flush=True)
         self.process = subprocess.Popen(
             cmd,
             stdin=subprocess.DEVNULL,
@@ -115,50 +103,22 @@ log {{
             stderr=subprocess.PIPE,
             text=True,
         )
-        print(
-            f"DEBUG: syslog-ng process started, PID: {self.process.pid}",
-            file=sys.stderr,
-            flush=True,
-        )
 
         # Give syslog-ng time to start up and open the FIFOs
         import time
 
-        print("DEBUG: Waiting 0.5s for syslog-ng to start...", file=sys.stderr, flush=True)
         time.sleep(0.5)
-        print("DEBUG: Wait complete, checking process status...", file=sys.stderr, flush=True)
 
         # Check if process is still running
         if self.process.poll() is not None:
             stderr_output = self.process.stderr.read() if self.process.stderr else "No stderr"
-            print(
-                f"DEBUG: syslog-ng exited with code {self.process.returncode}",
-                file=sys.stderr,
-                flush=True,
-            )
-            print(f"DEBUG: syslog-ng stderr: {stderr_output}", file=sys.stderr, flush=True)
             raise RuntimeError(f"syslog-ng failed to start: {stderr_output}")
-
-        print("DEBUG: syslog-ng still running, opening FIFOs...", file=sys.stderr, flush=True)
 
         # Open FIFOs for reading/writing
         # IMPORTANT: Open output for reading FIRST (non-blocking), then input for writing
         # Otherwise we'll deadlock
-        print(
-            f"DEBUG: Opening output FIFO (non-blocking): {self.output_fifo}",
-            file=sys.stderr,
-            flush=True,
-        )
         self.output_fd = os.open(self.output_fifo, os.O_RDONLY | os.O_NONBLOCK)
-        print(f"DEBUG: Output FD: {self.output_fd}", file=sys.stderr, flush=True)
-
-        print(
-            f"DEBUG: Opening input FIFO (blocking): {self.input_fifo}", file=sys.stderr, flush=True
-        )
         self.input_fd = os.open(self.input_fifo, os.O_WRONLY)
-        print(f"DEBUG: Input FD: {self.input_fd}", file=sys.stderr, flush=True)
-
-        print("DEBUG: PatternMatcher._setup() complete!", file=sys.stderr, flush=True)
 
     def match(self, line: str) -> str:
         """
