@@ -36,4 +36,4 @@ jobs:
 
       - name: Run mypy
         run: |
-          mypy src/{{ cookiecutter.project_slug }}
+          mypy src/patterndb_yaml

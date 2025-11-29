@@ -33,7 +33,7 @@ jobs:
         env:
           COLUMNS: 120  # Set terminal width for consistent Rich output formatting
         run: |
-          pytest --cov=src/{{ cookiecutter.project_slug }} --cov-report=xml --cov-report=term --cov-fail-under=85
+          pytest --cov=src/patterndb_yaml --cov-report=xml --cov-report=term --cov-fail-under=85
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.14'
