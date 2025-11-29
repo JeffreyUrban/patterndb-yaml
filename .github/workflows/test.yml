@@ -15,7 +15,37 @@ permissions:
   contents: read
 
 jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run ruff (lint)
+        run: |
+          ruff check .
+
+      - name: Run ruff (format check)
+        run: |
+          ruff format --check .
+
+      - name: Run mypy
+        run: |
+          mypy src/patterndb_yaml
+
   test:
+    needs: quality  # Only run tests if quality checks pass
     runs-on: ubuntu-latest
     timeout-minutes: 15  # Prevent jobs from hanging indefinitely
     strategy:
