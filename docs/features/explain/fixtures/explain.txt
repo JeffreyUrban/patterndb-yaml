@@ -1,5 +1,10 @@
-Usage: patterndb-yaml [OPTIONS] [INPUT_FILE]
-Try 'patterndb-yaml -h' for help.
-╭─ Error ──────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ No such option: --placeholder                                                                                        │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+EXPLAIN: [Line 1] No pattern matched (passed through unchanged)
+
+  Normalization Statistics
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃ Metric          ┃  Value ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│ Lines Processed │      1 │
+│ Lines Matched   │      1 │
+│ Match Rate      │ 100.0% │
+└─────────────────┴────────┘

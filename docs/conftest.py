@@ -298,6 +298,29 @@ pytest_collect_file = Sybil(
 ).pytest()
 
 
+def pytest_collection_modifyitems(items):
+    """
+    Skip examples in documents marked as templates.
+
+    If a document contains the visible warning heading:
+    "# ⚠️ Template doc: Testing disabled ⚠️"
+    all examples in that document are skipped during testing.
+
+    This allows incremental documentation development - remove the heading
+    when the doc is ready to be tested.
+    """
+    import pytest
+
+    for item in items:
+        # Sybil test items have fspath pointing to the markdown file
+        if hasattr(item, "fspath"):
+            doc_path = Path(str(item.fspath))
+            if doc_path.suffix == ".md" and doc_path.exists():
+                content = doc_path.read_text()
+                if "# ⚠️ Template doc: Testing disabled ⚠️" in content:
+                    item.add_marker(pytest.mark.skip(reason="Template doc - testing disabled"))
+
+
 def pytest_sessionfinish(session, exitstatus):
     """Clean up test artifacts after test session completes.
 
