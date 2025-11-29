@@ -4,9 +4,10 @@ import re
 import sys
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, BinaryIO, Callable, Optional, TextIO, Union
+from typing import Any, BinaryIO, Callable, Optional, TextIO, Union, cast
 
 import yaml
+
 from .normalization_engine import NormalizationEngine
 
 # Compile ANSI escape sequence regex once at module import time
@@ -14,8 +15,8 @@ ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
 
 
 def _match_pattern_components(
-    line: str, pattern_components: list, extract_fields: bool = False
-) -> tuple[bool, dict]:
+    line: str, pattern_components: list[dict[str, Any]], extract_fields: bool = False
+) -> tuple[bool, dict[str, str]]:
     """
     Generic pattern matcher that walks through pattern components.
 
@@ -90,7 +91,7 @@ def _match_pattern_components(
     return True, fields
 
 
-def _render_component_sequence(components: list) -> str:
+def _render_component_sequence(components: list[dict[str, Any]]) -> str:
     """
     Render a sequence of pattern components to their literal text.
 
@@ -110,7 +111,7 @@ def _render_component_sequence(components: list) -> str:
     return "".join(result)
 
 
-def _load_sequence_config(rules_path: Path) -> tuple[dict, set]:
+def _load_sequence_config(rules_path: Path) -> tuple[dict[str, Any], set[str]]:
     """
     Load multi-line sequence configuration from normalization rules YAML.
 
@@ -142,7 +143,8 @@ def _load_sequence_config(rules_path: Path) -> tuple[dict, set]:
 
             output = rule.get("output", "")
             if "{" in output:
-                # Extract marker from output field: "[rule-output:" portion before first field placeholder
+                # Extract marker from output field: "[rule-output:" portion
+                # before first field placeholder
                 # e.g., "[dialog-question:{content}]" -> "[dialog-question:"
                 marker = output[: output.index("{")]
                 markers.add(marker)
@@ -154,7 +156,9 @@ def _load_sequence_config(rules_path: Path) -> tuple[dict, set]:
     return sequences, markers
 
 
-def _initialize_engine(rules_path: Path) -> tuple[Optional[NormalizationEngine], dict, set]:
+def _initialize_engine(
+    rules_path: Path,
+) -> tuple[Optional[NormalizationEngine], dict[str, Any], set[str]]:
     """
     Initialize normalization engine and load sequence configurations.
 
@@ -191,17 +195,19 @@ def _initialize_engine(rules_path: Path) -> tuple[Optional[NormalizationEngine],
 class SequenceProcessor:
     """Handles multi-line sequence buffering and output."""
 
-    def __init__(self, sequence_configs: dict, sequence_markers: set):
+    def __init__(self, sequence_configs: dict[str, Any], sequence_markers: set[str]) -> None:
         self.sequence_configs = sequence_configs
         self.sequence_markers = sequence_markers
         self.current_sequence: Optional[str] = None  # Current sequence rule being buffered
-        self.sequence_buffer: list[tuple[str, str]] = []  # List of (raw_line, normalized_line) tuples
+        self.sequence_buffer: list[
+            tuple[str, str]
+        ] = []  # List of (raw_line, normalized_line) tuples
 
     def flush_sequence(self, output: Union[TextIO, BinaryIO]) -> None:
         """Output buffered sequence and clear buffer."""
         if self.sequence_buffer:
             for _, norm_line in self.sequence_buffer:
-                output.write(norm_line + "\n")  # type: ignore[arg-type]
+                cast(TextIO, output).write(norm_line + "\n")
         self.sequence_buffer = []
         self.current_sequence = None
 
@@ -211,7 +217,7 @@ class SequenceProcessor:
             if normalized.startswith(marker):
                 # Extract rule name from marker (e.g., "[dialog-question:" -> "dialog_question")
                 for rule_name in self.sequence_configs:
-                    rule_output = self.sequence_configs[rule_name].get("output", "")
+                    rule_output = str(self.sequence_configs[rule_name].get("output", ""))
                     if marker in rule_output:
                         return rule_name
         return None
@@ -260,7 +266,7 @@ class SequenceProcessor:
             self.sequence_buffer = [(raw_line, normalized)]
         else:
             # Regular line - output immediately
-            output.write(normalized + "\n")  # type: ignore[arg-type]
+            cast(TextIO, output).write(normalized + "\n")
 
 
 class PatterndbYaml:
@@ -354,9 +360,7 @@ class PatterndbYaml:
         Returns:
             Dictionary with keys: lines_processed, lines_matched, match_rate
         """
-        match_rate = (
-            self.lines_matched / self.lines_processed if self.lines_processed > 0 else 0.0
-        )
+        match_rate = self.lines_matched / self.lines_processed if self.lines_processed > 0 else 0.0
         return {
             "lines_processed": self.lines_processed,
             "lines_matched": self.lines_matched,

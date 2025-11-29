@@ -1,2 +1,5 @@
-Auto-detected file input: using placeholder (override with --placeholder)
-placeholder
+Usage: patterndb-yaml [OPTIONS] [INPUT_FILE]
+Try 'patterndb-yaml -h' for help.
+╭─ Error ──────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ No such option: --placeholder                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯

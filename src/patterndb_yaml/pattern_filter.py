@@ -27,18 +27,18 @@ class PatternMatcher:
             pdb_path: Path to patterndb XML file
         """
         self.pdb_path = pdb_path
-        self.process: Optional[subprocess.Popen] = None
-        self.temp_dir = None
-        self.input_fifo = None
-        self.output_fifo = None
-        self.config_file = None
-        self.input_fd = None
-        self.output_fd = None
+        self.process: Optional[subprocess.Popen[str]] = None
+        self.temp_dir: Optional[str] = None
+        self.input_fifo: Optional[str] = None
+        self.output_fifo: Optional[str] = None
+        self.config_file: Optional[str] = None
+        self.input_fd: int = -1
+        self.output_fd: int = -1
 
         self._setup()
         atexit.register(self.close)
 
-    def _setup(self):
+    def _setup(self) -> None:
         """Set up temporary directory, FIFOs, config, and start syslog-ng."""
         # Create temporary directory for our FIFOs and config
         self.temp_dir = tempfile.mkdtemp(prefix="syslog-ng-filter-")
@@ -125,7 +125,7 @@ log {{
             max_retries = 10
             retry_delay = 0.01  # 10ms
 
-            for attempt in range(max_retries):
+            for _attempt in range(max_retries):
                 # Check if data is available
                 ready, _, _ = select.select([self.output_fd], [], [], retry_delay)
                 if ready:
@@ -142,21 +142,21 @@ log {{
             print(f"Error in syslog-ng match: {e}", file=sys.stderr)
             return line
 
-    def close(self):
+    def close(self) -> None:
         """Close the syslog-ng process and clean up FIFOs."""
         try:
-            if self.input_fd:
+            if self.input_fd >= 0:
                 os.close(self.input_fd)
-            if self.output_fd:
+            if self.output_fd >= 0:
                 os.close(self.output_fd)
-        except:
+        except Exception:
             pass
 
         if self.process:
             try:
                 self.process.terminate()
                 self.process.wait(timeout=2)
-            except:
+            except Exception:
                 self.process.kill()
 
         # Clean up temp directory
@@ -166,7 +166,7 @@ log {{
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 
-def main():
+def main() -> None:
     """Main entry point for pattern matching filter"""
     # Get the patterns.xml path relative to this module
     module_dir = Path(__file__).parent

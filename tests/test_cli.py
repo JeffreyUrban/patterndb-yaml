@@ -28,6 +28,14 @@ def strip_ansi(text: str) -> str:
     return ANSI_ESCAPE.sub("", text)
 
 
+@pytest.fixture
+def rules_file(tmp_path):
+    """Provide a minimal rules file for tests."""
+    rules = tmp_path / "rules.yaml"
+    rules.write_text("rules: []")
+    return rules
+
+
 @pytest.mark.unit
 def test_cli_help():
     """Test --help output."""
@@ -35,69 +43,73 @@ def test_cli_help():
     assert result.exit_code == 0
     # Strip ANSI codes for reliable string matching across environments
     output = strip_ansi(result.stdout.lower())
-    assert "placeholder" in output
+    assert "normalize log lines" in output
+    assert "--rules" in output
+    assert "--generate-xml" in output
 
 
 @pytest.mark.unit
-def test_cli_with_file(tmp_path):
+def test_cli_with_file(rules_file, tmp_path):
     """Test CLI with input file."""
     # Create test file
     test_file = tmp_path / "input.txt"
     test_file.write_text("\n".join([f"line{i % 3}" for i in range(30)]) + "\n")
 
-    result = runner.invoke(app, [str(test_file), "--quiet"])
+    result = runner.invoke(app, ["--rules", str(rules_file), str(test_file), "--quiet"])
     assert result.exit_code == 0
     assert True
 
 
 @pytest.mark.unit
-def test_cli_with_stdin():
+def test_cli_with_stdin(rules_file):
     """Test CLI with stdin input."""
     input_data = "\n".join([f"line{i % 3}" for i in range(30)])
 
-    result = runner.invoke(app, ["--quiet"], input=input_data)
+    result = runner.invoke(app, ["--rules", str(rules_file), "--quiet"], input=input_data)
     assert result.exit_code == 0
     assert True
 
 
 @pytest.mark.unit
-def test_cli_empty_stdin():
+def test_cli_empty_stdin(rules_file):
     """Test CLI with empty stdin input"""
-    result = runner.invoke(app, ["--quiet"], input="")
+    result = runner.invoke(app, ["--rules", str(rules_file), "--quiet"], input="")
     assert result.exit_code == 0
     assert result.stdout == ""
 
 
 @pytest.mark.unit
-def test_cli_empty_file(tmp_path):
+def test_cli_empty_file(rules_file, tmp_path):
     """Test CLI with empty file input."""
     test_file = tmp_path / "empty.txt"
     test_file.write_text("")
 
-    result = runner.invoke(app, [str(test_file), "--quiet"], env=TEST_ENV)
+    result = runner.invoke(
+        app, ["--rules", str(rules_file), str(test_file), "--quiet"], env=TEST_ENV
+    )
     assert result.exit_code == 0
     assert result.stdout == ""
 
 
 @pytest.mark.unit
-def test_cli_statistics_output(tmp_path):
+def test_cli_statistics_output(rules_file, tmp_path):
     """Test CLI statistics are shown (not quiet mode)."""
     test_file = tmp_path / "test.txt"
     lines = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
     test_file.write_text("\n".join(lines) + "\n")
 
-    _ = runner.invoke(app, [str(test_file)], catch_exceptions=False)
+    _ = runner.invoke(app, ["--rules", str(rules_file), str(test_file)], catch_exceptions=False)
     # Rich console output in tests can cause exit code issues, just verify it runs
     # The actual statistics functionality is tested in unit tests
 
 
 @pytest.mark.unit
-def test_cli_quiet_mode(tmp_path):
+def test_cli_quiet_mode(rules_file, tmp_path):
     """Test CLI quiet mode suppresses statistics."""
     test_file = tmp_path / "test.txt"
     test_file.write_text("\n".join([f"line{i}" for i in range(20)]) + "\n")
 
-    result = runner.invoke(app, [str(test_file), "--quiet"])
+    result = runner.invoke(app, ["--rules", str(rules_file), str(test_file), "--quiet"])
     assert result.exit_code == 0
     # In quiet mode, stderr should not contain statistics
 
@@ -110,47 +122,52 @@ def test_cli_nonexistent_file():
 
 
 @pytest.mark.unit
-def test_cli_progress_flag(tmp_path):
+def test_cli_progress_flag(rules_file, tmp_path):
     """Test CLI with --progress flag."""
     test_file = tmp_path / "test.txt"
     test_file.write_text("\n".join([f"line{i}" for i in range(100)]) + "\n")
 
-    result = runner.invoke(app, [str(test_file), "--progress", "--quiet"])
+    result = runner.invoke(
+        app, ["--rules", str(rules_file), str(test_file), "--progress", "--quiet"]
+    )
     assert result.exit_code == 0
 
 
 @pytest.mark.unit
-def test_cli_progress_with_stdin():
+def test_cli_progress_with_stdin(rules_file):
     """Test progress bar with stdin input (covers cli.py lines 493-502)."""
     input_data = "\n".join([f"line{i % 10}" for i in range(1000)])
-    result = runner.invoke(app, ["--progress", "--quiet"], input=input_data, env=TEST_ENV)
+    result = runner.invoke(
+        app, ["--rules", str(rules_file), "--progress", "--quiet"], input=input_data, env=TEST_ENV
+    )
     assert result.exit_code == 0
 
 
 @pytest.mark.integration
-def test_cli_empty_file_integration(tmp_path):
+def test_cli_empty_file_integration(rules_file, tmp_path):
     """Test CLI with empty input file (integration test)."""
     test_file = tmp_path / "empty.txt"
     test_file.write_text("")
 
-    result = runner.invoke(app, [str(test_file), "--quiet"])
+    result = runner.invoke(app, ["--rules", str(rules_file), str(test_file), "--quiet"])
     assert result.exit_code == 0
     assert result.stdout.strip() == ""
 
 
 @pytest.mark.integration
-def test_cli_single_line(tmp_path):
+def test_cli_single_line(rules_file, tmp_path):
     """Test CLI with single line input."""
     test_file = tmp_path / "single.txt"
     test_file.write_text("single line\n")
 
-    result = runner.invoke(app, [str(test_file), "--quiet"])
+    result = runner.invoke(app, ["--rules", str(rules_file), str(test_file), "--quiet"])
     assert result.exit_code == 0
+    # With empty rules, line should pass through unmodified
     assert result.stdout.strip() == "single line"
 
 
 @pytest.mark.unit
-def test_cli_json_stats_format(tmp_path):
+def test_cli_json_stats_format(rules_file, tmp_path):
     """Test --stats-format json produces valid JSON."""
     import json
 
@@ -158,7 +175,9 @@ def test_cli_json_stats_format(tmp_path):
     lines = ["A", "B", "C", "D", "E"] * 3  # 15 lines with duplicates
     test_file.write_text("\n".join(lines) + "\n")
 
-    result = runner.invoke(app, [str(test_file), "--stats-format", "json"], env=TEST_ENV)
+    result = runner.invoke(
+        app, ["--rules", str(rules_file), str(test_file), "--stats-format", "json"], env=TEST_ENV
+    )
     assert result.exit_code == 0
 
     # Parse JSON from output (CliRunner captures stdout and stderr together)
@@ -178,12 +197,14 @@ def test_cli_json_stats_format(tmp_path):
 
 
 @pytest.mark.unit
-def test_cli_invalid_stats_format(tmp_path):
+def test_cli_invalid_stats_format(rules_file, tmp_path):
     """Test --stats-format rejects invalid formats."""
     test_file = tmp_path / "test.txt"
     test_file.write_text("test\n")
 
-    result = runner.invoke(app, [str(test_file), "--stats-format", "invalid"], env=TEST_ENV)
+    result = runner.invoke(
+        app, ["--rules", str(rules_file), str(test_file), "--stats-format", "invalid"], env=TEST_ENV
+    )
     assert result.exit_code != 0
     # Check output (combines stdout + stderr) to handle ANSI codes across environments
     assert "stats-format" in strip_ansi(result.output).lower()

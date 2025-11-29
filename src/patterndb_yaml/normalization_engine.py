@@ -16,9 +16,10 @@ import atexit
 import re
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 import yaml
+
 from .normalization_transforms import get_transform
 from .pattern_filter import PatternMatcher
 from .pattern_generator import generate_from_yaml
@@ -48,10 +49,7 @@ class NormalizationEngine:
 
         # Write XML to temporary file (cleaned up on exit)
         self.xml_tempfile = tempfile.NamedTemporaryFile(
-            mode='w',
-            suffix='.xml',
-            prefix='patterndb_',
-            delete=False
+            mode="w", suffix=".xml", prefix="patterndb_", delete=False
         )
         self.xml_tempfile.write(self.xml_content)
         self.xml_tempfile.flush()
@@ -66,7 +64,7 @@ class NormalizationEngine:
         # Build mapping of rule name -> rule for fast lookup
         self.rule_by_name = {rule["name"]: rule for rule in self.rules}
 
-    def _parse_encoded_message(self, message: str) -> Optional[tuple[str, Dict[str, str]]]:
+    def _parse_encoded_message(self, message: str) -> Optional[tuple[str, dict[str, str]]]:
         """
         Parse encoded MESSAGE output from syslog-ng pattern.
 
@@ -154,6 +152,10 @@ class NormalizationEngine:
         # Try to match the line against patterns
         matched = self.pattern_matcher.match(line_anchored)
 
+        # Remove anchors from matched output (they were only needed for matching)
+        if matched.startswith("^") and matched.endswith("$"):
+            matched = matched[1:-1]
+
         # Parse encoded MESSAGE
         parsed = self._parse_encoded_message(matched)
         if not parsed:
@@ -181,14 +183,14 @@ class NormalizationEngine:
                 transformed_fields[field_name] = field_value
 
         # Format output using template
-        output_template = rule.get("output", matched)
+        output_template: str = str(rule.get("output", matched))
         try:
             return output_template.format(**transformed_fields)
         except KeyError:
             # Template references missing field - return encoded message
             return matched
 
-    def _apply_field_transforms(self, field_value: str, transforms: List[str]) -> str:
+    def _apply_field_transforms(self, field_value: str, transforms: list[str]) -> str:
         """
         Apply a sequence of transformations to a field value.
 
@@ -202,20 +204,21 @@ class NormalizationEngine:
         result = field_value
         for transform_name in transforms:
             transform_func = get_transform(transform_name)
-            result = transform_func(result)
+            if transform_func:
+                result = transform_func(result)
         return result
 
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """Clean up temporary XML file."""
         try:
-            if hasattr(self, 'xml_tempfile'):
+            if hasattr(self, "xml_tempfile"):
                 self.xml_tempfile.close()
-            if hasattr(self, 'xml_path') and self.xml_path.exists():
+            if hasattr(self, "xml_path") and self.xml_path.exists():
                 self.xml_path.unlink()
         except Exception:
             pass  # Ignore cleanup errors
 
-    def close(self):
+    def close(self) -> None:
         """Close the pattern matcher and clean up resources."""
         if self.pattern_matcher:
             self.pattern_matcher.close()
