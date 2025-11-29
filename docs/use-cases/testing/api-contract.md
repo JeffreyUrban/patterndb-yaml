@@ -77,11 +77,18 @@ Create rules that extract contract-relevant information while ignoring implement
 
 === "Python"
 
+    <!-- verify-file: output.txt expected: api-contract-output-1.txt -->
     ```python
+    import sys
     from patterndb_yaml import PatterndbYaml
     from pathlib import Path
     from collections import Counter
     import re
+
+    # Redirect stdout to file for testing
+    _original_stdout = sys.stdout
+    output_file = open("output.txt", "w")
+    sys.stdout = output_file
 
     # Normalize both API versions
     processor = PatterndbYaml(rules_path=Path("api-contract-rules.yaml"))
@@ -155,6 +162,10 @@ Create rules that extract contract-relevant information while ignoring implement
             print("\nAdded in v2 (new operations):")
             for item in sorted(added):
                 print(f"  + {item}")
+
+    # Restore stdout and close output file
+    sys.stdout = _original_stdout
+    output_file.close()
     ```
 
 ## Expected Output
@@ -211,10 +222,17 @@ echo "✓ API v2 maintains contract compatibility"
 
 Verify test coverage against API specification:
 
+<!-- verify-file: output.txt expected: api-contract-output-2.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 # Expected endpoints from API spec
 API_SPEC = {
@@ -262,6 +280,10 @@ if extra:
     print("\nExtra endpoints (not in spec):")
     for endpoint in sorted(extra):
         print(f"  + {endpoint}")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 3. Breaking Change Detection
@@ -298,11 +320,18 @@ echo "\nBackward Compatibility: $percentage% " \
 
 Verify multiple microservices implement consistent contracts:
 
+<!-- verify-file: output.txt expected: api-contract-output-3.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
 from collections import defaultdict
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("api-contract-rules.yaml"))
 
@@ -351,16 +380,27 @@ for service in services:
             print(f"    {ep}")
     else:
         print(f"✓ {service} implements all core endpoints")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 5. Consumer-Driven Contract Testing
 
 Verify API meets consumer expectations:
 
+<!-- verify-file: output.txt expected: api-contract-output-4.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("api-contract-rules.yaml"))
 
@@ -404,6 +444,10 @@ for consumer, expectations in CONSUMER_EXPECTATIONS.items():
     else:
         print(f"✓ {consumer} expectations satisfied "
               f"({len(expectations)} operations)")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ## Key Benefits

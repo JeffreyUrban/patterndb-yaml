@@ -1,0 +1,9 @@
+2024-11-15 10:00:01 [REQUEST] GET /api/users/123 | Headers: {Authorization: Bearer abc123xyz} | Response: 200
+2024-11-15 10:00:01 [RESPONSE] {"id": 123, "email": "alice@example.com", "created": "2024-01-15T10:00:00Z", "last_login": "2024-11-15T09:45:00Z"}
+2024-11-15 10:00:02 [REQUEST] POST /api/orders | Headers: {Authorization: Bearer abc123xyz, Content-Type: application/json} | Response: 201
+2024-11-15 10:00:02 [RESPONSE] {"id": 5001, "user_id": 123, "total": 99.99, "created_at": "2024-11-15T10:00:02.123Z", "status": "pending"}
+2024-11-15 10:00:03 [REQUEST] PUT /api/orders/5001 | Headers: {Authorization: Bearer abc123xyz} | Response: 200
+2024-11-15 10:00:03 [RESPONSE] {"id": 5001, "status": "paid", "updated_at": "2024-11-15T10:00:03.456Z"}
+2024-11-15 10:00:04 [REQUEST] GET /api/orders/5001 | Headers: {Authorization: Bearer abc123xyz} | Response: 200
+2024-11-15 10:00:04 [RESPONSE] {"id": 5001, "user_id": 123, "total": 99.99, "status": "paid", "items": 3, "shipping": "standard"}
+2024-11-15 10:00:05 [REQUEST] DELETE /api/cart/items/789 | Headers: {Authorization: Bearer abc123xyz} | Response: 204

@@ -1,0 +1,4 @@
+Consumer-Driven Contract Verification:
+
+✓ mobile-app expectations satisfied (2 operations)
+✓ web-app expectations satisfied (3 operations)

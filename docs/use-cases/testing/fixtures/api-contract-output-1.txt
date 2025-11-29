@@ -1,0 +1,19 @@
+✓ API v2 implements the same contract as v1
+
+Contract Summary:
+  Total operations: 9
+  Requests: 5
+  Responses: 4
+
+  HTTP Methods:
+    DELETE: 1
+    GET: 2
+    POST: 1
+    PUT: 1
+
+  Endpoints:
+    GET /api/users/123
+    POST /api/orders
+    PUT /api/orders/5001
+    GET /api/orders/5001
+    DELETE /api/cart/items/789

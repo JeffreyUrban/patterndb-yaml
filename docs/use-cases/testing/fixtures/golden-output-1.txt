@@ -1,0 +1,12 @@
+Golden master captured
+  Events: 10
+
+✗ Behavioral differences detected:
+
+Missing in refactored (regressions):
+  - [SUBTOTAL:1,111.10]
+  - [TOTAL:1,216.65]
+
+Added in refactored (new behavior):
+  + [SUBTOTAL:1111.10]
+  + [TOTAL:1216.65]

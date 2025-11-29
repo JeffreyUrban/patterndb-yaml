@@ -1,0 +1,9 @@
+2024-11-15 14:30:12 [REQUEST] method=GET path=/api/users/123 auth=token:def456uvw status=200 duration=15ms
+2024-11-15 14:30:12 [RESPONSE] body={"id": 123, "email": "alice@example.com", "created": "2024-01-15T10:00:00.000Z", "last_login": "2024-11-15T14:20:00.000Z", "api_version": "v2"}
+2024-11-15 14:30:13 [REQUEST] method=POST path=/api/orders auth=token:def456uvw status=201 duration=42ms
+2024-11-15 14:30:13 [RESPONSE] body={"id": 5001, "user_id": 123, "total": 99.99, "created_at": "2024-11-15T14:30:13.789Z", "status": "pending", "api_version": "v2"}
+2024-11-15 14:30:14 [REQUEST] method=PUT path=/api/orders/5001 auth=token:def456uvw status=200 duration=28ms
+2024-11-15 14:30:14 [RESPONSE] body={"id": 5001, "status": "paid", "updated_at": "2024-11-15T14:30:14.012Z", "api_version": "v2"}
+2024-11-15 14:30:15 [REQUEST] method=GET path=/api/orders/5001 auth=token:def456uvw status=200 duration=12ms
+2024-11-15 14:30:15 [RESPONSE] body={"id": 5001, "user_id": 123, "total": 99.99, "status": "paid", "items": 3, "shipping": "standard", "api_version": "v2"}
+2024-11-15 14:30:16 [REQUEST] method=DELETE path=/api/cart/items/789 auth=token:def456uvw status=204 duration=8ms
