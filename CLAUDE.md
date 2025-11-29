@@ -310,11 +310,13 @@ When implementing or fixing features:
 - Document violations of requirements as "limitations" or "TODO" items
 - **Make unsubstantiated causal claims** - only state what is observed, not assumed causes
 
-### Feature Documentation Pattern
+### Feature and Use Case Documentation Pattern
 
-**Location**: `docs/features/[feature-name]/[feature-name].md`
+**Locations**:
+- Features: `docs/features/[feature-name]/[feature-name].md`
+- Use cases: `docs/use-cases/[use-case-name]/[use-case-name].md`
 
-**Purpose**: User-facing documentation for individual features with executable examples.
+**Purpose**: User-facing documentation for features and use cases with executable examples.
 
 **Template**: Follow the pattern in `docs/features/placeholder/placeholder.md`
 
@@ -383,11 +385,16 @@ When implementing or fixing features:
    # ⚠️ Template doc: Testing disabled ⚠️
    ```
 
-**Structure:**
+**Structure (Features):**
 - **What It Does** - Brief overview
 - **Examples** - Tabbed CLI/Python blocks demonstrating the feature
 - **Common Use Cases** - Practical applications
 - **See Also** - Links to related features/docs
+
+**Structure (Use Cases):**
+- Use case-specific sections (varies by use case)
+- Follow same formatting patterns (tabs, file output, fixtures, etc.)
+- Examples should demonstrate the use case scenario
 
 **DON'T:**
 - Create separate "Python API" sections (use tabs instead)
