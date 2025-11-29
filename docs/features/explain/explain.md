@@ -19,9 +19,28 @@ Explain mode adds diagnostic messages to stderr:
 
 Without `--explain`, normalization happens without feedback.
 
-```console
-$ patterndb-yaml --rules rules.yaml input.txt > output.txt
-```
+=== "CLI"
+
+    <!-- verify-file: output.txt expected: expected-output.txt -->
+    <!-- termynal -->
+    ```console
+    $ patterndb-yaml --rules rules.yaml input.txt \
+        > output.txt
+    ```
+
+=== "Python"
+
+    <!-- verify-file: output.txt expected: expected-output.txt -->
+    ```python
+    from patterndb_yaml import PatterndbYaml
+    from pathlib import Path
+
+    processor = PatterndbYaml(rules_path=Path("rules.yaml"))
+
+    with open("input.txt") as f:
+        with open("output.txt", "w") as out:
+            processor.process(f, out)
+    ```
 
 You see the normalized output but don't know what happened internally.
 
@@ -29,17 +48,36 @@ You see the normalized output but don't know what happened internally.
 
 With `--explain`, stderr shows why each line was processed the way it was:
 
-```console
-$ patterndb-yaml --rules rules.yaml input.txt --explain > output.txt
-EXPLAIN: [Line 1] Matched rule 'dialog_question'
-EXPLAIN: [Line 1] Extracted fields: content='What is your name?'
-EXPLAIN: [Line 1] Output: [dialog-question:What is your name?]
-EXPLAIN: [Line 2] No pattern matched (passed through unchanged)
-EXPLAIN: [Line 3] Started buffering sequence 'dialog_question' (leader line)
-EXPLAIN: [Line 4] Added follower to sequence 'dialog_question' (buffer: 2 lines)
-EXPLAIN: [Line 5] Line is not a follower - ending sequence 'dialog_question'
-EXPLAIN: [Line 5] Flushed sequence 'dialog_question' (2 lines buffered)
-```
+=== "CLI"
+
+    <!-- verify-file: explain.txt expected: expected-explain.txt -->
+    <!-- termynal -->
+    ```console
+    $ patterndb-yaml --rules rules.yaml input.txt --explain \
+        > output.txt 2> explain.txt
+    ```
+
+    Explanation output (`explain.txt`):
+    ```text
+    --8<-- "features/explain/fixtures/expected-explain.txt"
+    ```
+
+=== "Python"
+
+    <!-- verify-file: explain.txt expected: expected-explain.txt -->
+    ```python
+    from patterndb_yaml import PatterndbYaml
+    from pathlib import Path
+
+    processor = PatterndbYaml(
+        rules_path=Path("rules.yaml"),
+        explain=True  # Explanations go to stderr
+    )
+
+    with open("input.txt") as f:
+        with open("output.txt", "w") as out:
+            processor.process(f, out)
+    ```
 
 ## Explanation Message Types
 
@@ -68,9 +106,17 @@ EXPLAIN: [Line 42] Extracted fields: content='What is your name?', number='1'
 
 Shows transformations applied to field values:
 
+```bash
+patterndb-yaml --rules rules.yaml input.txt --explain 2> explain.txt
+cat explain.txt
 ```
-EXPLAIN: [Line 42] Applied transform 'strip_ansi' to field 'content': '\x1b[1mBold\x1b[0m' → 'Bold'
-EXPLAIN: [Line 42] Applied transform 'normalize_spinner' to field 'prompt': '✻' → '*'
+
+Example output:
+```
+EXPLAIN: [Line 42] Applied transform 'strip_ansi' to field
+  'content': '\x1b[1mBold\x1b[0m' → 'Bold'
+EXPLAIN: [Line 42] Applied transform 'normalize_spinner' to
+  field 'prompt': '✻' → '*'
 ```
 
 **Why useful**: See exactly how values are being modified.
@@ -80,14 +126,20 @@ EXPLAIN: [Line 42] Applied transform 'normalize_spinner' to field 'prompt': '✻
 Shows multi-line sequence buffering:
 
 ```
-EXPLAIN: [Line 10] Started buffering sequence 'dialog_question' (leader line)
-EXPLAIN: [Line 11] Added follower to sequence 'dialog_question' (buffer: 2 lines)
-EXPLAIN: [Line 12] Added follower to sequence 'dialog_question' (buffer: 3 lines)
-EXPLAIN: [Line 13] Line is not a follower - ending sequence 'dialog_question'
-EXPLAIN: [Line 13] Flushed sequence 'dialog_question' (3 lines buffered)
+EXPLAIN: [Line 10] Started buffering sequence 'dialog_question'
+  (leader line)
+EXPLAIN: [Line 11] Added follower to sequence 'dialog_question'
+  (buffer: 2 lines)
+EXPLAIN: [Line 12] Added follower to sequence 'dialog_question'
+  (buffer: 3 lines)
+EXPLAIN: [Line 13] Line is not a follower - ending sequence
+  'dialog_question'
+EXPLAIN: [Line 13] Flushed sequence 'dialog_question'
+  (3 lines buffered)
 ```
 
-**Why useful**: Multi-line sequences are complex; see when buffering starts/ends.
+**Why useful**: Multi-line sequences are complex; see when buffering
+starts/ends.
 
 ### 5. Output Formatting
 
@@ -102,8 +154,10 @@ EXPLAIN: [Line 42] Output: [dialog-question:What is your name?]
 Shows configuration or processing errors:
 
 ```
-EXPLAIN: [Line 42] Rule 'unknown_rule' not found in configuration (returned encoded message)
-EXPLAIN: [Line 43] Template error - missing field 'nonexistent' (returned encoded message)
+EXPLAIN: [Line 42] Rule 'unknown_rule' not found in
+  configuration (returned encoded message)
+EXPLAIN: [Line 43] Template error - missing field 'nonexistent'
+  (returned encoded message)
 ```
 
 **Why useful**: Helps debug configuration issues.
@@ -127,7 +181,8 @@ EXPLAIN: [Line N] <message>
 See if your patterns are matching:
 
 ```bash
-patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 | grep "Matched rule"
+patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 \
+  | grep "Matched rule"
 ```
 
 ### Validating Field Extraction
@@ -135,7 +190,8 @@ patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 | grep "Matched rule"
 Check that fields are extracted correctly:
 
 ```bash
-patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 | grep "Extracted fields"
+patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 \
+  | grep "Extracted fields"
 ```
 
 ### Understanding Transformations
@@ -143,7 +199,8 @@ patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 | grep "Extracted fie
 See how transformations modify values:
 
 ```bash
-patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 | grep "Applied transform"
+patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 \
+  | grep "Applied transform"
 ```
 
 ### Debugging Sequences
@@ -167,23 +224,28 @@ patterndb-yaml --rules rules.yaml large.log --explain --progress
 
 ```bash
 # Normalized output to file, explanations to terminal
-patterndb-yaml --rules rules.yaml log.txt --explain > normalized.log
+patterndb-yaml --rules rules.yaml log.txt --explain \
+  > normalized.log
 
 # Both to separate files
-patterndb-yaml --rules rules.yaml log.txt --explain > normalized.log 2> explain.log
+patterndb-yaml --rules rules.yaml log.txt --explain \
+  > normalized.log 2> explain.log
 
 # Combined for line-by-line analysis
-patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 | less
+patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 \
+  | less
 ```
 
 ### Filter Specific Lines
 
 ```bash
 # Show only processing for line 42
-patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 | grep "Line 42"
+patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 \
+  | grep "Line 42"
 
 # Show only lines that didn't match
-patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 | grep "No pattern matched"
+patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 \
+  | grep "No pattern matched"
 ```
 
 ## Python API

@@ -1,1 +1,1 @@
-EXPLAIN: placeholder
+EXPLAIN: [Line 1] No pattern matched (passed through unchanged)
