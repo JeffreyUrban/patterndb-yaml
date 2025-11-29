@@ -80,11 +80,18 @@ Create rules that normalize both MySQL and PostgreSQL query formats:
 
 === "Python"
 
+    <!-- verify-file: output.txt expected: migration-output-1.txt -->
     ```python
+    import sys
     from patterndb_yaml import PatterndbYaml
     from pathlib import Path
     from collections import Counter
     import re
+
+    # Redirect stdout to file for testing
+    _original_stdout = sys.stdout
+    output_file = open("output.txt", "w")
+    sys.stdout = output_file
 
     # Normalize both query logs
     processor = PatterndbYaml(rules_path=Path("migration-rules.yaml"))
@@ -166,6 +173,10 @@ Create rules that normalize both MySQL and PostgreSQL query formats:
         print("\n⚠ Query count differences:")
         for qtype, before, after in changes:
             print(f"  {qtype}: {before} → {after}")
+
+    # Restore stdout and close output file
+    sys.stdout = _original_stdout
+    output_file.close()
     ```
 
 ## Expected Output
