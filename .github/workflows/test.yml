@@ -30,12 +30,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # TODO: Re-enable syslog-ng installation when we have tests that actually use it
-      # Currently all tests are template placeholders that don't instantiate the engine
-      # - name: Install system dependencies
-      #   run: |
-      #     sudo apt-get update
-      #     sudo DEBIAN_FRONTEND=noninteractive apt-get install -y syslog-ng
+      - name: Install system dependencies
+        timeout-minutes: 3
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends syslog-ng-core
 
       - name: Install dependencies
         run: |

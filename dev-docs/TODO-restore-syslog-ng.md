@@ -10,9 +10,16 @@ syslog-ng installation has been **temporarily disabled** in CI workflows.
 - Quality job (without syslog-ng installation step at that time) completed in 49 seconds
 - Test jobs (with syslog-ng installation step) all hung
 
-**Hypothesis**: The `sudo apt-get install -y syslog-ng` step may be causing the hang, but this has not been confirmed.
+**Hypothesis confirmed**: The `sudo apt-get install -y syslog-ng` step is causing jobs to hang.
+- Run 19784729004 with syslog-ng installation commented out: jobs completed in ~30 seconds
+- Tests failed with `FileNotFoundError: 'syslog-ng'` because the engine needs it to run
+- This confirms syslog-ng installation was the blocking step
 
-**Current workaround**: Commented out syslog-ng installation to unblock CI and allow testing of this hypothesis.
+**Root cause unknown**: Why `apt-get install syslog-ng` hangs is still unclear. Possible causes:
+- Package repository issue
+- Interactive prompts not suppressed
+- GitHub Actions runner-specific issue
+- Transient infrastructure problem
 
 ## When to Re-enable
 
