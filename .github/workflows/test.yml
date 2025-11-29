@@ -30,10 +30,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y syslog-ng
+      # TODO: Re-enable syslog-ng installation when we have tests that actually use it
+      # Currently all tests are template placeholders that don't instantiate the engine
+      # - name: Install system dependencies
+      #   run: |
+      #     sudo apt-get update
+      #     sudo DEBIAN_FRONTEND=noninteractive apt-get install -y syslog-ng
 
       - name: Install dependencies
         run: |

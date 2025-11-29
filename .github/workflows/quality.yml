@@ -27,10 +27,11 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y syslog-ng
+      # TODO: Re-enable syslog-ng installation when we have tests that actually use it
+      # - name: Install system dependencies
+      #   run: |
+      #     sudo apt-get update
+      #     sudo DEBIAN_FRONTEND=noninteractive apt-get install -y syslog-ng
 
       - name: Install dependencies
         run: |
