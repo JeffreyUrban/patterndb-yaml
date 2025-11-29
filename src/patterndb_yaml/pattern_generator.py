@@ -9,8 +9,12 @@ Handles inline alternatives and cartesian products automatically.
 import re
 import xml.etree.ElementTree as ET
 from itertools import product
-from typing import Any, Dict, List
+from typing import Any, Optional, Union
 from xml.dom import minidom
+
+# Type aliases for clarity
+PatternVariant = Union[list[str], tuple[list[str], tuple[str, str]]]
+PatternVariantList = list[PatternVariant]
 
 
 def unicode_escape(char: str) -> str:
@@ -71,7 +75,7 @@ def expand_parser_placeholders(template: str) -> str:
     return "".join(result)
 
 
-def expand_pattern_element(element: Dict[str, Any]) -> List[List[str]]:
+def expand_pattern_element(element: dict[str, Any]) -> PatternVariantList:
     """
     Expand a pattern element into all possible variants.
 
@@ -87,7 +91,7 @@ def expand_pattern_element(element: Dict[str, Any]) -> List[List[str]]:
         # Each alternative can be either:
         # 1. A single element dict: {text: "foo"}
         # 2. A list of elements: [{serialized: "..."}, {text: "..."}]
-        all_variants = []
+        all_variants: PatternVariantList = []
         for alt in element["alternatives"]:
             if isinstance(alt, list):
                 # Alternative is a sequence of elements - expand each and combine
@@ -98,8 +102,12 @@ def expand_pattern_element(element: Dict[str, Any]) -> List[List[str]]:
                 from itertools import product
 
                 for combo in product(*sequence_variants):
-                    # Flatten the combination
-                    variant = [frag for elem_variant in combo for frag in elem_variant]
+                    # Flatten the combination - only dealing with List[str] here, not options
+                    variant: list[str] = []
+                    for elem_variant in combo:
+                        if isinstance(elem_variant, list):
+                            variant.extend(elem_variant)
+                        # Options not expected in alternatives sequence
                     all_variants.append(variant)
             else:
                 # Alternative is a single element
@@ -120,7 +128,7 @@ def expand_pattern_element(element: Dict[str, Any]) -> List[List[str]]:
             raise ValueError(f"Options must have 'name' and 'values': {element}")
 
         # Generate one variant per option value, with the name and value attached
-        all_variants = []
+        option_variants: PatternVariantList = []
         for opt in option_values:
             # Each option should be a dict with 'text' key
             if not isinstance(opt, dict) or "text" not in opt:
@@ -129,8 +137,8 @@ def expand_pattern_element(element: Dict[str, Any]) -> List[List[str]]:
             # Expand the text (handles Unicode escaping and parser placeholders)
             expanded = expand_parser_placeholders(option_text)
             # Return as tuple: (pattern_fragments, (option_name, option_value))
-            all_variants.append(([expanded], (option_name, option_text)))
-        return all_variants
+            option_variants.append(([expanded], (option_name, option_text)))
+        return option_variants
 
     if "text" in element:
         # Literal text - may contain {PARSER:field} placeholders
@@ -173,7 +181,7 @@ def expand_pattern_element(element: Dict[str, Any]) -> List[List[str]]:
         raise ValueError(f"Unknown pattern element type: {element}")
 
 
-def _infer_delimiter(pattern_elements: List[Dict[str, Any]], field_index: int) -> str:
+def _infer_delimiter(pattern_elements: list[dict[str, Any]], field_index: int) -> str:
     """
     Infer the delimiter for a field by looking at the next element.
 
@@ -207,7 +215,9 @@ def _infer_delimiter(pattern_elements: List[Dict[str, Any]], field_index: int) -
     return ""
 
 
-def generate_pattern_variants(pattern_elements: List[Dict[str, Any]]) -> List[tuple]:
+def generate_pattern_variants(
+    pattern_elements: list[dict[str, Any]],
+) -> list[tuple[str, dict[str, str]]]:
     """
     Generate all pattern variants from pattern elements.
 
@@ -247,8 +257,8 @@ def generate_pattern_variants(pattern_elements: List[Dict[str, Any]]) -> List[tu
 
     # Expand each element to its variants, handling automatic delimiter inference
     # Also track which variants have options (for later processing)
-    element_variants = []
-    variant_has_options = []  # Parallel array tracking if each variant has options
+    element_variants: list[PatternVariantList] = []
+    variant_has_options: list[bool] = []  # Parallel array tracking if each variant has options
 
     for i, elem in enumerate(pattern_elements):
         if i in skip_elements:
@@ -258,7 +268,8 @@ def generate_pattern_variants(pattern_elements: List[Dict[str, Any]]) -> List[tu
         if i == len(pattern_elements) - 1 and last_is_field_without_delim:
             # Last element is a field without delimiter - use ESTRING with $ anchor
             field_name = elem["field"]
-            element_variants.append([[f"@ESTRING:{field_name}:$@"]])
+            anchor_variant: PatternVariantList = [[f"@ESTRING:{field_name}:$@"]]
+            element_variants.append(anchor_variant)
             variant_has_options.append(False)
         elif "field" in elem and not elem.get("until") and not elem.get("parser"):
             # Field without explicit delimiter - look ahead to infer delimiter
@@ -266,7 +277,8 @@ def generate_pattern_variants(pattern_elements: List[Dict[str, Any]]) -> List[tu
             if delimiter:
                 # Use ESTRING with inferred delimiter
                 field_name = elem["field"]
-                element_variants.append([[f"@ESTRING:{field_name}:{delimiter}@"]])
+                delim_variant: PatternVariantList = [[f"@ESTRING:{field_name}:{delimiter}@"]]
+                element_variants.append(delim_variant)
             else:
                 # No delimiter found, use ANYSTRING
                 element_variants.append(expand_pattern_element(elem))
@@ -293,7 +305,7 @@ def generate_pattern_variants(pattern_elements: List[Dict[str, Any]]) -> List[tu
                 # opt_data is (option_name, option_value)
                 option_name, option_value = opt_data
                 option_values[option_name] = option_value
-            else:
+            elif isinstance(variant, list):
                 # Regular element (returns list of fragments)
                 pattern_parts.extend(variant)
 
@@ -310,7 +322,7 @@ def generate_pattern_variants(pattern_elements: List[Dict[str, Any]]) -> List[tu
     return patterns
 
 
-def extract_field_names(pattern_elements: List[Dict[str, Any]]) -> List[str]:
+def extract_field_names(pattern_elements: list[dict[str, Any]]) -> list[str]:
     """
     Extract field names from pattern elements.
 
@@ -343,7 +355,7 @@ def extract_field_names(pattern_elements: List[Dict[str, Any]]) -> List[str]:
 
 
 def generate_message_value(
-    rule_name: str, fields: List[str], option_values: Dict[str, str] = None
+    rule_name: str, fields: list[str], option_values: Optional[dict[str, str]] = None
 ) -> str:
     """
     Generate the MESSAGE value template with encoded fields.
@@ -377,7 +389,7 @@ def generate_message_value(
     return f"[{rule_name}]|{'|'.join(field_parts)}|"
 
 
-def generate_xml_rule(rule: Dict[str, Any]) -> List[ET.Element]:
+def generate_xml_rule(rule: dict[str, Any]) -> list[ET.Element]:
     """
     Generate syslog-ng XML rule elements from YAML rule definition.
 
@@ -454,7 +466,7 @@ def generate_xml_rule(rule: Dict[str, Any]) -> List[ET.Element]:
         return [rule_elem]
 
 
-def generate_patterndb(rules: List[Dict[str, Any]]) -> str:
+def generate_patterndb(rules: list[dict[str, Any]]) -> str:
     """
     Generate complete syslog-ng patterndb XML from YAML rules.
 
@@ -502,7 +514,7 @@ def generate_patterndb(rules: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def generate_from_yaml(rules_data: Dict[str, Any]) -> str:
+def generate_from_yaml(rules_data: dict[str, Any]) -> str:
     """
     Generate syslog-ng XML from YAML rules data.
 

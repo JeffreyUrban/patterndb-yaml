@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional, TextIO
 
 import typer
+import yaml
 from rich.console import Console
 from rich.progress import (
     BarColumn,
@@ -18,15 +19,14 @@ from rich.progress import (
 from rich.table import Table
 
 from . import __version__
+from .pattern_generator import generate_from_yaml
 from .patterndb_yaml import (
     PatterndbYaml,
 )
-from .pattern_generator import generate_from_yaml
-import yaml
 
 app = typer.Typer(
     name="patterndb-yaml",
-    help="placeholder",
+    help="Normalize log lines using pattern-based rules",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -78,7 +78,7 @@ def validate_arguments(
 def main(
     input_file: Optional[Path] = typer.Argument(
         None,
-        help="Input file to deduplicate (reads from stdin if not specified)",
+        help="Input file to normalize (reads from stdin if not specified)",
         exists=True,
         dir_okay=False,
     ),
@@ -91,11 +91,11 @@ def main(
         help="Show version and exit",
     ),
     # Input Format
-    rules_file: Optional[Path] = typer.Option(
-        None,
+    rules_file: Path = typer.Option(
+        ...,
         "--rules",
         "-r",
-        help="Path to normalization rules YAML file (default: normalization_rules.yaml in package)",
+        help="Path to normalization rules YAML file",
         rich_help_panel="Input Format",
         exists=True,
         dir_okay=False,
@@ -137,19 +137,23 @@ def main(
     ),
 ) -> None:
     """
-    placeholder from streaming input.
+    Normalize log lines using pattern-based transformation rules.
 
-    This tool placeholder.
+    Reads input lines, applies normalization rules from YAML configuration,
+    and outputs normalized lines. Rules can match patterns, extract fields,
+    and apply transformations.
 
     \b
     Quick Start:
-        patterndb-yaml input.log > output.log              # placeholder a file
-        cat placeholder | patterndb-yaml                          # Use in pipeline
+        patterndb-yaml --rules rules.yaml input.log > output.log    # Normalize a file
+        cat input.log | patterndb-yaml --rules rules.yaml           # Use in pipeline
+        patterndb-yaml --rules rules.yaml --generate-xml > out.xml  # Export syslog-ng XML
 
     \b
     More Examples:
-        patterndb-yaml --placeholder
-        patterndb-yaml --quiet input.log > output.log      # No statistics
+        patterndb-yaml --rules rules.yaml --progress input.log > output.log   # Show progress
+        patterndb-yaml --rules rules.yaml --quiet input.log > output.log      # No statistics
+        patterndb-yaml --rules examples/normalization_rules.yaml input.log    # Use example rules
 
     \b
     Documentation:
@@ -162,10 +166,11 @@ def main(
     # Check if running interactively with no input
     if input_file is None and sys.stdin.isatty():
         console.print("[yellow]No input provided.[/yellow]")
-        console.print("\n[bold]Usage:[/bold] patterndb-yaml [FILE] or pipe data via stdin")
+        console.print("\n[bold]Usage:[/bold] patterndb-yaml --rules RULES.yaml [FILE]")
         console.print("\n[bold]Examples:[/bold]")
-        console.print("  patterndb-yaml input.log > output.log")
-        console.print("  cat placeholder | patterndb-yaml")
+        console.print("  patterndb-yaml --rules rules.yaml input.log > output.log")
+        console.print("  cat input.log | patterndb-yaml --rules rules.yaml")
+        console.print("  patterndb-yaml --rules rules.yaml --generate-xml > patterns.xml")
         console.print("\n[dim]For full help: patterndb-yaml --help[/dim]")
         raise typer.Exit(0)
 
@@ -176,33 +181,6 @@ def main(
 
     # Disable progress if outputting to a pipe
     show_progress = progress and sys.stdout.isatty()
-
-    if input_file is not None:
-        # File mode
-        if not quiet:
-            console.print(
-                "[dim]Auto-detected file input: using placeholder "
-                "(override with --placeholder)[/dim]"
-            )
-    else:
-        # Streaming mode
-        pass
-
-    if placeholder:
-        pass
-    else:
-        pass
-
-    # Determine rules file path
-    if rules_file is None:
-        # Use default rules file from examples directory
-        package_dir = Path(__file__).parent.parent.parent
-        rules_file = package_dir / "examples" / "normalization_rules.yaml"
-
-        if not rules_file.exists():
-            console.print(f"[red]Error:[/red] Default rules file not found at {rules_file}")
-            console.print("\n[yellow]Please specify a rules file with --rules PATH[/yellow]")
-            raise typer.Exit(1)
 
     # Handle --generate-xml mode
     if generate_xml:
@@ -226,6 +204,13 @@ def main(
 
     try:
         if show_progress:
+            # Determine total lines for file input (for determinate progress)
+            total_lines = None
+            if input_file:
+                # Count lines in file for progress bar
+                with input_file.open("r") as f:
+                    total_lines = sum(1 for _ in f)
+
             # Create progress display
             with Progress(
                 SpinnerColumn(),
@@ -236,16 +221,18 @@ def main(
                 transient=True,
             ) as progress_bar:
                 task = progress_bar.add_task(
-                    "Processing placeholder...",
-                    total=None,
-                    skipped=0,
+                    "Normalizing lines...",
+                    total=total_lines,
                 )
 
-                def update_progress(line_num: int, lines_skipped: int) -> None:
+                def update_progress(line_num: int, lines_unmatched: int) -> None:
+                    desc = (
+                        f"Normalizing lines... ({line_num} processed, {lines_unmatched} unmatched)"
+                    )
                     progress_bar.update(
                         task,
                         completed=line_num,
-                        skipped=lines_skipped,
+                        description=desc,
                     )
 
                 # Process with progress

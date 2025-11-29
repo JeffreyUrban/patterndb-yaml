@@ -1,32 +1,31 @@
 # Explain Mode
 
-The `--explain` flag outputs explanations to stderr showing why placeholder.
-This helps you understand the placeholder decisions being made in real-time.
+The `--explain` flag outputs diagnostic messages to stderr showing how lines are being processed.
+This helps you understand the normalization decisions being made in real-time.
 
 ## What It Does
 
 Explain mode adds diagnostic messages to stderr:
 
-- **Normal mode**: Deduplication happens silently
-- **With explain**: Messages show why placeholder
-- **Use case**: Debugging placeholder, understanding placeholder, troubleshooting unexpected behavior
+- **Normal mode**: Normalization happens silently
+- **With explain**: Messages show pattern matching, field extraction, transformations, and sequence processing
+- **Use case**: Debugging patterns, understanding transformations, troubleshooting unexpected output
 
-**Key insight**: Explanations go to stderr, so stdout remains clean for placeholder.
+**Key insight**: Explanations go to stderr, so stdout remains clean for piping normalized output.
 
-## Example: placeholder
+## Example: Understanding Pattern Matching
 
-placeholder
+### Without Explain: Silent Processing
 
-### Without Explain: placeholder
-
-Without `--explain`, placeholder happens without feedback.
+Without `--explain`, normalization happens without feedback.
 
 === "CLI"
 
     <!-- verify-file: output.txt expected: expected-output.txt -->
     <!-- termynal -->
     ```console
-    $ patterndb-yaml input.txt --placeholder > output.txt
+    $ patterndb-yaml --rules rules.yaml input.txt \
+        > output.txt
     ```
 
 === "Python"
@@ -34,88 +33,191 @@ Without `--explain`, placeholder happens without feedback.
     <!-- verify-file: output.txt expected: expected-output.txt -->
     ```python
     from patterndb_yaml import PatterndbYaml
+    from pathlib import Path
 
-    processor = PatterndbYaml(
-        placeholder=False  # (1)!
-    )
+    processor = PatterndbYaml(rules_path=Path("rules.yaml"))
 
     with open("input.txt") as f:
         with open("output.txt", "w") as out:
             processor.process(f, out)
-            processor.flush(out)
     ```
 
-    1. Default: no explanations
-
-???+ success "Output: placeholder"
-    ```text
-    --8<-- "features/explain/fixtures/expected-output.txt"
-    ```
-
-    **Result**: placeholder.
+You see the normalized output but don't know what happened internally.
 
 ### With Explain: Documented Decisions
 
-With `--explain`, stderr shows why placeholder.
+With `--explain`, stderr shows why each line was processed the way it was:
 
 === "CLI"
 
-    <!-- verify-file: output.txt expected: expected-output.txt -->
+    <!-- verify-file: explain.txt expected: expected-explain.txt -->
     <!-- termynal -->
     ```console
-    $ patterndb-yaml input.txt --placeholder \
+    $ patterndb-yaml --rules rules.yaml input.txt --explain \
         > output.txt 2> explain.txt
     ```
 
-=== "Python"
-
-    <!-- verify-file: output.txt expected: expected-output.txt -->
-    ```python
-    from patterndb_yaml import PatterndbYaml
-    import sys
-
-    processor = PatterndbYaml(
-        placeholder=False,
-        explain=True  # (1)!
-    )
-
-    with open("input.txt") as f:
-        with open("output.txt", "w") as out:
-            processor.process(f, out)
-            processor.flush(out)
-    ```
-
-    1. Enable explain mode
-
-???+ warning "Stdout: Deduplicated output"
-    ```text
-    --8<-- "features/explain/fixtures/expected-output.txt"
-    ```
-
-???+ info "Stderr: Explanation messages"
+    Explanation output (`explain.txt`):
     ```text
     --8<-- "features/explain/fixtures/expected-explain.txt"
     ```
 
-    **Result**: Stdout has placeholder, stderr shows placeholder.
+=== "Python"
 
-## How It Works
+    <!-- verify-file: explain.txt expected: expected-explain.txt -->
+    ```python
+    from patterndb_yaml import PatterndbYaml
+    from pathlib import Path
+    import sys
 
-### Explanation Format
+    processor = PatterndbYaml(
+        rules_path=Path("rules.yaml"),
+        explain=True  # Explanations go to stderr
+    )
 
-Explain messages provide actionable information:
+    with open("input.txt") as f:
+        with open("output.txt", "w") as out:
+            with open("explain.txt", "w") as err:
+                # Redirect stderr to capture explanations
+                old_stderr = sys.stderr
+                sys.stderr = err
+                try:
+                    processor.process(f, out)
+                finally:
+                    sys.stderr = old_stderr
+    ```
 
-**placeholder**:
+## Explanation Message Types
+
+### 1. Pattern Matching
+
+Shows whether a line matched a normalization rule:
+
+```
+EXPLAIN: [Line 42] Matched rule 'dialog_question'
+EXPLAIN: [Line 43] No pattern matched (passed through unchanged)
+```
+
+**Why useful**: Quickly see if your patterns are working.
+
+### 2. Field Extraction
+
+Shows extracted field values from matched patterns:
+
+```
+EXPLAIN: [Line 42] Extracted fields: content='What is your name?', number='1'
+```
+
+**Why useful**: Debug field patterns and delimiters.
+
+### 3. Field Transformations
+
+Shows transformations applied to field values:
+
+```bash
+patterndb-yaml --rules rules.yaml input.txt --explain 2> explain.txt
+cat explain.txt
+```
+
+Example output:
+```
+EXPLAIN: [Line 42] Applied transform 'strip_ansi' to field
+  'content': '\x1b[1mBold\x1b[0m' → 'Bold'
+EXPLAIN: [Line 42] Applied transform 'normalize_spinner' to
+  field 'prompt': '✻' → '*'
+```
+
+**Why useful**: See exactly how values are being modified.
+
+### 4. Sequence Processing
+
+Shows multi-line sequence buffering:
+
+```
+EXPLAIN: [Line 10] Started buffering sequence 'dialog_question'
+  (leader line)
+EXPLAIN: [Line 11] Added follower to sequence 'dialog_question'
+  (buffer: 2 lines)
+EXPLAIN: [Line 12] Added follower to sequence 'dialog_question'
+  (buffer: 3 lines)
+EXPLAIN: [Line 13] Line is not a follower - ending sequence
+  'dialog_question'
+EXPLAIN: [Line 13] Flushed sequence 'dialog_question'
+  (3 lines buffered)
+```
+
+**Why useful**: Multi-line sequences are complex; see when buffering
+starts/ends.
+
+### 5. Output Formatting
+
+Shows the final normalized output:
+
+```
+EXPLAIN: [Line 42] Output: [dialog-question:What is your name?]
+```
+
+### 6. Error Cases
+
+Shows configuration or processing errors:
+
+```
+EXPLAIN: [Line 42] Rule 'unknown_rule' not found in
+  configuration (returned encoded message)
+EXPLAIN: [Line 43] Template error - missing field 'nonexistent'
+  (returned encoded message)
+```
+
+**Why useful**: Helps debug configuration issues.
+
+## Message Format
+
+All explain messages follow a consistent format:
+
+```
+EXPLAIN: [Line N] <message>
+```
+
+- **Prefix**: `EXPLAIN:` for easy grep filtering
+- **Line number**: `[Line N]` correlates with input line
+- **Message**: Human-readable description of the operation
 
 ## Common Use Cases
 
-### Debugging Why placeholder
+### Debugging Pattern Rules
 
-### Validating placeholder
+See if your patterns are matching:
 
-### Understanding placeholder
+```bash
+patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 \
+  | grep "Matched rule"
+```
 
-### Troubleshooting Unexpected Behavior
+### Validating Field Extraction
+
+Check that fields are extracted correctly:
+
+```bash
+patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 \
+  | grep "Extracted fields"
+```
+
+### Understanding Transformations
+
+See how transformations modify values:
+
+```bash
+patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 \
+  | grep "Applied transform"
+```
+
+### Debugging Sequences
+
+Track multi-line sequence processing:
+
+```bash
+patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 | grep "sequence"
+```
 
 ## Combining with Other Features
 
@@ -123,53 +225,83 @@ Explain messages provide actionable information:
 
 ```bash
 # Real-time explanations with progress indicator
-patterndb-yaml large.log --explain --progress 2>&1 | tee diagnostics.txt
+patterndb-yaml --rules rules.yaml large.log --explain --progress
 ```
 
-## Filtering Explain Output
-
-### Extract Specific Information
+### Separate Output Streams
 
 ```bash
-# Only show placeholder
-patterndb-yaml log.txt --explain 2>&1 | grep "placeholder"
-```
-
-### Separate Stdout and Stderr
-
-```bash
-# placeholder to file, explanations to terminal
-patterndb-yaml log.txt --explain > clean.log
+# Normalized output to file, explanations to terminal
+patterndb-yaml --rules rules.yaml log.txt --explain \
+  > normalized.log
 
 # Both to separate files
-patterndb-yaml log.txt --explain > clean.log 2> explain.log
+patterndb-yaml --rules rules.yaml log.txt --explain \
+  > normalized.log 2> explain.log
 
-# Merge for analysis
-patterndb-yaml log.txt --explain 2>&1 | grep "Line 42"
+# Combined for line-by-line analysis
+patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 \
+  | less
 ```
+
+### Filter Specific Lines
+
+```bash
+# Show only processing for line 42
+patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 \
+  | grep "Line 42"
+
+# Show only lines that didn't match
+patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 \
+  | grep "No pattern matched"
+```
+
+## Python API
+
+Enable explain mode programmatically:
+
+<!-- verify-file: output.txt expected: expected-output.txt -->
+```python
+from patterndb_yaml import PatterndbYaml
+from pathlib import Path
+
+# Enable explain mode
+processor = PatterndbYaml(
+    rules_path=Path("rules.yaml"),
+    explain=True  # Explanations go to stderr
+)
+
+with open("input.txt") as f:
+    with open("output.txt", "w") as out:
+        processor.process(f, out)
+```
+
+Explanations are written to `sys.stderr` automatically.
 
 ## Performance Note
 
 Explain mode has minimal overhead:
+
 - Simple conditional check before printing
 - Messages only written when explain is enabled
-- No impact on placeholder performance
+- No impact on normalization performance
 - Stderr output is buffered (efficient)
 
 ## Rule of Thumb
 
-**Use explain mode when you need to understand** the placeholder.
+**Use explain mode when you need to understand** the normalization process:
 
-- **Initial setup**: Validate placeholder are working correctly
-- **Debugging**: Understand why placeholder
-- **Pattern development**: Test and refine placeholder
-- **Troubleshooting**: Diagnose unexpected behavior
-- **Learning**: Understand how the algorithm works on your data
+- **Initial setup**: Validate patterns are working correctly
+- **Debugging**: Understand why a line didn't match or was transformed incorrectly
+- **Pattern development**: Test and refine normalization rules
+- **Troubleshooting**: Diagnose unexpected output
+- **Learning**: Understand how the normalization algorithm works on your data
 
 **Don't use in production** unless actively debugging—the extra output
-can clutter logs.
+can clutter logs and reduce readability.
 
 ## See Also
 
-- [CLI Reference](../../reference/cli.md) - Complete explain documentation
+- [Pattern Rules](../../getting-started/basic-concepts.md#pattern-rules) - How to write normalization patterns
+- [Field Transformations](../../getting-started/basic-concepts.md#transformations) - Available transformation functions
 - [Troubleshooting](../../guides/troubleshooting.md) - Common issues and solutions

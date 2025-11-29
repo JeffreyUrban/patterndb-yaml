@@ -2,6 +2,62 @@
 
 Guidance for Claude Code (claude.ai/code) when working with this repository.
 
+## Working with a Template-Based Project
+
+**CRITICAL: This project uses a custom template designed to be release-ready from day one.**
+
+### Template Philosophy
+
+The template provides **complete, working infrastructure**:
+- README with badges (PyPI, Tests, Coverage, etc.) - keep ALL badges even if they show "no release"
+- CI/CD workflows fully configured
+- Documentation structure with examples
+- Test framework with fixtures
+- All quality checks (coverage, type checking, linting)
+
+### What to DO:
+1. **Fill in template content** - Replace "placeholder" text with real project-specific content
+2. **Follow template structure** - When creating new docs/tests, use existing templates as examples
+3. **Keep all infrastructure** - README badges, CI workflows, doc structure stay intact
+4. **Adapt, don't delete** - Modify template examples to fit this project, don't start from scratch
+
+### What NOT to do:
+- ❌ Delete README badges because "they don't work yet"
+- ❌ Remove CI/CD workflows because "we're not ready"
+- ❌ Delete template documentation and start over
+- ❌ Remove quality checks because "coverage is too low"
+- ❌ Strip out infrastructure "until we need it"
+
+### Progressive Development Pattern:
+- Template docs marked with `# ⚠️ Template doc: Testing disabled ⚠️` are automatically skipped in tests
+- **Remove the warning heading when doc is ready** - testing automatically enables
+- Coverage threshold starts low (30%), should be increased as code matures
+- All template infrastructure stays in place, just incomplete content gets filled in
+
+### Examples of Correct Approach:
+
+**Wrong:**
+```markdown
+Let me remove these badges since PyPI doesn't exist yet...
+Let me delete this template doc and write a new one...
+This CI workflow is too complex, let me simplify it...
+```
+
+**Right:**
+```markdown
+Let me fill in this template doc with real content for this project...
+Let me use this existing doc as a template for the new feature doc...
+Let me add real test data to these template fixtures...
+```
+
+### Remember:
+The user has invested significant effort designing a complete template. **Respect that work** by filling it in, not replacing it. When in doubt, ask before deleting ANY template infrastructure.
+
+The project is new, all code is new and we need to vet and fix all code for errors and issues that come up.
+There are no 'pre-existing issues'. Avoid overriding any quality checks. When type checking, avoid the `Any` type.
+
+Documentation should include code and CLI commands and those should be tested. These are part of the test suite.
+
 ## Critical Rules
 
 **NEVER mention version numbers** (v0.x, v1.x, etc.) unless they have been explicitly agreed upon and documented in planning. Use:
@@ -60,6 +116,104 @@ Guidance for Claude Code (claude.ai/code) when working with this repository.
 - Docstrings for public functions/classes
 - **Avoid magic numbers** - use named constants
     - Example: `MY_CONSTANT = 0.5` instead of hardcoded `0.5`
+
+### Writing Code That Passes Quality Checks First Time
+
+**This project has strict quality checks. Write code that passes from the start to avoid rework.**
+
+#### Type Checking (mypy --strict)
+
+**Always:**
+- Add type hints to ALL function parameters and return values
+- Use `Optional[Type]` for values that can be `None`
+- Never use `Any` type
+- Import types from `typing` for Python 3.9 compatibility:
+  ```python
+  from typing import Optional, Union  # Not using `Type | None` syntax
+  ```
+
+**Common Issues:**
+```python
+# ❌ Wrong - missing return type
+def process(data):
+    return data
+
+# ✅ Right
+def process(data: str) -> str:
+    return data
+
+# ❌ Wrong - Any type
+def handle(obj: Any) -> None:
+    ...
+
+# ✅ Right - specific type
+def handle(obj: dict[str, str]) -> None:
+    ...
+```
+
+#### Line Length (100 chars max)
+
+**Check before committing:**
+- Code lines: 100 characters maximum
+- Docstring lines: 80 characters maximum (markdown in docs)
+- Use implicit line continuation in parentheses:
+  ```python
+  # ✅ Right
+  result = some_function(
+      long_parameter_name,
+      another_parameter,
+  )
+  ```
+
+#### Formatting (ruff format)
+
+**Let ruff handle it:**
+- Run `ruff format .` before committing
+- Or rely on pre-commit hooks
+- **Don't fight the formatter** - accept its style
+
+#### Imports (ruff check)
+
+**Order:**
+1. Standard library imports
+2. Third-party imports
+3. Local imports
+
+```python
+# ✅ Right
+import sys
+from pathlib import Path
+
+import yaml
+
+from .module import function
+```
+
+#### Docstrings
+
+**Required for public functions/classes:**
+```python
+def public_function(param: str) -> bool:
+    """
+    One-line summary ending with period.
+
+    Longer description if needed.
+
+    Args:
+        param: Description of parameter
+
+    Returns:
+        Description of return value
+    """
+```
+
+**Pre-commit will enforce:**
+- Trailing whitespace removal
+- End-of-file newlines
+- YAML syntax validity
+- Mixed line endings
+
+**Pro tip:** Run `pre-commit run --all-files` before pushing to catch issues early.
 
 ## Documentation Standards
 

@@ -27,18 +27,18 @@ class PatternMatcher:
             pdb_path: Path to patterndb XML file
         """
         self.pdb_path = pdb_path
-        self.process: Optional[subprocess.Popen] = None
-        self.temp_dir = None
-        self.input_fifo = None
-        self.output_fifo = None
-        self.config_file = None
-        self.input_fd = None
-        self.output_fd = None
+        self.process: Optional[subprocess.Popen[str]] = None
+        self.temp_dir: Optional[str] = None
+        self.input_fifo: Optional[str] = None
+        self.output_fifo: Optional[str] = None
+        self.config_file: Optional[str] = None
+        self.input_fd: int = -1
+        self.output_fd: int = -1
 
         self._setup()
         atexit.register(self.close)
 
-    def _setup(self):
+    def _setup(self) -> None:
         """Set up temporary directory, FIFOs, config, and start syslog-ng."""
         # Create temporary directory for our FIFOs and config
         self.temp_dir = tempfile.mkdtemp(prefix="syslog-ng-filter-")
@@ -52,7 +52,7 @@ class PatternMatcher:
         os.mkfifo(self.output_fifo)
 
         # Write syslog-ng configuration
-        config = f"""@version: 4.10
+        config = f"""@version: 4.3
 
 source s_pipe {{
     pipe("{self.input_fifo}" flags(no-parse));
@@ -63,9 +63,7 @@ rewrite r_set_program {{
 }};
 
 parser p_patterns {{
-    db-parser(
-        file("{self.pdb_path}")
-    );
+    db-parser(file("{self.pdb_path}"));
 }};
 
 destination d_pipe {{
@@ -86,8 +84,20 @@ log {{
             f.write(config)
 
         # Start syslog-ng process
+        # Use temp_dir for persist file to avoid permission issues
+        persist_file = os.path.join(self.temp_dir, "syslog-ng.persist")
+        cmd = [
+            "syslog-ng",
+            "-f",
+            self.config_file,
+            "--foreground",
+            "--stderr",
+            "--no-caps",  # Disable capability management (not available in containers)
+            "--persist-file",
+            persist_file,
+        ]
         self.process = subprocess.Popen(
-            ["syslog-ng", "-f", self.config_file, "--foreground", "--stderr"],
+            cmd,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -98,6 +108,11 @@ log {{
         import time
 
         time.sleep(0.5)
+
+        # Check if process is still running
+        if self.process.poll() is not None:
+            stderr_output = self.process.stderr.read() if self.process.stderr else "No stderr"
+            raise RuntimeError(f"syslog-ng failed to start: {stderr_output}")
 
         # Open FIFOs for reading/writing
         # IMPORTANT: Open output for reading FIRST (non-blocking), then input for writing
@@ -125,7 +140,7 @@ log {{
             max_retries = 10
             retry_delay = 0.01  # 10ms
 
-            for attempt in range(max_retries):
+            for _attempt in range(max_retries):
                 # Check if data is available
                 ready, _, _ = select.select([self.output_fd], [], [], retry_delay)
                 if ready:
@@ -142,21 +157,21 @@ log {{
             print(f"Error in syslog-ng match: {e}", file=sys.stderr)
             return line
 
-    def close(self):
+    def close(self) -> None:
         """Close the syslog-ng process and clean up FIFOs."""
         try:
-            if self.input_fd:
+            if self.input_fd >= 0:
                 os.close(self.input_fd)
-            if self.output_fd:
+            if self.output_fd >= 0:
                 os.close(self.output_fd)
-        except:
+        except Exception:
             pass
 
         if self.process:
             try:
                 self.process.terminate()
                 self.process.wait(timeout=2)
-            except:
+            except Exception:
                 self.process.kill()
 
         # Clean up temp directory
@@ -166,7 +181,7 @@ log {{
             shutil.rmtree(self.temp_dir, ignore_errors=True)
 
 
-def main():
+def main() -> None:
     """Main entry point for pattern matching filter"""
     # Get the patterns.xml path relative to this module
     module_dir = Path(__file__).parent

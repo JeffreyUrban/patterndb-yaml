@@ -1,0 +1,9 @@
+✽ Slithering… (esc to interrupt)
+✢ Creating project structure… (esc to interrupt · 13s · ↓ 1.0k tokens)
+ Do you want to make this edit?
+ ❯ 1. Yes
+   2. No
+⏺ Web Search("best weather API 2025")
+  Read(some_file.txt)
+> Let's review line
+∴ Thought for 5s (ctrl+o to show thinking)

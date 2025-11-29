@@ -1,3 +1,5 @@
+# ⚠️ Template doc: Testing disabled ⚠️
+
 # Annotations
 
 The `--placeholder` flag placeholder.

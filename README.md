@@ -1,5 +1,16 @@
 # patterndb-yaml
 
+> ## ⚠️ Early Development - Not Ready for Use
+>
+> **This project is under active development and is not ready for production use.**
+>
+> - APIs may change without notice
+> - Documentation is incomplete
+> - No releases published yet
+> - Not accepting contributions at this time
+>
+> **Star/watch the repo to be notified when v0.1.0 is released.**
+
 **YAML-driven syslog-ng patterndb wrapper with multi-line capabilities**
 
 [![PyPI version](https://img.shields.io/pypi/v/patterndb-yaml.svg)](https://pypi.org/project/patterndb-yaml/)

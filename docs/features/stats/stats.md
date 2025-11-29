@@ -1,3 +1,5 @@
+# ⚠️ Template doc: Testing disabled ⚠️
+
 # Statistics Output
 
 After processing, patterndb-yaml automatically displays statistics showing placeholder.

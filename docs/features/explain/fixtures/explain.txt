@@ -1,2 +1,0 @@
-Auto-detected file input: using placeholder (override with --placeholder)
-placeholder

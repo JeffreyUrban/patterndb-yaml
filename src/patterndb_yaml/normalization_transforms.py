@@ -7,6 +7,7 @@ Each function takes a string and returns a transformed string.
 """
 
 import re
+from typing import Callable, Optional
 
 # ANSI escape sequence patterns
 ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-9;]*m")  # Binary ANSI codes
@@ -71,7 +72,7 @@ TRANSFORMS = {
 }
 
 
-def get_transform(name: str):
+def get_transform(name: str) -> Optional[Callable[[str], str]]:
     """
     Get a transformation function by name.
 

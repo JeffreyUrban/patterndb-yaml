@@ -6,12 +6,18 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel old runs when new commits are pushed
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 10  # Prevent jobs from hanging indefinitely
 
     steps:
       - uses: actions/checkout@v6
@@ -20,6 +26,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
+
+      - name: Install system dependencies
+        timeout-minutes: 3
+        run: |
+          # Install latest syslog-ng-core from official repository (minimal install)
+          wget -qO - https://ose-repo.syslog-ng.com/apt/syslog-ng-ose-pub.asc | sudo gpg --dearmor -o /etc/apt/keyrings/syslog-ng-ose.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/syslog-ng-ose.gpg] https://ose-repo.syslog-ng.com/apt/ stable ubuntu-noble" | sudo tee /etc/apt/sources.list.d/syslog-ng-ose.list
+          sudo apt-get update
+          sudo apt-get install -y syslog-ng-core
+          syslog-ng --version
 
       - name: Install dependencies
         run: |
@@ -36,4 +52,4 @@ jobs:
 
       - name: Run mypy
         run: |
-          mypy src/{{ cookiecutter.project_slug }}
+          mypy src/patterndb_yaml

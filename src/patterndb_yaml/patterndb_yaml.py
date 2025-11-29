@@ -4,9 +4,10 @@ import re
 import sys
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, BinaryIO, Callable, Optional, TextIO, Union
+from typing import Any, BinaryIO, Callable, Optional, TextIO, Union, cast
 
 import yaml
+
 from .normalization_engine import NormalizationEngine
 
 # Compile ANSI escape sequence regex once at module import time
@@ -14,8 +15,8 @@ ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
 
 
 def _match_pattern_components(
-    line: str, pattern_components: list, extract_fields: bool = False
-) -> tuple[bool, dict]:
+    line: str, pattern_components: list[dict[str, Any]], extract_fields: bool = False
+) -> tuple[bool, dict[str, str]]:
     """
     Generic pattern matcher that walks through pattern components.
 
@@ -90,7 +91,7 @@ def _match_pattern_components(
     return True, fields
 
 
-def _render_component_sequence(components: list) -> str:
+def _render_component_sequence(components: list[dict[str, Any]]) -> str:
     """
     Render a sequence of pattern components to their literal text.
 
@@ -110,7 +111,7 @@ def _render_component_sequence(components: list) -> str:
     return "".join(result)
 
 
-def _load_sequence_config(rules_path: Path) -> tuple[dict, set]:
+def _load_sequence_config(rules_path: Path) -> tuple[dict[str, Any], set[str]]:
     """
     Load multi-line sequence configuration from normalization rules YAML.
 
@@ -142,7 +143,8 @@ def _load_sequence_config(rules_path: Path) -> tuple[dict, set]:
 
             output = rule.get("output", "")
             if "{" in output:
-                # Extract marker from output field: "[rule-output:" portion before first field placeholder
+                # Extract marker from output field: "[rule-output:" portion
+                # before first field placeholder
                 # e.g., "[dialog-question:{content}]" -> "[dialog-question:"
                 marker = output[: output.index("{")]
                 markers.add(marker)
@@ -154,21 +156,29 @@ def _load_sequence_config(rules_path: Path) -> tuple[dict, set]:
     return sequences, markers
 
 
-def _initialize_engine(rules_path: Path) -> tuple[Optional[NormalizationEngine], dict, set]:
+def _initialize_engine(
+    rules_path: Path,
+    explain: bool = False,
+) -> tuple[NormalizationEngine, dict[str, Any], set[str]]:
     """
     Initialize normalization engine and load sequence configurations.
 
     Args:
         rules_path: Path to normalization_rules.yaml
+        explain: If True, enable explain mode in the engine
 
     Returns:
         Tuple of (norm_engine, sequence_configs, sequence_markers)
+
+    Raises:
+        FileNotFoundError: If rules file does not exist
+        RuntimeError: If normalization engine cannot be initialized
     """
     if not rules_path.exists():
-        return None, {}, set()
+        raise FileNotFoundError(f"Rules file not found: {rules_path}")
 
     try:
-        norm_engine = NormalizationEngine(rules_path)
+        norm_engine = NormalizationEngine(rules_path, explain=explain)
 
         # Provide a cached normalize callable to reduce repeated work on identical lines
         @lru_cache(maxsize=65536)
@@ -184,24 +194,38 @@ def _initialize_engine(rules_path: Path) -> tuple[Optional[NormalizationEngine],
         return norm_engine, sequence_configs, sequence_markers
 
     except Exception as e:
-        print(f"Warning: Could not initialize normalization engine: {e}", file=sys.stderr)
-        return None, {}, set()
+        raise RuntimeError(f"Failed to initialize normalization engine: {e}") from e
 
 
 class SequenceProcessor:
     """Handles multi-line sequence buffering and output."""
 
-    def __init__(self, sequence_configs: dict, sequence_markers: set):
+    def __init__(
+        self,
+        sequence_configs: dict[str, Any],
+        sequence_markers: set[str],
+        explain_callback: Optional[Callable[[str], None]] = None,
+    ) -> None:
         self.sequence_configs = sequence_configs
         self.sequence_markers = sequence_markers
         self.current_sequence: Optional[str] = None  # Current sequence rule being buffered
-        self.sequence_buffer: list[tuple[str, str]] = []  # List of (raw_line, normalized_line) tuples
+        self.sequence_buffer: list[
+            tuple[str, str]
+        ] = []  # List of (raw_line, normalized_line) tuples
+        self.explain_callback = explain_callback
+
+    def _explain(self, message: str) -> None:
+        """Output explanation message via callback if available."""
+        if self.explain_callback:
+            self.explain_callback(message)
 
     def flush_sequence(self, output: Union[TextIO, BinaryIO]) -> None:
         """Output buffered sequence and clear buffer."""
         if self.sequence_buffer:
+            count = len(self.sequence_buffer)
+            self._explain(f"Flushed sequence '{self.current_sequence}' ({count} lines buffered)")
             for _, norm_line in self.sequence_buffer:
-                output.write(norm_line + "\n")  # type: ignore[arg-type]
+                cast(TextIO, output).write(norm_line + "\n")
         self.sequence_buffer = []
         self.current_sequence = None
 
@@ -211,7 +235,7 @@ class SequenceProcessor:
             if normalized.startswith(marker):
                 # Extract rule name from marker (e.g., "[dialog-question:" -> "dialog_question")
                 for rule_name in self.sequence_configs:
-                    rule_output = self.sequence_configs[rule_name].get("output", "")
+                    rule_output = str(self.sequence_configs[rule_name].get("output", ""))
                     if marker in rule_output:
                         return rule_name
         return None
@@ -247,9 +271,15 @@ class SequenceProcessor:
             if self.is_sequence_follower(raw_line, self.current_sequence):
                 # Add to buffer and continue
                 self.sequence_buffer.append((raw_line, normalized))
+                buffer_count = len(self.sequence_buffer)
+                self._explain(
+                    f"Added follower to sequence '{self.current_sequence}' "
+                    f"(buffer: {buffer_count} lines)"
+                )
                 return
             else:
                 # Not a follower - flush the sequence first
+                self._explain(f"Line is not a follower - ending sequence '{self.current_sequence}'")
                 self.flush_sequence(output)
 
         # Check if this line starts a new sequence
@@ -258,9 +288,10 @@ class SequenceProcessor:
             # Start buffering a new sequence
             self.current_sequence = sequence_leader
             self.sequence_buffer = [(raw_line, normalized)]
+            self._explain(f"Started buffering sequence '{sequence_leader}' (leader line)")
         else:
             # Regular line - output immediately
-            output.write(normalized + "\n")  # type: ignore[arg-type]
+            cast(TextIO, output).write(normalized + "\n")
 
 
 class PatterndbYaml:
@@ -284,9 +315,16 @@ class PatterndbYaml:
         self.rules_path = rules_path
         self.explain = explain  # Show explanations to stderr
 
-        # Initialize normalization engine and sequence processor
-        self.norm_engine, sequence_configs, sequence_markers = _initialize_engine(rules_path)
-        self.seq_processor = SequenceProcessor(sequence_configs, sequence_markers)
+        # Initialize normalization engine and sequence processor (raises on failure)
+        self.norm_engine, sequence_configs, sequence_markers = _initialize_engine(
+            rules_path, explain=explain
+        )
+        # Pass explain callback to SequenceProcessor
+        self.seq_processor = SequenceProcessor(
+            sequence_configs,
+            sequence_markers,
+            explain_callback=self._print_explain if explain else None,
+        )
 
         # Statistics
         self.lines_processed = 0
@@ -320,13 +358,13 @@ class PatterndbYaml:
             line = line.rstrip("\n") if isinstance(line, str) else line.decode("utf-8").rstrip("\n")
             self.lines_processed += 1
 
+            # Update line number in normalization engine for explain output
+            self.norm_engine.current_line_number = self.lines_processed
+
             # Normalize the line
-            if self.norm_engine:
-                normalized = self.norm_engine.normalize_cached(line)  # type: ignore[attr-defined]
-                if not normalized.startswith("^"):
-                    self.lines_matched += 1
-            else:
-                normalized = f"^{line}"  # Unmatched marker if no engine
+            normalized = self.norm_engine.normalize_cached(line)  # type: ignore[attr-defined]
+            if not normalized.startswith("^"):
+                self.lines_matched += 1
 
             # Process the line (handles sequence buffering)
             self.seq_processor.process_line(line, normalized, output)
@@ -354,9 +392,7 @@ class PatterndbYaml:
         Returns:
             Dictionary with keys: lines_processed, lines_matched, match_rate
         """
-        match_rate = (
-            self.lines_matched / self.lines_processed if self.lines_processed > 0 else 0.0
-        )
+        match_rate = self.lines_matched / self.lines_processed if self.lines_processed > 0 else 0.0
         return {
             "lines_processed": self.lines_processed,
             "lines_matched": self.lines_matched,

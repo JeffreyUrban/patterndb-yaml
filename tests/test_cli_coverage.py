@@ -62,10 +62,15 @@ def test_json_stats_format():
     """Test JSON statistics format output."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
+        # Create rules file
+        rules_file = tmpdir / "rules.yaml"
+        rules_file.write_text("rules: []")
         input_file = tmpdir / "input.log"
         input_file.write_text("A\nB\nC\nA\nB\nC\nD\n")
 
-        exit_code, stdout, stderr = run_command([str(input_file), "--stats-format", "json"])
+        exit_code, stdout, stderr = run_command(
+            ["--rules", str(rules_file), str(input_file), "--stats-format", "json"]
+        )
 
         assert exit_code == 0
         # Stats should be in stderr for JSON format
@@ -83,10 +88,15 @@ def test_quiet_mode():
     """Test --quiet flag suppresses statistics."""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
+        # Create rules file
+        rules_file = tmpdir / "rules.yaml"
+        rules_file.write_text("rules: []")
         input_file = tmpdir / "input.log"
         input_file.write_text("A\nB\nC\nA\nB\nC\n")
 
-        exit_code, stdout, stderr = run_command([str(input_file), "--quiet"])
+        exit_code, stdout, stderr = run_command(
+            ["--rules", str(rules_file), str(input_file), "--quiet"]
+        )
 
         assert exit_code == 0
         # No statistics table should be in stderr
@@ -96,13 +106,21 @@ def test_quiet_mode():
 @pytest.mark.integration
 def test_stdin_input():
     """Test reading from stdin."""
-    input_data = "A\nB\nC\nA\nB\nC\nD\n"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+        # Create rules file
+        rules_file = tmpdir / "rules.yaml"
+        rules_file.write_text("rules: []")
 
-    exit_code, stdout, stderr = run_command(["--quiet"], input_data=input_data)
+        input_data = "A\nB\nC\nA\nB\nC\nD\n"
 
-    assert exit_code == 0
-    # In passthrough mode, all lines should be in output
-    assert "A" in stdout
-    assert "B" in stdout
-    assert "C" in stdout
-    assert "D" in stdout
+        exit_code, stdout, stderr = run_command(
+            ["--rules", str(rules_file), "--quiet"], input_data=input_data
+        )
+
+        assert exit_code == 0
+        # In passthrough mode, all lines should be in output
+        assert "A" in stdout
+        assert "B" in stdout
+        assert "C" in stdout
+        assert "D" in stdout
