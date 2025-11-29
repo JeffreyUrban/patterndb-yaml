@@ -481,12 +481,14 @@ Tests SHOULD fail when they document intended behavior that isn't yet implemente
 - ✅ Add notes explaining the gap between expected and actual behavior
 - ✅ Use these tests as implementation guides when building the feature
 
-**Example from this project:**
+**Example pattern:**
 
-The sequence follower normalization test (docs/features/rules/rules.md:355) fails because:
-- **Expected**: Follower lines normalized to `[dialog-answer:...]` format
-- **Actual**: Follower lines passed through unchanged as `[A] ...`
-- **Status**: Intentional - documents the specification for future implementation
+A specification test might document intended behavior like:
+- **Expected**: Feature produces specific output format
+- **Actual**: Feature not yet implemented, different output
+- **Status**: Intentional - documents the specification for implementation
+
+When the feature is implemented, update the documentation to reflect completion.
 
 ## Common Task Checklists
 

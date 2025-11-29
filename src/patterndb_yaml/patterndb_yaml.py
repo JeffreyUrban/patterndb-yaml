@@ -256,6 +256,51 @@ class SequenceProcessor:
 
         return False
 
+    def normalize_follower(self, raw_line: str, rule_name: str) -> str:
+        """
+        Normalize a follower line according to its pattern and output template.
+
+        Args:
+            raw_line: Raw follower line to normalize
+            rule_name: Name of the sequence rule this follower belongs to
+
+        Returns:
+            Normalized follower line, or raw line if no pattern matches
+        """
+        if rule_name not in self.sequence_configs:
+            return raw_line
+
+        sequence_def = self.sequence_configs[rule_name].get("sequence", {})
+        followers = sequence_def.get("followers", [])
+
+        # Try each follower pattern
+        for follower_def in followers:
+            follower_pattern = follower_def.get("pattern", [])
+            matched, fields = _match_pattern_components(
+                raw_line, follower_pattern, extract_fields=True
+            )
+
+            if matched:
+                # Get output template for this follower
+                output_template = follower_def.get("output", "")
+
+                if not output_template:
+                    # No output template - return raw line
+                    return raw_line
+
+                # Format output using extracted fields
+                try:
+                    formatted_output: str = output_template.format(**fields)
+                    self._explain(f"Normalized follower using pattern: {formatted_output}")
+                    return formatted_output
+                except KeyError as e:
+                    # Template references missing field
+                    self._explain(f"Follower template error - missing field {e}")
+                    return raw_line
+
+        # No pattern matched
+        return raw_line
+
     def process_line(self, raw_line: str, normalized: str, output: Union[TextIO, BinaryIO]) -> None:
         """
         Process and output a line (handling sequences).
@@ -269,8 +314,10 @@ class SequenceProcessor:
         if self.current_sequence:
             # Check if this line is a follower
             if self.is_sequence_follower(raw_line, self.current_sequence):
+                # Normalize the follower according to its pattern
+                normalized_follower = self.normalize_follower(raw_line, self.current_sequence)
                 # Add to buffer and continue
-                self.sequence_buffer.append((raw_line, normalized))
+                self.sequence_buffer.append((raw_line, normalized_follower))
                 buffer_count = len(self.sequence_buffer)
                 self._explain(
                     f"Added follower to sequence '{self.current_sequence}' "

@@ -382,17 +382,15 @@ matched because they follow a question leader.
             processor.process(f, out)
     ```
 
-???+ success "Expected Output: Grouped sequences (specification)"
+???+ success "Output: Normalized sequences"
     ```text
     --8<-- "features/rules/fixtures/sequence-output.txt"
     ```
 
-    **Expected behavior**: Questions normalized, follower answers normalized
-    and buffered with each question group.
-
-    **Note**: Full sequence normalization (normalizing follower patterns) is
-    specified but not yet fully implemented. Currently followers are buffered
-    but passed through unchanged.
+    Questions are normalized to `[dialog-question:...]` format and follower
+    answers are normalized to `[dialog-answer:...]` format. All lines in a
+    sequence are buffered and output together atomically. Note that line 9
+    starts with `- ` but is NOT normalized because it doesn't follow a question.
 
 **How sequences work**:
 
