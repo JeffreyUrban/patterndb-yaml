@@ -68,8 +68,11 @@ Create rules that extract structural performance indicators:
 
     # Find operations with increased queries
     echo "\nOperations with increased DB queries:"
-    join -t: <(grep -o 'PERF:[^,]*,.*db_queries=[0-9]*' baseline-norm.log | sort) \
-             <(grep -o 'PERF:[^,]*,.*db_queries=[0-9]*' regression-norm.log | sort) | \
+    join -t: \
+        <(grep -o 'PERF:[^,]*,.*db_queries=[0-9]*' \
+            baseline-norm.log | sort) \
+        <(grep -o 'PERF:[^,]*,.*db_queries=[0-9]*' \
+            regression-norm.log | sort) | \
         awk -F, '{
             split($3, b, "="); split($6, r, "=");
             if (r[2] > b[2]) print $1 ": " b[2] " → " r[2] " queries"
@@ -95,7 +98,9 @@ Create rules that extract structural performance indicators:
             processor.process(f, output)
             output.seek(0)
 
-            metrics = defaultdict(lambda: {'cache_misses': [], 'db_queries': []})
+            metrics = defaultdict(
+                lambda: {'cache_misses': [], 'db_queries': []}
+            )
 
             for line in output:
                 if match := re.match(
@@ -140,12 +145,14 @@ Create rules that extract structural performance indicators:
             print(f"⚠ {op}:")
 
             if cache_regressed:
-                print(f"    Cache misses: {avg_base_cache:.1f} → {avg_reg_cache:.1f} "
-                      f"(+{avg_reg_cache - avg_base_cache:.1f})")
+                cache_increase = avg_reg_cache - avg_base_cache
+                print(f"    Cache misses: {avg_base_cache:.1f} → "
+                      f"{avg_reg_cache:.1f} (+{cache_increase:.1f})")
 
             if queries_regressed:
-                print(f"    DB queries: {avg_base_queries:.1f} → {avg_reg_queries:.1f} "
-                      f"(+{avg_reg_queries - avg_base_queries:.1f})")
+                query_increase = avg_reg_queries - avg_base_queries
+                print(f"    DB queries: {avg_base_queries:.1f} → "
+                      f"{avg_reg_queries:.1f} (+{query_increase:.1f})")
             print()
 
     if not regressions_found:
@@ -251,12 +258,16 @@ def get_operation_metrics(log_file):
                     }
                 else:
                     # Average with previous samples
+                    prev_total_cache = ops[op]['cache_misses'] * \
+                        ops[op]['samples']
                     ops[op]['cache_misses'] = (
-                        (ops[op]['cache_misses'] * ops[op]['samples'] + int(misses)) /
+                        (prev_total_cache + int(misses)) /
                         (ops[op]['samples'] + 1)
                     )
+                    prev_total_queries = ops[op]['db_queries'] * \
+                        ops[op]['samples']
                     ops[op]['db_queries'] = (
-                        (ops[op]['db_queries'] * ops[op]['samples'] + int(queries)) /
+                        (prev_total_queries + int(queries)) /
                         (ops[op]['samples'] + 1)
                     )
                     ops[op]['samples'] += 1
@@ -282,17 +293,25 @@ for op in sorted(set(baseline_ops.keys()) | set(current_ops.keys())):
     curr = current_ops[op]
 
     # Check for regressions (>10% increase)
-    cache_regression = (curr['cache_misses'] - base['cache_misses']) / max(base['cache_misses'], 1)
-    query_regression = (curr['db_queries'] - base['db_queries']) / max(base['db_queries'], 1)
+    cache_regression = (
+        (curr['cache_misses'] - base['cache_misses']) /
+        max(base['cache_misses'], 1)
+    )
+    query_regression = (
+        (curr['db_queries'] - base['db_queries']) /
+        max(base['db_queries'], 1)
+    )
 
     if cache_regression > 0.1 or query_regression > 0.1:
         print(f"⚠ {op}:")
         if cache_regression > 0.1:
-            print(f"    Cache: {base['cache_misses']:.1f} → {curr['cache_misses']:.1f} "
-                  f"({cache_regression*100:+.0f}%)")
+            cache_pct = cache_regression * 100
+            print(f"    Cache: {base['cache_misses']:.1f} → "
+                  f"{curr['cache_misses']:.1f} ({cache_pct:+.0f}%)")
         if query_regression > 0.1:
-            print(f"    Queries: {base['db_queries']:.1f} → {curr['db_queries']:.1f} "
-                  f"({query_regression*100:+.0f}%)")
+            query_pct = query_regression * 100
+            print(f"    Queries: {base['db_queries']:.1f} → "
+                  f"{curr['db_queries']:.1f} ({query_pct:+.0f}%)")
     else:
         print(f"✓ {op}: No regression")
 ```
@@ -345,7 +364,9 @@ print("-----------|--------------|-----------")
 
 for date in sorted(history.keys()):
     metrics = history[date]
-    print(f"{date} |      {metrics['cache_misses']:6d} |   {metrics['db_queries']:7d}")
+    cache = metrics['cache_misses']
+    queries = metrics['db_queries']
+    print(f"{date} |      {cache:6d} |   {queries:7d}")
 
 # Detect trends
 dates = sorted(history.keys())
@@ -378,17 +399,21 @@ for concurrency in 10 50 100; do
         --quiet > load-${concurrency}-norm.log
 
     # Calculate metrics
-    total_misses=$(grep -o 'cache_misses=[0-9]*' load-${concurrency}-norm.log | \
+    total_misses=$(grep -o 'cache_misses=[0-9]*' \
+        load-${concurrency}-norm.log | \
         awk -F= '{sum+=$2} END {print sum}')
 
-    total_queries=$(grep -o 'db_queries=[0-9]*' load-${concurrency}-norm.log | \
+    total_queries=$(grep -o 'db_queries=[0-9]*' \
+        load-${concurrency}-norm.log | \
         awk -F= '{sum+=$2} END {print sum}')
 
     operations=$(grep '^\[PERF:' load-${concurrency}-norm.log | wc -l)
 
     echo "  Operations: $operations"
-    echo "  Avg cache misses per op: $(echo "scale=2; $total_misses / $operations" | bc)"
-    echo "  Avg queries per op: $(echo "scale=2; $total_queries / $operations" | bc)"
+    avg_cache=$(echo "scale=2; $total_misses / $operations" | bc)
+    echo "  Avg cache misses per op: $avg_cache"
+    avg_queries=$(echo "scale=2; $total_queries / $operations" | bc)
+    echo "  Avg queries per op: $avg_queries"
     echo
 done
 ```
@@ -423,7 +448,9 @@ for variant, log_file in variants.items():
                 line.strip()
             ):
                 op, misses, queries = match.groups()
-                cache_misses_by_op[op] = cache_misses_by_op.get(op, 0) + int(misses)
+                cache_misses_by_op[op] = (
+                    cache_misses_by_op.get(op, 0) + int(misses)
+                )
                 queries_by_op[op] = queries_by_op.get(op, 0) + int(queries)
 
         results[variant] = {

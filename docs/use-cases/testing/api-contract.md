@@ -107,8 +107,14 @@ Create rules that extract contract-relevant information while ignoring implement
         print(f"  Total operations: {len(v1_contract)}")
 
         # Count by type
-        requests = [line for line in v1_contract if not line.startswith('[RESPONSE')]
-        responses = [line for line in v1_contract if line.startswith('[RESPONSE')]
+        requests = [
+            line for line in v1_contract
+            if not line.startswith('[RESPONSE')
+        ]
+        responses = [
+            line for line in v1_contract
+            if line.startswith('[RESPONSE')
+        ]
 
         print(f"  Requests: {len(requests)}")
         print(f"  Responses: {len(responses)}")
@@ -245,7 +251,8 @@ for endpoint, expected_status in sorted(API_SPEC.items()):
         if actual_status == expected_status:
             print(f"✓ {endpoint} → {actual_status}")
         else:
-            print(f"✗ {endpoint} → Expected {expected_status}, got {actual_status}")
+            print(f"✗ {endpoint} → Expected {expected_status}, "
+                  f"got {actual_status}")
     else:
         print(f"⚠ {endpoint} → NOT TESTED")
 
@@ -283,7 +290,8 @@ preserved=$(comm -12 baseline-contract.txt new-contract.txt | wc -l)
 total=$(wc -l < baseline-contract.txt)
 percentage=$((preserved * 100 / total))
 
-echo "\nBackward Compatibility: $percentage% ($preserved/$total operations preserved)"
+echo "\nBackward Compatibility: $percentage% " \
+    "($preserved/$total operations preserved)"
 ```
 
 ### 4. Microservices Contract Testing
@@ -308,7 +316,9 @@ for service in services:
         output = StringIO()
         processor.process(f, output)
         output.seek(0)
-        contracts[service] = set(line.strip() for line in output if line.strip())
+        contracts[service] = set(
+            line.strip() for line in output if line.strip()
+        )
 
 # Find common contract
 common_contract = set.intersection(*contracts.values())
@@ -377,7 +387,9 @@ with open("api-provider.log") as f:
     actual_contract = set()
     for line in output:
         # Normalize IDs in paths
-        normalized = re.sub(r':/api/(\w+)/\d+,', r':/api/\1/{id},', line.strip())
+        normalized = re.sub(
+            r':/api/(\w+)/\d+,', r':/api/\1/{id},', line.strip()
+        )
         if normalized:
             actual_contract.add(normalized)
 
@@ -390,7 +402,8 @@ for consumer, expectations in CONSUMER_EXPECTATIONS.items():
         for exp in sorted(missing):
             print(f"    Missing: {exp}")
     else:
-        print(f"✓ {consumer} expectations satisfied ({len(expectations)} operations)")
+        print(f"✓ {consumer} expectations satisfied "
+              f"({len(expectations)} operations)")
 ```
 
 ## Key Benefits

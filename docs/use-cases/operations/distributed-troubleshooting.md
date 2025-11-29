@@ -131,7 +131,9 @@ Create rules that extract events and normalize correlation ID names:
 
         # Show trace
         for event in events:
-            prefix = "  ⚠" if ('error' in event['event'] or 'failed' in event['event']) else "   "
+            has_issue = 'error' in event['event'] or \
+                'failed' in event['event']
+            prefix = "  ⚠" if has_issue else "   "
             print(f"{prefix} {event['event']}")
 
         print()
@@ -373,7 +375,9 @@ output.seek(0)
 
 # Group by request
 from collections import defaultdict
-requests = defaultdict(lambda: {'services': set(), 'events': [], 'status': 'unknown'})
+requests = defaultdict(
+    lambda: {'services': set(), 'events': [], 'status': 'unknown'}
+)
 
 for line in output:
     if match := re.match(r'\[([^\]]+)\] ([^:]+):(.+)', line.strip()):
@@ -398,14 +402,17 @@ for req_id in sorted(requests.keys()):
     service_count = len(req['services'])
     event_count = len(req['events'])
 
-    print(f"{req_id:<15} {status_icon} {req['status']:<9} {service_count:<8} {event_count:<8}")
+    print(f"{req_id:<15} {status_icon} {req['status']:<9} "
+          f"{service_count:<8} {event_count:<8}")
 
 # Summary stats
 total = len(requests)
 failed = sum(1 for r in requests.values() if r['status'] == 'failed')
 success = total - failed
+failure_pct = failed / total * 100
 
-print(f"\nSummary: {total} requests, {success} success, {failed} failed ({failed/total*100:.0f}% failure rate)")
+print(f"\nSummary: {total} requests, {success} success, "
+      f"{failed} failed ({failure_pct:.0f}% failure rate)")
 ```
 
 ## Key Benefits

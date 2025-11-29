@@ -266,7 +266,8 @@ for op in sorted(all_ops):
     postgres_count = postgres_ops.get(op, 0)
 
     # Allow 5% variance (due to timing/concurrency)
-    variance = abs(mysql_count - postgres_count) / max(mysql_count, postgres_count, 1)
+    variance = abs(mysql_count - postgres_count) / \
+        max(mysql_count, postgres_count, 1)
 
     status = "✓" if variance < 0.05 else "⚠"
     print(f"  {status} {op}: MySQL={mysql_count}, PostgreSQL={postgres_count}")
@@ -368,11 +369,17 @@ def extract_timings(raw_log_file, db_type):
             if db_type == 'mysql':
                 if match := re.search(r'UPDATE (\w+).*Duration: (\d+)ms', line):
                     table, duration = match.groups()
-                    timings_by_table.setdefault(table, []).append(int(duration))
+                    timings_by_table.setdefault(table, []).append(
+                        int(duration)
+                    )
             elif db_type == 'postgres':
-                if match := re.search(r'UPDATE (\w+).*duration: ([\d.]+) ms', line):
+                if match := re.search(
+                    r'UPDATE (\w+).*duration: ([\d.]+) ms', line
+                ):
                     table, duration = match.groups()
-                    timings_by_table.setdefault(table, []).append(float(duration))
+                    timings_by_table.setdefault(table, []).append(
+                        float(duration)
+                    )
 
     # Calculate averages
     avg_timings = {}

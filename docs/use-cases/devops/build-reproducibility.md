@@ -86,7 +86,9 @@ Create rules that preserve meaningful data while filtering ephemeral details:
     import subprocess
 
     # Normalize all three builds
-    processor = PatterndbYaml(rules_path=Path("build-reproducibility-rules.yaml"))
+    processor = PatterndbYaml(
+        rules_path=Path("build-reproducibility-rules.yaml")
+    )
 
     for build_num in [1, 2, 3]:
         with open(f"build{build_num}.log") as f:

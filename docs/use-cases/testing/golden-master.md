@@ -165,7 +165,8 @@ for test_case in tests/data/*.json; do
     echo "  Processing $(basename $test_case)..."
 
     # Run legacy system
-    run-legacy-system --input "$test_case" > "output/legacy-$(basename $test_case .json).log"
+    run-legacy-system --input "$test_case" > \
+        "output/legacy-$(basename $test_case .json).log"
 
     # Normalize
     patterndb-yaml --rules golden-master-rules.yaml \
@@ -233,7 +234,9 @@ for test_case in Path("tests/data").glob("*.json"):
             print(f"    Added: {len(added)} events")
 
 # Summary
-print(f"\nResults: {len(golden_masters) - len(failures)}/{len(golden_masters)} passed")
+passed = len(golden_masters) - len(failures)
+total = len(golden_masters)
+print(f"\nResults: {passed}/{total} passed")
 
 if failures:
     print("\nFailed test cases:")

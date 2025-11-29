@@ -66,7 +66,8 @@ Create rules that extract security-relevant fields while normalizing format diff
     ```bash
     # Combine all security logs
     cat firewall.log ids.log app-auth.log | \
-        patterndb-yaml --rules security-rules.yaml --quiet > unified-security.log
+        patterndb-yaml --rules security-rules.yaml \
+            --quiet > unified-security.log
 
     # Correlate by source IP
     echo "Events by source IP:"
@@ -202,11 +203,13 @@ tail -f /var/log/firewall.log /var/log/ids/alerts.log /var/log/app/auth.log | \
             ip="${BASH_REMATCH[1]}${BASH_REMATCH[2]}"
 
             # Count recent events from this IP
-            recent_count=$(grep "$ip" /tmp/recent-events.log 2>/dev/null | wc -l)
+            recent_count=$(grep "$ip" /tmp/recent-events.log \
+                2>/dev/null | wc -l)
 
             # Alert on threshold
             if [ "$recent_count" -gt 5 ]; then
-                echo "🚨 ALERT: Suspicious activity from $ip ($recent_count events)"
+                echo "🚨 ALERT: Suspicious activity from $ip" \
+                    "($recent_count events)"
                 grep "$ip" /tmp/recent-events.log
             fi
 
@@ -233,7 +236,11 @@ import re
 processor = PatterndbYaml(rules_path=Path("security-rules.yaml"))
 
 # Normalize logs from incident timeframe
-incident_logs = ["firewall-incident.log", "ids-incident.log", "auth-incident.log"]
+incident_logs = [
+    "firewall-incident.log",
+    "ids-incident.log",
+    "auth-incident.log"
+]
 all_events = []
 
 for log_file in incident_logs:
@@ -353,9 +360,12 @@ def to_cef(event):
     src_ip = attr_dict.get('src', attr_dict.get('ip', ''))
     dst_ip = attr_dict.get('dst', '').split(':')[0]
 
-    # CEF format: CEF:Version|Device Vendor|Device Product|Device Version|Signature ID|Name|Severity|Extension
+    # CEF format:
+    # CEF:Version|Device Vendor|Device Product|Device Version|
+    # Signature ID|Name|Severity|Extension
     return (
-        f"CEF:0|PatternDB|SecurityAggregator|1.0|{event_type}|{event_type}|{severity}|"
+        f"CEF:0|PatternDB|SecurityAggregator|1.0|"
+        f"{event_type}|{event_type}|{severity}|"
         f"src={src_ip} dst={dst_ip} act={event_type}"
     )
 

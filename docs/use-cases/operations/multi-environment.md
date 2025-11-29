@@ -154,7 +154,8 @@ patterndb-yaml --rules env-rules.yaml prod-baseline.log --quiet > prod-norm.log
 
 # Deploy to staging and capture logs
 kubectl logs -l app=myapp -n staging --tail=1000 > staging-test.log
-patterndb-yaml --rules env-rules.yaml staging-test.log --quiet > staging-norm.log
+patterndb-yaml --rules env-rules.yaml staging-test.log \
+    --quiet > staging-norm.log
 
 # Compare core events
 if diff <(grep '^\[order\|payment\|ship' prod-norm.log | sort) \
@@ -198,7 +199,9 @@ for event in set(prod_events.keys()) | set(staging_events.keys()):
     staging_count = staging_events.get(event, 0)
 
     # Allow 10% variance
-    if abs(prod_count - staging_count) / max(prod_count, staging_count, 1) > 0.10:
+    variance = abs(prod_count - staging_count) / \
+        max(prod_count, staging_count, 1)
+    if variance > 0.10:
         print(f"⚠ Event frequency differs: {event}")
         print(f"  Production: {prod_count}, Staging: {staging_count}")
 ```
