@@ -72,9 +72,7 @@ rewrite r_set_program {{
 }};
 
 parser p_patterns {{
-    db-parser(
-        file("{self.pdb_path}")
-    );
+    db-parser(file("{self.pdb_path}"));
 }};
 
 destination d_pipe {{
