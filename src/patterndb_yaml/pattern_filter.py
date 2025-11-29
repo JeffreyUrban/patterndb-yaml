@@ -103,6 +103,7 @@ log {{
             self.config_file,
             "--foreground",
             "--stderr",
+            "--no-caps",  # Disable capability management (not available in containers)
             "--verbose",
             "--debug",
         ]
