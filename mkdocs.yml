@@ -66,9 +66,7 @@ nav:
   - Use Cases:
       - Overview: use-cases/index.md
       - Testing:
-          - Application Version Comparison: use-cases/testing/version-comparison.md
           - API Contract Testing: use-cases/testing/api-contract.md
-          - Performance Regression Detection: use-cases/testing/performance-regression.md
           - Golden Master Testing: use-cases/testing/golden-master.md
       - DevOps:
           - CI/CD Build Reproducibility: use-cases/devops/build-reproducibility.md

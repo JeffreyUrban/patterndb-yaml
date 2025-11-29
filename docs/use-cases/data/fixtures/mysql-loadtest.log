@@ -1,0 +1,8 @@
+2024-11-15 10:00:01.234 [MySQL] Query: SELECT id, email FROM users WHERE email='alice@example.com' | Duration: 5ms | Rows: 1
+2024-11-15 10:00:01.567 [MySQL] Query: INSERT INTO orders (user_id, total, status) VALUES (123, 99.99, 'pending') | Duration: 8ms | Rows: 1
+2024-11-15 10:00:01.890 [MySQL] Query: SELECT LAST_INSERT_ID() | Duration: 1ms | Rows: 1
+2024-11-15 10:00:02.123 [MySQL] Query: UPDATE orders SET status='paid' WHERE id=5001 | Duration: 6ms | Rows: 1
+2024-11-15 10:00:02.456 [MySQL] Query: SELECT * FROM orders WHERE id=5001 | Duration: 4ms | Rows: 1
+2024-11-15 10:00:02.789 [MySQL] Query: INSERT INTO payments (order_id, amount, method) VALUES (5001, 99.99, 'credit_card') | Duration: 7ms | Rows: 1
+2024-11-15 10:00:03.012 [MySQL] Query: UPDATE orders SET status='shipped' WHERE id=5001 | Duration: 5ms | Rows: 1
+2024-11-15 10:00:03.345 [MySQL] Query: SELECT COUNT(*) FROM orders WHERE status='shipped' AND DATE(created_at)=CURDATE() | Duration: 12ms | Rows: 1

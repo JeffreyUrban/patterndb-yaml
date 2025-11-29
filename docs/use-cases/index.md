@@ -6,9 +6,7 @@ Real-world examples demonstrating how to use patterndb-yaml to solve common log 
 
 **Verify behavior, detect regressions, ensure quality**
 
-- **[Application Version Comparison](testing/version-comparison.md)** - Compare log formats between application versions to verify identical behavior
 - **[API Contract Testing](testing/api-contract.md)** - Verify API implementations maintain contracts across versions and rewrites
-- **[Performance Regression Detection](testing/performance-regression.md)** - Detect performance issues via structural metrics (cache misses, query counts)
 - **[Golden Master Testing](testing/golden-master.md)** - Safely refactor legacy code by capturing and comparing behavior
 
 ## DevOps
