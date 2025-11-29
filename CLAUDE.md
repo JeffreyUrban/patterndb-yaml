@@ -233,6 +233,24 @@ def public_function(param: str) -> bool:
 - Preserve design rationales when converting planning → work product docs
 - **Clean up as you go**: Delete TODO documents once resolved, update permanent docs instead
 
+**Markdown Formatting:**
+
+- **Always add a blank line before lists** - Lists must have a blank line above them to render correctly
+  ```markdown
+  # ❌ Wrong - list runs into previous line
+  Your application has three versions:
+  - Version 1
+  - Version 2
+
+  # ✅ Right - blank line before list
+  Your application has three versions:
+
+  - Version 1
+  - Version 2
+  ```
+- **Always add a blank line before code blocks** - Same rule applies to code fences
+- **Check list rendering** - If a line ends with `:` and the next line starts with `-`, add a blank line between them
+
 **Documentation Cleanup:**
 
 When work is complete, **remove temporary documentation**:

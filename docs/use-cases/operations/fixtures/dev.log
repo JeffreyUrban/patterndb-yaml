@@ -1,0 +1,8 @@
+2024-11-15T10:00:01.234Z [DEBUG] localhost:8080 - Connecting to database: postgres@localhost:5432/myapp_dev
+2024-11-15T10:00:01.567Z [INFO] localhost:8080 - User login: alice@example.com (session: dev-sess-a1b2c3)
+2024-11-15T10:00:02.890Z [DEBUG] localhost:8080 - Query executed: SELECT * FROM orders WHERE user_id=123 (15ms)
+2024-11-15T10:00:03.123Z [INFO] localhost:8080 - Order created: #5001 for user 123
+2024-11-15T10:00:03.456Z [DEBUG] localhost:8080 - Cache miss: order:5001
+2024-11-15T10:00:03.789Z [INFO] localhost:8080 - Payment processed: order #5001, amount $99.99
+2024-11-15T10:00:04.012Z [DEBUG] localhost:8080 - Email queued: order-confirmation to alice@example.com
+2024-11-15T10:00:04.345Z [INFO] localhost:8080 - Order shipped: #5001

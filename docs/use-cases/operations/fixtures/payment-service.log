@@ -1,0 +1,4 @@
+2024-11-15T10:00:01.356Z payment-svc correlation_id=req-abc123 action=process_payment order=5001 amount=99.99
+2024-11-15T10:00:01.423Z payment-svc correlation_id=req-abc123 action=payment_authorized order=5001 txn_id=txn-xyz789
+2024-11-15T10:00:03.478Z payment-svc correlation_id=req-ghi789 action=process_payment order=5002 amount=149.99
+2024-11-15T10:00:03.656Z payment-svc correlation_id=req-ghi789 action=payment_error order=5002 error="Payment gateway timeout"

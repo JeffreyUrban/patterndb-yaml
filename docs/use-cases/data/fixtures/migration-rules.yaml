@@ -1,0 +1,106 @@
+rules:
+  # MySQL format: SELECT query
+  - name: mysql_select
+    pattern:
+      - field: timestamp
+      - text: " [MySQL] Query: SELECT "
+      - field: columns
+      - text: " FROM "
+      - field: table
+      - text: " "
+      - field: rest
+      - text: " | Duration: "
+      - field: duration
+      - text: " | Rows: "
+      - field: rows
+    output: "[SELECT:{table}]"
+
+  # PostgreSQL format: SELECT query
+  - name: postgres_select
+    pattern:
+      - field: timestamp
+      - text: " [PostgreSQL] duration: "
+      - field: duration
+      - text: "  statement: SELECT "
+      - field: columns
+      - text: " FROM "
+      - field: table
+      - text: " "
+      - field: rest
+    output: "[SELECT:{table}]"
+
+  # MySQL format: INSERT query
+  - name: mysql_insert
+    pattern:
+      - field: timestamp
+      - text: " [MySQL] Query: INSERT INTO "
+      - field: table
+      - text: " "
+      - field: rest
+      - text: " | Duration: "
+      - field: duration
+      - text: " | Rows: "
+      - field: rows
+    output: "[INSERT:{table}]"
+
+  # PostgreSQL format: INSERT query (with RETURNING)
+  - name: postgres_insert_returning
+    pattern:
+      - field: timestamp
+      - text: " [PostgreSQL] duration: "
+      - field: duration
+      - text: "  statement: INSERT INTO "
+      - field: table
+      - text: " "
+      - field: rest
+      - text: " RETURNING "
+      - field: returning
+    output: "[INSERT:{table}]"
+
+  # PostgreSQL format: INSERT query (without RETURNING)
+  - name: postgres_insert
+    pattern:
+      - field: timestamp
+      - text: " [PostgreSQL] duration: "
+      - field: duration
+      - text: "  statement: INSERT INTO "
+      - field: table
+      - text: " "
+      - field: rest
+    output: "[INSERT:{table}]"
+
+  # MySQL format: UPDATE query
+  - name: mysql_update
+    pattern:
+      - field: timestamp
+      - text: " [MySQL] Query: UPDATE "
+      - field: table
+      - text: " "
+      - field: rest
+      - text: " | Duration: "
+      - field: duration
+      - text: " | Rows: "
+      - field: rows
+    output: "[UPDATE:{table}]"
+
+  # PostgreSQL format: UPDATE query
+  - name: postgres_update
+    pattern:
+      - field: timestamp
+      - text: " [PostgreSQL] duration: "
+      - field: duration
+      - text: "  statement: UPDATE "
+      - field: table
+      - text: " "
+      - field: rest
+    output: "[UPDATE:{table}]"
+
+  # MySQL-specific: LAST_INSERT_ID() - ignore, Postgres uses RETURNING
+  - name: mysql_last_insert_id
+    pattern:
+      - field: timestamp
+      - text: " [MySQL] Query: SELECT LAST_INSERT_ID() | Duration: "
+      - field: duration
+      - text: " | Rows: "
+      - field: rows
+    output: "[LAST-INSERT-ID]"

@@ -1,0 +1,10 @@
+2024-11-15 14:30:15.234 [PERF] Operation=user_lookup Duration=45ms CacheMisses=5 DBQueries=6
+2024-11-15 14:30:15.567 [PERF] Operation=order_create Duration=18ms CacheMisses=0 DBQueries=3
+2024-11-15 14:30:15.890 [PERF] Operation=payment_process Duration=120ms CacheMisses=3 DBQueries=8
+2024-11-15 14:30:16.123 [PERF] Operation=inventory_check Duration=95ms CacheMisses=12 DBQueries=15
+2024-11-15 14:30:16.456 [PERF] Operation=email_send Duration=155ms CacheMisses=0 DBQueries=0
+2024-11-15 14:30:16.789 [PERF] Operation=user_lookup Duration=42ms CacheMisses=4 DBQueries=5
+2024-11-15 14:30:17.012 [PERF] Operation=order_create Duration=16ms CacheMisses=0 DBQueries=3
+2024-11-15 14:30:17.345 [PERF] Operation=payment_process Duration=115ms CacheMisses=3 DBQueries=8
+2024-11-15 14:30:17.678 [WARN] SlowQuery: SELECT * FROM products WHERE category='electronics' Duration=48ms
+2024-11-15 14:30:18.001 [PERF] Operation=order_ship Duration=21ms CacheMisses=0 DBQueries=2

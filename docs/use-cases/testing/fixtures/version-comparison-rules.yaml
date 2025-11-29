@@ -1,0 +1,100 @@
+rules:
+  # v2.3 format: [INFO] 2024-01-15 10:23:45 - Order #1234 processed
+  - name: order_processed_v23
+    pattern:
+      - text: "[INFO] "
+      - field: timestamp
+      - text: " - Order #"
+      - field: order_id
+      - text: " processed"
+    output: "[order-processed:{order_id}]"
+
+  # v2.4 format: 2024-01-15T10:23:45.123Z [info] Order ID=1234 status=processed
+  - name: order_processed_v24
+    pattern:
+      - field: timestamp
+      - text: " [info] Order ID="
+      - field: order_id
+      - text: " status=processed"
+    output: "[order-processed:{order_id}]"
+
+  # v2.3 format: [INFO] ... - Payment received for order #1234 amount=$129.99
+  - name: payment_received_v23
+    pattern:
+      - text: "[INFO] "
+      - field: timestamp
+      - text: " - Payment received for order #"
+      - field: order_id
+      - text: " amount=$"
+      - field: amount
+    output: "[payment-received:{order_id},amount=${amount}]"
+
+  # v2.4 format: ... [info] Payment order=1234 amount=$129.99 status=received
+  - name: payment_received_v24
+    pattern:
+      - field: timestamp
+      - text: " [info] Payment order="
+      - field: order_id
+      - text: " amount=$"
+      - field: amount
+      - text: " status=received"
+    output: "[payment-received:{order_id},amount=${amount}]"
+
+  # v2.3 format: [INFO] ... - Order #1234 shipped to customer
+  - name: order_shipped_v23
+    pattern:
+      - text: "[INFO] "
+      - field: timestamp
+      - text: " - Order #"
+      - field: order_id
+      - text: " shipped to customer"
+    output: "[order-shipped:{order_id}]"
+
+  # v2.4 format: ... [info] Shipping order=1234 destination=customer
+  - name: order_shipped_v24
+    pattern:
+      - field: timestamp
+      - text: " [info] Shipping order="
+      - field: order_id
+      - text: " destination=customer"
+    output: "[order-shipped:{order_id}]"
+
+  # v2.3 format: [WARN] ... - Inventory low for product SKU-789 (5 remaining)
+  - name: inventory_low_v23
+    pattern:
+      - text: "[WARN] "
+      - field: timestamp
+      - text: " - Inventory low for product "
+      - field: sku
+      - text: " ("
+      - field: quantity
+      - text: " remaining)"
+    output: "[inventory-low:{sku},qty={quantity}]"
+
+  # v2.4 format: ... [warn] Low inventory product=SKU-789 quantity=5
+  - name: inventory_low_v24
+    pattern:
+      - field: timestamp
+      - text: " [warn] Low inventory product="
+      - field: sku
+      - text: " quantity="
+      - field: quantity
+    output: "[inventory-low:{sku},qty={quantity}]"
+
+  # v2.3 format: [ERROR] ... - Payment declined for order #1236
+  - name: payment_declined_v23
+    pattern:
+      - text: "[ERROR] "
+      - field: timestamp
+      - text: " - Payment declined for order #"
+      - field: order_id
+    output: "[payment-declined:{order_id}]"
+
+  # v2.4 format: ... [error] Payment order=1236 status=declined
+  - name: payment_declined_v24
+    pattern:
+      - field: timestamp
+      - text: " [error] Payment order="
+      - field: order_id
+      - text: " status=declined"
+    output: "[payment-declined:{order_id}]"

@@ -1,0 +1,94 @@
+rules:
+  # Database connection - ignore hostname, port, database name
+  - name: db_connection
+    pattern:
+      - field: timestamp
+      - text: " ["
+      - field: level
+      - text: "] "
+      - field: host
+      - text: " - Connecting to database: "
+      - field: connection_string
+    output: "[db-connect]"
+
+  # User login - keep email, ignore session ID and hostname
+  - name: user_login
+    pattern:
+      - field: timestamp
+      - text: " [INFO] "
+      - field: host
+      - text: " - User login: "
+      - field: email
+      - text: " (session: "
+      - field: session_id
+      - text: ")"
+    output: "[user-login:{email}]"
+
+  # Debug query - ignore in normalization (DEBUG logs vary by environment)
+  - name: debug_query
+    pattern:
+      - field: timestamp
+      - text: " [DEBUG] "
+      - field: host
+      - text: " - Query executed: "
+      - field: query
+      - text: " ("
+      - field: duration
+      - text: ")"
+    output: "[query-executed]"
+
+  # Debug cache - ignore in normalization
+  - name: debug_cache
+    pattern:
+      - field: timestamp
+      - text: " [DEBUG] "
+      - field: host
+      - text: " - Cache miss: "
+      - field: key
+    output: "[cache-miss]"
+
+  # Debug email - ignore in normalization
+  - name: debug_email
+    pattern:
+      - field: timestamp
+      - text: " [DEBUG] "
+      - field: host
+      - text: " - Email queued: "
+      - field: template
+      - text: " to "
+      - field: recipient
+    output: "[email-queued]"
+
+  # Order created - keep order ID and user ID
+  - name: order_created
+    pattern:
+      - field: timestamp
+      - text: " [INFO] "
+      - field: host
+      - text: " - Order created: #"
+      - field: order_id
+      - text: " for user "
+      - field: user_id
+    output: "[order-created:{order_id},user:{user_id}]"
+
+  # Payment processed - keep order ID and amount
+  - name: payment_processed
+    pattern:
+      - field: timestamp
+      - text: " [INFO] "
+      - field: host
+      - text: " - Payment processed: order #"
+      - field: order_id
+      - text: ", amount $"
+      - field: amount
+    output: "[payment-processed:{order_id},amount:${amount}]"
+
+  # Order shipped - keep order ID
+  - name: order_shipped
+    pattern:
+      - field: timestamp
+      - text: " [INFO] "
+      - field: host
+      - text: " - Order shipped: #"
+      - field: order_id
+    output: "[order-shipped:{order_id}]"

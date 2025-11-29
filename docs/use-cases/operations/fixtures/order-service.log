@@ -1,0 +1,8 @@
+2024-11-15T10:00:01.234Z [order-service] trace_id=req-abc123 event=order_created order_id=5001 user_id=123
+2024-11-15T10:00:01.345Z [order-service] trace_id=req-abc123 event=calling_payment_service order_id=5001 amount=99.99
+2024-11-15T10:00:01.445Z [order-service] trace_id=req-abc123 event=payment_success order_id=5001
+2024-11-15T10:00:02.245Z [order-service] trace_id=req-def456 event=order_lookup order_id=5001
+2024-11-15T10:00:02.555Z [order-service] trace_id=req-def456 event=order_found order_id=5001 status=paid
+2024-11-15T10:00:03.356Z [order-service] trace_id=req-ghi789 event=order_created order_id=5002 user_id=456
+2024-11-15T10:00:03.467Z [order-service] trace_id=req-ghi789 event=calling_payment_service order_id=5002 amount=149.99
+2024-11-15T10:00:03.667Z [order-service] trace_id=req-ghi789 event=payment_failed order_id=5002 error="Connection timeout"

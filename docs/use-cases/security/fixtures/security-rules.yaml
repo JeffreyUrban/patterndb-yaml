@@ -1,0 +1,108 @@
+rules:
+  # Firewall: ACCEPT traffic
+  - name: firewall_accept
+    pattern:
+      - field: date
+      - text: " "
+      - field: host
+      - text: " kernel: ACCEPT IN="
+      - field: in_iface
+      - text: " OUT="
+      - field: out_iface
+      - text: " SRC="
+      - field: src_ip
+      - text: " DST="
+      - field: dst_ip
+      - text: " PROTO="
+      - field: protocol
+      - text: " SPT="
+      - field: src_port
+      - text: " DPT="
+      - field: dst_port
+    output: "[firewall-accept:src={src_ip},dst={dst_ip}:{dst_port},proto={protocol}]"
+
+  # Firewall: DROP traffic
+  - name: firewall_drop
+    pattern:
+      - field: date
+      - text: " "
+      - field: host
+      - text: " kernel: DROP IN="
+      - field: in_iface
+      - text: " OUT="
+      - field: out_iface
+      - text: " SRC="
+      - field: src_ip
+      - text: " DST="
+      - field: dst_ip
+      - text: " PROTO="
+      - field: protocol
+      - text: " SPT="
+      - field: src_port
+      - text: " DPT="
+      - field: dst_port
+      - text: " REASON="
+      - field: reason
+    output: "[firewall-drop:src={src_ip},dst={dst_ip}:{dst_port},reason={reason}]"
+
+  # IDS: SQL Injection
+  - name: ids_sqli
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] ALERT: SQL Injection attempt from "
+      - field: src_ip
+      - text: " to "
+      - field: dst
+      - text: " - Signature: "
+      - field: signature
+    output: "[ids-sqli:src={src_ip},dst={dst}]"
+
+  # IDS: Port Scan
+  - name: ids_portscan
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] ALERT: Port scan detected from "
+      - field: src_ip
+      - text: " targeting "
+      - field: target
+      - text: " - "
+      - field: details
+    output: "[ids-portscan:src={src_ip},target={target}]"
+
+  # IDS: Brute Force
+  - name: ids_bruteforce
+    pattern:
+      - text: "["
+      - field: timestamp
+      - text: "] ALERT: Brute force login attempt from "
+      - field: src_ip
+      - text: " to "
+      - field: dst
+      - text: " - "
+      - field: details
+    output: "[ids-bruteforce:src={src_ip},dst={dst}]"
+
+  # App Auth: Successful Login
+  - name: auth_success
+    pattern:
+      - field: timestamp
+      - text: " [AUTH] user="
+      - field: username
+      - text: " ip="
+      - field: ip
+      - text: " action=login status=success"
+    output: "[auth-success:user={username},ip={ip}]"
+
+  # App Auth: Failed Login
+  - name: auth_failure
+    pattern:
+      - field: timestamp
+      - text: " [AUTH] user="
+      - field: username
+      - text: " ip="
+      - field: ip
+      - text: " action=login status=failure reason="
+      - field: reason
+    output: "[auth-failure:user={username},ip={ip},reason={reason}]"
