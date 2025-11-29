@@ -10,17 +10,15 @@ syslog-ng installation has been **temporarily disabled** in CI workflows.
 - Quality job (without syslog-ng installation step at that time) completed in 49 seconds
 - Test jobs (with syslog-ng installation step) all hung
 
-**Hypothesis confirmed**: The `sudo apt-get install -y syslog-ng` step is causing jobs to hang.
-- Run 19784729004 with syslog-ng installation commented out: jobs completed in ~30 seconds
-- Tests failed with `FileNotFoundError: 'syslog-ng'` because the engine needs it to run
-- This confirms syslog-ng installation was the blocking step
+**Confirmed**: Hang occurs during test execution, NOT during installation:
+- Run 19784729004: No syslog-ng - completed in 30s, tests failed with FileNotFoundError
+- Run 19784751735: `syslog-ng-core` with DEBIAN_FRONTEND/--no-install-recommends - installation completed, pytest collected 89 items, hung
+- Run 19784835064: Original `apt-get install -y syslog-ng` - installation completed, pytest collected 89 items, hung
 
-**Root cause identified**: `apt-get install syslog-ng` was hanging, but alternative installation worked:
-- Run 19784751735: `syslog-ng-core` installed successfully in ~1 minute
-- However, pytest now hangs after collecting tests (89 items collected, then hangs)
-- Observed: Tests instantiate PatterndbYaml → starts syslog-ng subprocess → subprocess hangs in CI
+**Installation flags are irrelevant**: Both simple and complex installation commands produce identical behavior.
+Installation succeeds in both cases. Hang occurs when pytest tries to execute tests.
 
-**New issue**: syslog-ng process hangs when started in GitHub Actions environment
+**Root issue**: syslog-ng subprocess hangs when tests try to start it in GitHub Actions environment
 - Local execution works fine
 - Possible CI-specific issues:
   - FIFOs not working properly
