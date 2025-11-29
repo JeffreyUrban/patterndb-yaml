@@ -1,0 +1,10 @@
+Performance Comparison (UPDATE queries):
+
+🚀 orders:
+    MySQL: 5.50ms
+    PostgreSQL: 5.12ms
+    Ratio: 0.93x
+🚀 payments:
+    MySQL: 7.50ms
+    PostgreSQL: 7.01ms
+    Ratio: 0.93x

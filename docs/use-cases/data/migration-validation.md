@@ -231,10 +231,17 @@ done
 
 Run same load test against both databases:
 
+<!-- verify-file: output.txt expected: migration-output-2.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 from collections import Counter
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("migration-rules.yaml"))
 
@@ -282,6 +289,10 @@ for op in sorted(all_ops):
 
     status = "✓" if variance < 0.05 else "⚠"
     print(f"  {status} {op}: MySQL={mysql_count}, PostgreSQL={postgres_count}")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 3. Migration Regression Detection
@@ -312,10 +323,17 @@ comm -12 baseline-queries.txt migrated-queries.txt | wc -l
 
 Verify schema changes don't alter query patterns:
 
+<!-- verify-file: output.txt expected: migration-output-3.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("migration-rules.yaml"))
 
@@ -356,16 +374,26 @@ if new_patterns:
 
 if not new_patterns and not removed_patterns:
     print("✓ Schema change preserves all query patterns")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 5. Cross-Database Performance Comparison
 
 Compare performance characteristics:
 
+<!-- verify-file: output.txt expected: migration-output-4.txt -->
 ```python
-from patterndb_yaml import PatterndbYaml
+import sys
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 # Note: This requires custom rules that preserve timing information
 # For this example, we'll parse timing from raw logs
@@ -416,6 +444,10 @@ for table in sorted(all_tables):
         print(f"    MySQL: {mysql_avg:.2f}ms")
         print(f"    PostgreSQL: {postgres_avg:.2f}ms")
         print(f"    Ratio: {ratio:.2f}x")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ## Key Benefits

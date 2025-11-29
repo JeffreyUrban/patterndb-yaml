@@ -1,0 +1,1 @@
+✓ Schema change preserves all query patterns
