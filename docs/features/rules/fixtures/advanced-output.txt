@@ -1,0 +1,4 @@
+[login-success:user=alice,ip=192.168.1.100]
+[login-success:user=bob,ip=10.0.0.50]
+[login-failed:user=charlie,ip=192.168.1.200]
+[login-success:user=admin,ip=127.0.0.1]

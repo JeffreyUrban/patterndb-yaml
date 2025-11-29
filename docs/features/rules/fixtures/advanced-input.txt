@@ -1,0 +1,4 @@
+User alice logged in from 192.168.1.100
+User bob logged in from 10.0.0.50
+Failed login attempt for charlie from 192.168.1.200
+User admin logged in from 127.0.0.1

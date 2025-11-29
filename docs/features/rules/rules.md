@@ -1,0 +1,447 @@
+# Writing Normalization Rules
+
+Normalization rules define how to match and transform log lines. Rules are written in YAML format and specify patterns to match and output formats for normalized lines.
+
+## What It Does
+
+Normalization rules provide pattern-based log transformation:
+
+- **Pattern matching**: Identify log lines by structure and content
+- **Field extraction**: Capture variable data from log lines
+- **Output formatting**: Transform matched lines to consistent format
+- **Use case**: Normalize heterogeneous logs for analysis, diff comparison, or monitoring
+
+**Key insight**: Rules let you standardize diverse log formats into consistent, structured output.
+
+## Basic Rule Structure
+
+A normalization rule has three required components:
+
+```yaml
+rules:
+  - name: rule_identifier        # Unique rule name
+    pattern:                      # Match criteria
+      - text: "fixed string"      #   Literal text to match
+      - field: variable_data      #   Variable data to capture
+    output: "[tag:{field}]"       # Normalized output format
+```
+
+## Example: Simple Text Matching
+
+Match log lines by fixed text patterns:
+
+???+ note "Input: Application logs with severity levels"
+    ```text
+    --8<-- "features/rules/fixtures/simple-input.txt"
+    ```
+
+    Log lines with different severity levels in square brackets.
+
+???+ note "Rules: Match severity levels"
+    ```yaml
+    --8<-- "features/rules/fixtures/simple-rules.yaml"
+    ```
+
+    Four rules matching INFO, ERROR, WARN, and DEBUG severity levels.
+
+=== "CLI"
+
+    <!-- verify-file: output.txt expected: simple-output.txt -->
+    <!-- termynal -->
+    ```console
+    $ patterndb-yaml --rules simple-rules.yaml simple-input.txt \
+        --quiet > output.txt
+    ```
+
+=== "Python"
+
+    <!-- verify-file: output.txt expected: simple-output.txt -->
+    ```python
+    from patterndb_yaml import PatterndbYaml
+    from pathlib import Path
+
+    processor = PatterndbYaml(rules_path=Path("simple-rules.yaml"))
+
+    with open("simple-input.txt") as f:
+        with open("output.txt", "w") as out:
+            processor.process(f, out)
+    ```
+
+???+ success "Output: Normalized severity levels"
+    ```text
+    --8<-- "features/rules/fixtures/simple-output.txt"
+    ```
+
+    Each log line is normalized to a consistent format with severity tag.
+
+**How it works**:
+
+1. Each rule's `pattern` is tested against the input line
+2. When a pattern matches, the rule's `output` format is used
+3. The `{message}` placeholder is replaced with the captured field value
+
+## Example: Field Extraction
+
+Extract multiple fields from structured log lines:
+
+???+ note "Input: Login events"
+    ```text
+    --8<-- "features/rules/fixtures/advanced-input.txt"
+    ```
+
+    User login events with usernames and IP addresses.
+
+???+ note "Rules: Extract username and IP"
+    ```yaml
+    --8<-- "features/rules/fixtures/advanced-rules.yaml"
+    ```
+
+    Rules that extract `username` and `ip_address` fields from login events.
+
+=== "CLI"
+
+    <!-- verify-file: output.txt expected: advanced-output.txt -->
+    <!-- termynal -->
+    ```console
+    $ patterndb-yaml --rules advanced-rules.yaml advanced-input.txt \
+        --quiet > output.txt
+    ```
+
+=== "Python"
+
+    <!-- verify-file: output.txt expected: advanced-output.txt -->
+    ```python
+    from patterndb_yaml import PatterndbYaml
+    from pathlib import Path
+
+    processor = PatterndbYaml(rules_path=Path("advanced-rules.yaml"))
+
+    with open("advanced-input.txt") as f:
+        with open("output.txt", "w") as out:
+            processor.process(f, out)
+    ```
+
+???+ success "Output: Normalized with extracted fields"
+    ```text
+    --8<-- "features/rules/fixtures/advanced-output.txt"
+    ```
+
+    Username and IP address extracted and formatted consistently.
+
+**How field extraction works**:
+
+1. Pattern components are matched in order
+2. `text` components match literal strings
+3. `field` components capture variable data between text delimiters
+4. Captured fields are available in the `output` format string
+
+## Pattern Components
+
+### Text Matching
+
+Match literal text exactly:
+
+```yaml
+pattern:
+  - text: "User "
+  - text: "logged in"
+```
+
+**Characteristics**:
+- Case-sensitive matching
+- ANSI escape codes are automatically stripped before matching
+- Whitespace matters (must match exactly)
+
+### Field Extraction
+
+Capture variable data:
+
+```yaml
+pattern:
+  - field: username      # Captures until next delimiter
+  - text: " from "       # Delimiter
+  - field: ip_address    # Captures until end of line
+```
+
+**Field behavior**:
+- Fields capture text between delimiters
+- Last field in pattern captures until end of line
+- Field names must be valid YAML identifiers
+
+### Numbered Fields
+
+Extract numeric values:
+
+```yaml
+pattern:
+  - text: "Port "
+  - field: port_number
+    parser: NUMBER       # Only matches digits
+```
+
+**Number parser**:
+- Matches one or more digits (`0-9`)
+- Useful for ports, IDs, counts, etc.
+- Fails to match if non-digit characters are encountered
+
+## Output Formatting
+
+The `output` field defines the normalized format:
+
+```yaml
+output: "[event-type:field1={field1},field2={field2}]"
+```
+
+**Placeholders**:
+- `{fieldname}`: Replaced with extracted field value
+- Literal text: Appears as-is in output
+- Format is completely customizable
+
+**Common patterns**:
+```yaml
+# Tagged format
+output: "[tag:data={data}]"
+
+# Key-value format
+output: "event=login user={user} ip={ip}"
+
+# JSON-like format
+output: '{"event":"login","user":"{user}"}'
+
+# Simplified format
+output: "{user}@{host}"
+```
+
+## Rule Matching Behavior
+
+### Match Order
+
+Rules are tested in the order they appear in the YAML file:
+
+```yaml
+rules:
+  - name: specific_rule      # Tested first
+    pattern:
+      - text: "WARN: deprecated"
+    output: "[deprecated-warning]"
+
+  - name: general_rule       # Tested second
+    pattern:
+      - text: "WARN: "
+    output: "[warning]"
+```
+
+**Best practice**: Put more specific rules before general rules.
+
+### Unmatched Lines
+
+Lines that don't match any rule are passed through unchanged:
+
+```text
+# Input
+Matched log line
+Random unstructured text
+Another matched line
+
+# Output (with one rule matching "Matched")
+[matched]
+Random unstructured text      ← Passed through
+[matched]
+```
+
+### Match Statistics
+
+Use `--stats` to see match effectiveness:
+
+```console
+$ patterndb-yaml --rules rules.yaml input.txt > output.txt
+
+Normalization Statistics
+┌─────────────────┬────────┐
+│ Lines Processed │  1,000 │
+│ Lines Matched   │    847 │
+│ Match Rate      │  84.7% │
+└─────────────────┴────────┘
+```
+
+Low match rates suggest missing rules for common patterns.
+
+## Advanced Features
+
+### Alternatives
+
+Match any of several options:
+
+```yaml
+pattern:
+  - text: "Status: "
+  - alternatives:
+      - - text: "OK"
+      - - text: "SUCCESS"
+      - - text: "PASSED"
+  - field: details
+```
+
+Matches "Status: OK", "Status: SUCCESS", or "Status: PASSED".
+
+### Transformations
+
+Transform field values before output:
+
+```yaml
+rules:
+  - name: clean_ansi
+    pattern:
+      - text: "Output: "
+      - field: message
+    output: "[clean:{message}]"
+    transformations:
+      message: strip_ansi    # Remove ANSI escape codes
+```
+
+**Available transformations**:
+- `strip_ansi`: Remove ANSI color/formatting codes
+
+### Sequences
+
+Match multi-line patterns (advanced feature):
+
+```yaml
+rules:
+  - name: dialog_question
+    pattern:
+      - text: "[Q] "
+      - field: question
+    output: "[dialog-q:{question}]"
+    sequence:
+      followers:
+        - pattern:
+            - text: "  [A] "
+            - field: answer
+          output: "[dialog-a:{answer}]"
+```
+
+Buffers multi-line dialog patterns for atomic output.
+
+## Common Patterns
+
+### HTTP Logs
+
+```yaml
+rules:
+  - name: http_request
+    pattern:
+      - field: method
+      - text: " "
+      - field: path
+      - text: " HTTP/"
+      - field: version
+    output: "[http:{method},{path}]"
+```
+
+### Timestamps
+
+```yaml
+rules:
+  - name: iso_timestamp_log
+    pattern:
+      - field: timestamp      # ISO 8601 timestamp
+      - text: " "
+      - field: message
+    output: "[log:{message}]"  # Discard timestamp
+```
+
+### Key-Value Pairs
+
+```yaml
+rules:
+  - name: kv_pair
+    pattern:
+      - field: key
+      - text: "="
+      - field: value
+    output: "{key}={value}"   # Preserve format
+```
+
+### Error Messages
+
+```yaml
+rules:
+  - name: exception
+    pattern:
+      - field: exception_type
+      - text: ": "
+      - field: error_message
+    output: "[error:type={exception_type},msg={error_message}]"
+```
+
+## Rule Development Tips
+
+### Start Simple
+
+Begin with basic patterns and iterate:
+
+1. **Identify common log formats** in your input
+2. **Write simple rules** matching key patterns
+3. **Test with real data** and check match rates
+4. **Refine patterns** based on unmatched lines
+
+### Use Explain Mode
+
+Debug pattern matching with `--explain`:
+
+```console
+$ patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 | grep "Line 42"
+
+EXPLAIN: [Line 42] Matched rule 'http_request'
+EXPLAIN: [Line 42] Extracted fields: method='GET', path='/api/users'
+EXPLAIN: [Line 42] Output: [http:GET,/api/users]
+```
+
+### Test Match Rates
+
+Aim for high match rates to ensure complete normalization:
+
+- **90-100%**: Excellent coverage
+- **70-90%**: Good coverage, may have edge cases
+- **<70%**: Missing common patterns, needs more rules
+
+### Validate Output
+
+Check that output format is consistent:
+
+```bash
+# All output should start with same tag format
+patterndb-yaml --rules rules.yaml logs.txt | grep -v '^\['
+# Should return no lines (all lines start with [tag])
+```
+
+## Performance Considerations
+
+Rules are processed efficiently:
+
+- **Cached normalization**: Identical lines normalized once
+- **Sequential matching**: First matching rule wins (no backtracking)
+- **ANSI stripping**: Pre-compiled regex, minimal overhead
+
+**Best practice**: Order rules from most specific to most general for optimal performance.
+
+## Rule of Thumb
+
+**Write rules that are:**
+- **Specific enough** to match intended patterns accurately
+- **General enough** to handle slight variations
+- **Ordered** from specific to general
+- **Tested** with real log data to verify match rates
+
+**Avoid:**
+- Overly broad patterns that match unintended lines
+- Duplicate rules with overlapping patterns
+- Complex patterns when simple ones suffice
+
+## See Also
+
+- [Explain Mode](../explain/explain.md) - Debug pattern matching
+- [Statistics](../stats/stats.md) - Measure normalization effectiveness
+- [Generate XML](../generate-xml/generate-xml.md) - Export rules to syslog-ng format
+- [Getting Started](../../getting-started/quickstart.md) - Quick introduction to rules

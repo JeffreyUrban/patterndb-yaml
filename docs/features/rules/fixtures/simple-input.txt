@@ -1,0 +1,4 @@
+[INFO] Application started
+[ERROR] Connection timeout
+[WARN] Deprecated API used
+[DEBUG] Cache hit for key: user_123
