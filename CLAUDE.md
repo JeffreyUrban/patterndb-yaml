@@ -226,11 +226,20 @@ def public_function(param: str) -> bool:
 **Key Principles:**
 
 - Work is not complete until documentation is production-ready
-- Planning/progress docs are valuable during development - archive after completion
+- Planning/progress docs are valuable during development - **delete or archive after completion**
 - Work product docs describe current reality, not plans or history
 - Put function details in docstrings, not external docs
 - Reference code locations, don't duplicate values or implementation
 - Preserve design rationales when converting planning → work product docs
+- **Clean up as you go**: Delete TODO documents once resolved, update permanent docs instead
+
+**Documentation Cleanup:**
+
+When work is complete, **remove temporary documentation**:
+- ❌ **Delete** TODO documents that describe completed work
+- ✅ **Update** permanent documentation (design docs, implementation guides) with useful information
+- ✅ **Update** CLAUDE.md if there are lessons learned for future work
+- Don't leave the project littered with obsolete TODO files
 
 **Before creating directory structures:** Discuss scope and organization with user
 

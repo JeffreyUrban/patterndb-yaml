@@ -45,16 +45,9 @@ Our usage is minimal - we only use these features:
 - Consider using temporary directory for persist file if state persistence not needed
 - Our current implementation uses a temporary directory for both FIFOs and persist file
 
-**Current implementation** (pattern_filter.py:65-68):
+**Current implementation** (pattern_filter.py:88-98):
 ```python
 persist_file = os.path.join(self.temp_dir, "syslog-ng.persist")
-config = f"""@version: 4.3
-
-@define persist-file "{persist_file}"
-```
-
-And command line (pattern_filter.py:98-105):
-```python
 cmd = [
     "syslog-ng",
     "-f",
@@ -62,8 +55,12 @@ cmd = [
     "--foreground",
     "--stderr",
     "--no-caps",  # Disable capability management (not available in containers)
+    "--persist-file",  # Command-line option, not config directive
+    persist_file,
 ]
 ```
+
+**Note**: The persist file location MUST be set via `--persist-file` command-line option, not via `@define` in the config file.
 
 ## Strategic Questions to Answer
 
