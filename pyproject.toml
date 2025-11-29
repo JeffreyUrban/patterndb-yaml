@@ -121,10 +121,6 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 
-[[tool.mypy.overrides]]
-module = "yaml"
-ignore_missing_imports = true
-
 [tool.coverage.run]
 source = ["src/patterndb_yaml"]
 omit = ["*/tests/*"]
