@@ -4,7 +4,7 @@ Guidance for Claude Code (claude.ai/code) when working with this repository.
 
 ## Starting from a Template
 
-This project is starting from a template, and may include prototype code from elsewhere.
+This project is starting from a template, and may include prototype code.
 
 We plan to keep the structure and features from the template, adapting the new code into it.
 Avoid deleting anything unless explicitly agreed upon. Adapt the placeholder instances to the new code and this project.
@@ -12,7 +12,7 @@ Avoid deleting anything unless explicitly agreed upon. Adapt the placeholder ins
 The project is new, all code is new and we need to vet and fix all code for errors and issues that come up.
 There are no 'pre-existing issues'. Avoid overriding any quality checks. When type checking, avoid the `Any` type.
 
-This project includes tested documentation code. The documentation contains actual test cases.
+Documentation should include code and CLI commands and those should be tested. These are part of the test suite.
 
 ## Critical Rules
 

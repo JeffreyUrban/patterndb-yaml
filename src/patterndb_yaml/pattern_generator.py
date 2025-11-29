@@ -305,7 +305,7 @@ def generate_pattern_variants(
                 # opt_data is (option_name, option_value)
                 option_name, option_value = opt_data
                 option_values[option_name] = option_value
-            else:
+            elif isinstance(variant, list):
                 # Regular element (returns list of fragments)
                 pattern_parts.extend(variant)
 

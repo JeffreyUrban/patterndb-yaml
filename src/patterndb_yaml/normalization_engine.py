@@ -14,6 +14,7 @@ The engine is data-driven: rules are defined in YAML, transformations in Python.
 
 import atexit
 import re
+import sys
 import tempfile
 from pathlib import Path
 from typing import Optional
@@ -30,14 +31,17 @@ class NormalizationEngine:
     Engine for normalizing lines using pattern-based transformation rules.
     """
 
-    def __init__(self, rules_path: Path):
+    def __init__(self, rules_path: Path, explain: bool = False):
         """
         Initialize the normalization engine.
 
         Args:
             rules_path: Path to YAML rules file
+            explain: If True, output explanations to stderr
         """
         self.rules_path = rules_path
+        self.explain = explain
+        self.current_line_number = 0
 
         # Load rules from YAML
         with open(rules_path) as f:
@@ -63,6 +67,17 @@ class NormalizationEngine:
 
         # Build mapping of rule name -> rule for fast lookup
         self.rule_by_name = {rule["name"]: rule for rule in self.rules}
+
+    def _explain(self, message: str) -> None:
+        """
+        Output an explanation message to stderr if explain mode is enabled.
+
+        Args:
+            message: The explanation message to output
+        """
+        if self.explain:
+            line_info = f"[Line {self.current_line_number}]" if self.current_line_number > 0 else ""
+            print(f"EXPLAIN: {line_info} {message}", file=sys.stderr)
 
     def _parse_encoded_message(self, message: str) -> Optional[tuple[str, dict[str, str]]]:
         """
@@ -160,16 +175,26 @@ class NormalizationEngine:
         parsed = self._parse_encoded_message(matched)
         if not parsed:
             # No pattern matched or invalid encoding - return as-is
+            self._explain("No pattern matched (passed through unchanged)")
             return matched
 
         rule_name, fields = parsed
+        self._explain(f"Matched rule '{rule_name}'")
 
         # Look up the rule
         if rule_name not in self.rule_by_name:
             # Unknown rule - return encoded message
+            self._explain(
+                f"Rule '{rule_name}' not found in configuration (returned encoded message)"
+            )
             return matched
 
         rule = self.rule_by_name[rule_name]
+
+        # Show extracted fields
+        if fields:
+            fields_str = ", ".join([f"{k}={v!r}" for k, v in fields.items()])
+            self._explain(f"Extracted fields: {fields_str}")
 
         # Apply field transformations
         transformed_fields = {}
@@ -177,7 +202,9 @@ class NormalizationEngine:
             # Check if this field has transforms
             field_transforms = rule.get("field_transforms", {}).get(field_name, [])
             if field_transforms:
-                transformed_value = self._apply_field_transforms(field_value, field_transforms)
+                transformed_value = self._apply_field_transforms(
+                    field_value, field_transforms, field_name
+                )
                 transformed_fields[field_name] = transformed_value
             else:
                 transformed_fields[field_name] = field_value
@@ -185,18 +212,24 @@ class NormalizationEngine:
         # Format output using template
         output_template: str = str(rule.get("output", matched))
         try:
-            return output_template.format(**transformed_fields)
-        except KeyError:
+            formatted_output = output_template.format(**transformed_fields)
+            self._explain(f"Output: {formatted_output}")
+            return formatted_output
+        except KeyError as e:
             # Template references missing field - return encoded message
+            self._explain(f"Template error - missing field {e} (returned encoded message)")
             return matched
 
-    def _apply_field_transforms(self, field_value: str, transforms: list[str]) -> str:
+    def _apply_field_transforms(
+        self, field_value: str, transforms: list[str], field_name: str = ""
+    ) -> str:
         """
         Apply a sequence of transformations to a field value.
 
         Args:
             field_value: The field value to transform
             transforms: List of transformation function names
+            field_name: Name of the field being transformed (for explain output)
 
         Returns:
             Transformed field value
@@ -205,7 +238,13 @@ class NormalizationEngine:
         for transform_name in transforms:
             transform_func = get_transform(transform_name)
             if transform_func:
+                before = result
                 result = transform_func(result)
+                if before != result:
+                    field_info = f" to field '{field_name}'" if field_name else ""
+                    self._explain(
+                        f"Applied transform '{transform_name}'{field_info}: {before!r} → {result!r}"
+                    )
         return result
 
     def _cleanup(self) -> None:

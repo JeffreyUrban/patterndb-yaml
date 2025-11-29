@@ -158,12 +158,14 @@ def _load_sequence_config(rules_path: Path) -> tuple[dict[str, Any], set[str]]:
 
 def _initialize_engine(
     rules_path: Path,
+    explain: bool = False,
 ) -> tuple[Optional[NormalizationEngine], dict[str, Any], set[str]]:
     """
     Initialize normalization engine and load sequence configurations.
 
     Args:
         rules_path: Path to normalization_rules.yaml
+        explain: If True, enable explain mode in the engine
 
     Returns:
         Tuple of (norm_engine, sequence_configs, sequence_markers)
@@ -172,7 +174,7 @@ def _initialize_engine(
         return None, {}, set()
 
     try:
-        norm_engine = NormalizationEngine(rules_path)
+        norm_engine = NormalizationEngine(rules_path, explain=explain)
 
         # Provide a cached normalize callable to reduce repeated work on identical lines
         @lru_cache(maxsize=65536)
@@ -195,17 +197,30 @@ def _initialize_engine(
 class SequenceProcessor:
     """Handles multi-line sequence buffering and output."""
 
-    def __init__(self, sequence_configs: dict[str, Any], sequence_markers: set[str]) -> None:
+    def __init__(
+        self,
+        sequence_configs: dict[str, Any],
+        sequence_markers: set[str],
+        explain_callback: Optional[Callable[[str], None]] = None,
+    ) -> None:
         self.sequence_configs = sequence_configs
         self.sequence_markers = sequence_markers
         self.current_sequence: Optional[str] = None  # Current sequence rule being buffered
         self.sequence_buffer: list[
             tuple[str, str]
         ] = []  # List of (raw_line, normalized_line) tuples
+        self.explain_callback = explain_callback
+
+    def _explain(self, message: str) -> None:
+        """Output explanation message via callback if available."""
+        if self.explain_callback:
+            self.explain_callback(message)
 
     def flush_sequence(self, output: Union[TextIO, BinaryIO]) -> None:
         """Output buffered sequence and clear buffer."""
         if self.sequence_buffer:
+            count = len(self.sequence_buffer)
+            self._explain(f"Flushed sequence '{self.current_sequence}' ({count} lines buffered)")
             for _, norm_line in self.sequence_buffer:
                 cast(TextIO, output).write(norm_line + "\n")
         self.sequence_buffer = []
@@ -253,9 +268,15 @@ class SequenceProcessor:
             if self.is_sequence_follower(raw_line, self.current_sequence):
                 # Add to buffer and continue
                 self.sequence_buffer.append((raw_line, normalized))
+                buffer_count = len(self.sequence_buffer)
+                self._explain(
+                    f"Added follower to sequence '{self.current_sequence}' "
+                    f"(buffer: {buffer_count} lines)"
+                )
                 return
             else:
                 # Not a follower - flush the sequence first
+                self._explain(f"Line is not a follower - ending sequence '{self.current_sequence}'")
                 self.flush_sequence(output)
 
         # Check if this line starts a new sequence
@@ -264,6 +285,7 @@ class SequenceProcessor:
             # Start buffering a new sequence
             self.current_sequence = sequence_leader
             self.sequence_buffer = [(raw_line, normalized)]
+            self._explain(f"Started buffering sequence '{sequence_leader}' (leader line)")
         else:
             # Regular line - output immediately
             cast(TextIO, output).write(normalized + "\n")
@@ -291,8 +313,15 @@ class PatterndbYaml:
         self.explain = explain  # Show explanations to stderr
 
         # Initialize normalization engine and sequence processor
-        self.norm_engine, sequence_configs, sequence_markers = _initialize_engine(rules_path)
-        self.seq_processor = SequenceProcessor(sequence_configs, sequence_markers)
+        self.norm_engine, sequence_configs, sequence_markers = _initialize_engine(
+            rules_path, explain=explain
+        )
+        # Pass explain callback to SequenceProcessor
+        self.seq_processor = SequenceProcessor(
+            sequence_configs,
+            sequence_markers,
+            explain_callback=self._print_explain if explain else None,
+        )
 
         # Statistics
         self.lines_processed = 0
@@ -325,6 +354,10 @@ class PatterndbYaml:
         for line in stream:
             line = line.rstrip("\n") if isinstance(line, str) else line.decode("utf-8").rstrip("\n")
             self.lines_processed += 1
+
+            # Update line number in normalization engine for explain output
+            if self.norm_engine:
+                self.norm_engine.current_line_number = self.lines_processed
 
             # Normalize the line
             if self.norm_engine:
