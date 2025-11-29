@@ -298,5 +298,5 @@ Statistics collection has minimal overhead:
 ## See Also
 
 - [Explain Mode](../explain/explain.md) - Understand why lines matched or didn't match
+- [Writing Rules](../rules/rules.md) - How to write normalization patterns
 - [CLI Reference](../../reference/cli.md) - Complete command-line options
-- [Python API](../../reference/python-api.md) - Using `get_stats()` programmatically

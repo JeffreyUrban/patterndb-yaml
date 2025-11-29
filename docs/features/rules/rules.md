@@ -444,4 +444,4 @@ Rules are processed efficiently:
 - [Explain Mode](../explain/explain.md) - Debug pattern matching
 - [Statistics](../stats/stats.md) - Measure normalization effectiveness
 - [Generate XML](../generate-xml/generate-xml.md) - Export rules to syslog-ng format
-- [Getting Started](../../getting-started/quickstart.md) - Quick introduction to rules
+- [Quick Start](../../getting-started/quick-start.md) - Quick introduction to rules

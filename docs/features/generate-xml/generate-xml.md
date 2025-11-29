@@ -230,6 +230,6 @@ XML generation is fast:
 
 ## See Also
 
-- [Rules Documentation](../rules/rules.md) - Writing normalization rules in YAML
+- [Writing Rules](../rules/rules.md) - Writing normalization rules in YAML
 - [syslog-ng Pattern Database](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.38/administration-guide/11#TOPIC-1829071) - Official syslog-ng pattern database documentation
-- [Getting Started](../../getting-started/quickstart.md) - Basic usage with YAML rules
+- [Quick Start](../../getting-started/quick-start.md) - Basic usage with YAML rules

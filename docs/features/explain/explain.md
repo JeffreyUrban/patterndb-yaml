@@ -279,6 +279,6 @@ can clutter logs and reduce readability.
 
 ## See Also
 
-- [Pattern Rules](../../getting-started/basic-concepts.md#pattern-rules) - How to write normalization patterns
-- [Field Transformations](../../getting-started/basic-concepts.md#transformations) - Available transformation functions
+- [Writing Rules](../rules/rules.md) - How to write normalization patterns
+- [Statistics](../stats/stats.md) - Measure normalization effectiveness
 - [Troubleshooting](../../guides/troubleshooting.md) - Common issues and solutions
