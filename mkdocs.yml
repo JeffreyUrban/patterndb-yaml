@@ -67,8 +67,7 @@ nav:
       - placeholder:
           - placeholder: use-cases/placeholder/placeholder.md
   - Features:
-      - placeholder: features/placeholder/placeholder.md
-      - Writing Rules: features/rules/rules.md
+      - Rules: features/rules/rules.md
       - Explain Mode: features/explain/explain.md
       - Statistics Output: features/stats/stats.md
       - Generate XML: features/generate-xml/generate-xml.md

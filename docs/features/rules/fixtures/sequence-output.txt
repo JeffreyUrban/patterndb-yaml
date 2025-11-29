@@ -1,0 +1,10 @@
+[dialog-question:What is your name?]
+[dialog-answer:My name is Alice]
+[dialog-question:What is your favorite color?]
+[dialog-answer:Blue]
+[dialog-answer:Actually, green]
+[dialog-question:Where do you live?]
+[dialog-answer:New York]
+Regular log line without question/answer format
+[dialog-question:How old are you?]
+[dialog-answer:25]

@@ -1,17 +1,17 @@
 # Generate syslog-ng XML
 
-The `--generate-xml` flag converts YAML normalization rules into syslog-ng's native XML pattern database format.
+The `--generate-xml` flag exports YAML normalization rules to syslog-ng's native XML pattern database format. **This feature is optional** - patterndb-yaml automatically generates and uses this XML format internally for processing. The export capability is provided as a convenience for syslog-ng interoperability.
 
 ## What It Does
 
-Generate XML enables interoperability with syslog-ng:
+Generate XML enables interoperability and deployment to syslog-ng infrastructure:
 
 - **Export to syslog-ng**: Convert YAML rules to XML pattern database format
-- **Migration path**: Move existing syslog-ng XML patterns to YAML
 - **Validation**: Verify YAML rules generate valid syslog-ng patterns
-- **Use case**: Deploy normalization rules to syslog-ng infrastructure
+- **Deployment**: Use YAML-authored rules with native syslog-ng installations
+- **Not required for normal use**: patterndb-yaml handles XML generation internally
 
-**Key insight**: Write rules once in YAML, use them in both patterndb-yaml and syslog-ng.
+**Key insight**: patterndb-yaml uses syslog-ng's XML format internally. This export feature lets you see or deploy that XML.
 
 ## Example: Exporting Rules to syslog-ng Format
 
@@ -69,6 +69,8 @@ Use `--generate-xml` to convert YAML rules to syslog-ng XML format:
   - `<patterns>`: syslog-ng pattern syntax (ESTRING, etc.)
   - `<values>`: Output MESSAGE value
 - Field extraction uses syslog-ng parser syntax (`@ESTRING:field:delimiter@`)
+
+For details on syslog-ng's XML pattern database format, see the [syslog-ng Pattern Database documentation](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.38/administration-guide/11) and the [Pattern Database XML schema reference](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.38/administration-guide/12#TOPIC-1829093).
 
 ## XML Generation Details
 

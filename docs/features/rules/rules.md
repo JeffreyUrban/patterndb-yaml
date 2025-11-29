@@ -1,19 +1,36 @@
-# Writing Normalization Rules
+# Rules
 
-Normalization rules define how to match and transform log lines. Rules are written in YAML format and specify patterns to match and output formats for normalized lines.
+YAML-based normalization rules provide an intuitive way to define pattern matching and transformation logic. Rules leverage syslog-ng's high-performance patterndb engine while offering a more organized and readable format than XML, plus multi-line sequence capabilities.
 
 ## What It Does
 
-Normalization rules provide pattern-based log transformation:
+Rules enable pattern-based log normalization with a user-friendly interface:
 
-- **Pattern matching**: Identify log lines by structure and content
+- **Intuitive YAML syntax**: Define patterns in readable, structured format
+- **High-performance matching**: Powered by syslog-ng's proven patterndb engine
 - **Field extraction**: Capture variable data from log lines
 - **Output formatting**: Transform matched lines to consistent format
+- **Multi-line sequences**: Group related lines together (unique to patterndb-yaml)
 - **Use case**: Normalize heterogeneous logs for analysis, diff comparison, or monitoring
 
-**Key insight**: Rules let you standardize diverse log formats into consistent, structured output.
+**Key insight**: Write rules once in YAML, get syslog-ng's performance plus enhanced capabilities.
 
-## Basic Rule Structure
+## Pattern Matching Engine
+
+Under the hood, patterndb-yaml uses [syslog-ng's patterndb](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.38/administration-guide/11) as its matching engine. When you provide YAML rules, patterndb-yaml:
+
+1. Converts your YAML to syslog-ng's XML pattern database format
+2. Loads the patterns into syslog-ng's high-performance matching engine
+3. Applies patterns to normalize your logs
+
+This gives you:
+- **Battle-tested performance**: syslog-ng processes millions of messages per second
+- **Reliable pattern matching**: Proven in production environments worldwide
+- **Extended capabilities**: Multi-line sequences and simplified syntax
+
+## Writing Normalization Rules
+
+### Basic Rule Structure
 
 A normalization rule has three required components:
 
@@ -26,7 +43,7 @@ rules:
     output: "[tag:{field}]"       # Normalized output format
 ```
 
-## Example: Simple Text Matching
+### Example: Simple Text Matching
 
 Match log lines by fixed text patterns:
 
@@ -80,7 +97,7 @@ Match log lines by fixed text patterns:
 2. When a pattern matches, the rule's `output` format is used
 3. The `{message}` placeholder is replaced with the captured field value
 
-## Example: Field Extraction
+### Example: Field Extraction
 
 Extract multiple fields from structured log lines:
 
@@ -251,7 +268,7 @@ Random unstructured text      ← Passed through
 
 ### Match Statistics
 
-Use `--stats` to see match effectiveness:
+Use statistics to see match effectiveness:
 
 ```console
 $ patterndb-yaml --rules rules.yaml input.txt > output.txt
@@ -302,26 +319,75 @@ rules:
 **Available transformations**:
 - `strip_ansi`: Remove ANSI color/formatting codes
 
-### Sequences
+### Sequences: Multi-Line Pattern Matching
 
-Match multi-line patterns (advanced feature):
+Sequences allow you to group related lines together for atomic processing. This is particularly useful for multi-line log entries like dialogs, stack traces, or multi-part messages.
 
-```yaml
-rules:
-  - name: dialog_question
-    pattern:
-      - text: "[Q] "
-      - field: question
-    output: "[dialog-q:{question}]"
-    sequence:
-      followers:
-        - pattern:
-            - text: "  [A] "
-            - field: answer
-          output: "[dialog-a:{answer}]"
-```
+A sequence consists of:
+- **Leader pattern**: The first line that starts the sequence
+- **Follower patterns**: Subsequent lines that belong to the sequence
+- **Buffering behavior**: All sequence lines are buffered and output together
 
-Buffers multi-line dialog patterns for atomic output.
+#### Example: Dialog Question-Answer Pairs
+
+???+ note "Input: Interactive dialog logs"
+    ```text
+    --8<-- "features/rules/fixtures/sequence-input.txt"
+    ```
+
+    Question-answer dialog with indented answers following each question.
+
+???+ note "Rules: Match question-answer sequences"
+    ```yaml
+    --8<-- "features/rules/fixtures/sequence-rules.yaml"
+    ```
+
+    Leader pattern matches questions, follower pattern matches indented answers.
+
+=== "CLI"
+
+    <!-- verify-file: output.txt expected: sequence-output.txt -->
+    <!-- termynal -->
+    ```console
+    $ patterndb-yaml --rules sequence-rules.yaml sequence-input.txt \
+        --quiet > output.txt
+    ```
+
+=== "Python"
+
+    <!-- verify-file: output.txt expected: sequence-output.txt -->
+    ```python
+    from patterndb_yaml import PatterndbYaml
+    from pathlib import Path
+
+    processor = PatterndbYaml(rules_path=Path("sequence-rules.yaml"))
+
+    with open("sequence-input.txt") as f:
+        with open("output.txt", "w") as out:
+            processor.process(f, out)
+    ```
+
+???+ success "Output: Grouped sequences"
+    ```text
+    --8<-- "features/rules/fixtures/sequence-output.txt"
+    ```
+
+    Questions normalized, answers buffered with each question group.
+
+**How sequences work**:
+
+1. **Leader line** matches and starts buffering
+2. **Follower lines** are buffered (added to the sequence)
+3. **Non-follower line** ends the sequence
+4. **All buffered lines** are output together atomically
+
+This ensures related lines stay together even during streaming processing.
+
+**When to use sequences**:
+- Multi-line error messages or stack traces
+- Question-answer pairs or dialogs
+- Header-detail log entries
+- Any related group of lines that should be processed atomically
 
 ## Common Patterns
 
@@ -418,11 +484,12 @@ patterndb-yaml --rules rules.yaml logs.txt | grep -v '^\['
 
 ## Performance Considerations
 
-Rules are processed efficiently:
+Rules are processed efficiently using syslog-ng's optimized engine:
 
 - **Cached normalization**: Identical lines normalized once
 - **Sequential matching**: First matching rule wins (no backtracking)
 - **ANSI stripping**: Pre-compiled regex, minimal overhead
+- **syslog-ng performance**: Battle-tested at scale
 
 **Best practice**: Order rules from most specific to most general for optimal performance.
 
@@ -445,3 +512,4 @@ Rules are processed efficiently:
 - [Statistics](../stats/stats.md) - Measure normalization effectiveness
 - [Generate XML](../generate-xml/generate-xml.md) - Export rules to syslog-ng format
 - [Quick Start](../../getting-started/quick-start.md) - Quick introduction to rules
+- [syslog-ng Pattern Database Documentation](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.38/administration-guide/11) - Underlying pattern matching engine

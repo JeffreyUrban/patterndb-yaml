@@ -1,0 +1,12 @@
+rules:
+  - name: dialog_question
+    pattern:
+      - text: "[Q] "
+      - field: question
+    output: "[dialog-question:{question}]"
+    sequence:
+      followers:
+        - pattern:
+            - text: "  [A] "
+            - field: answer
+          output: "[dialog-answer:{answer}]"

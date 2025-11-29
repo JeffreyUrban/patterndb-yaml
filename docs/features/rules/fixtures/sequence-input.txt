@@ -1,0 +1,10 @@
+[Q] What is your name?
+  [A] My name is Alice
+[Q] What is your favorite color?
+  [A] Blue
+  [A] Actually, green
+[Q] Where do you live?
+  [A] New York
+Regular log line without question/answer format
+[Q] How old are you?
+  [A] 25
