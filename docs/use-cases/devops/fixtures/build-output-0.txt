@@ -1,0 +1,10 @@
+✓ Builds 1 and 2 are reproducible
+✗ Build 3 has changes:
+4c4
+< [dependency:libssl,3.0.2]
+---
+> [dependency:libssl,3.0.7]
+9c9
+< [binary-hash:sha256:7a3f8e2c9b1d4e6f0a2b5c8d3e7f1a4b]
+---
+> [binary-hash:sha256:8b4f9e3d0c2e5f7a1b3c6d9e4f8a2b5c]

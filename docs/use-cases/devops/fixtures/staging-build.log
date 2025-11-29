@@ -1,0 +1,10 @@
+[2024-11-15 15:47:23] Build started (PID: 29834)
+[2024-11-15 15:47:23] Working directory: /tmp/build-c7b4f8e2
+[2024-11-15 15:47:23] Compiler: gcc 11.4.0
+[2024-11-15 15:47:24] Dependency: libssl 3.0.2
+[2024-11-15 15:47:24] Dependency: zlib 1.2.11
+[2024-11-15 15:47:25] Compiling src/main.c... success (0.221s)
+[2024-11-15 15:47:25] Compiling src/utils.c... success (0.198s)
+[2024-11-15 15:47:26] Linking binary... success
+[2024-11-15 15:47:26] Binary hash: sha256:7a3f8e2c9b1d4e6f0a2b5c8d3e7f1a4b
+[2024-11-15 15:47:26] Build completed (total: 3.145s)

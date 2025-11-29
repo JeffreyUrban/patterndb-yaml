@@ -80,10 +80,17 @@ Create rules that preserve meaningful data while filtering ephemeral details:
 
 === "Python"
 
+    <!-- verify-file: output.txt expected: build-output-0.txt -->
     ```python
+    import sys
     from patterndb_yaml import PatterndbYaml
     from pathlib import Path
     import subprocess
+
+    # Redirect stdout to file for testing
+    _original_stdout = sys.stdout
+    output_file = open("output.txt", "w")
+    sys.stdout = output_file
 
     # Normalize all three builds
     processor = PatterndbYaml(
@@ -116,6 +123,10 @@ Create rules that preserve meaningful data while filtering ephemeral details:
     if result.returncode != 0:
         print("✗ Build 3 has changes:")
         print(result.stdout)
+
+    # Restore stdout and close output file
+    sys.stdout = _original_stdout
+    output_file.close()
     ```
 
 ## Expected Output
@@ -188,10 +199,17 @@ fi
 
 Verify build artifacts match across environments:
 
+<!-- verify-file: output.txt expected: build-output-1.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("build-rules.yaml"))
 
@@ -220,6 +238,10 @@ else:
     print(f"  Dev:     {dev_hash}")
     print(f"  Staging: {staging_hash}")
     print(f"  Prod:    {prod_hash}")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 4. Historical Build Comparison
