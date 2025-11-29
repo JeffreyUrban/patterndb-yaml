@@ -1,0 +1,10 @@
+[info:Application started]
+[debug:Loading configuration from /etc/app/config.yaml]
+[info:Database connection established]
+[error:Failed to connect to cache server: timeout]
+[warn:Retrying cache connection (attempt 1/3)]
+[info:Cache connection successful]
+Some random line without a log level
+[debug:Loading user preferences]
+[info:User authentication successful for user: admin]
+Another unmatched line for variety
