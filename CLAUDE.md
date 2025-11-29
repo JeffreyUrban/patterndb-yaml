@@ -2,12 +2,56 @@
 
 Guidance for Claude Code (claude.ai/code) when working with this repository.
 
-## Starting from a Template
+## Working with a Template-Based Project
 
-This project is starting from a template, and may include prototype code.
+**CRITICAL: This project uses a custom template designed to be release-ready from day one.**
 
-We plan to keep the structure and features from the template, adapting the new code into it.
-Avoid deleting anything unless explicitly agreed upon. Adapt the placeholder instances to the new code and this project.
+### Template Philosophy
+
+The template provides **complete, working infrastructure**:
+- README with badges (PyPI, Tests, Coverage, etc.) - keep ALL badges even if they show "no release"
+- CI/CD workflows fully configured
+- Documentation structure with examples
+- Test framework with fixtures
+- All quality checks (coverage, type checking, linting)
+
+### What to DO:
+1. **Fill in template content** - Replace "placeholder" text with real project-specific content
+2. **Follow template structure** - When creating new docs/tests, use existing templates as examples
+3. **Keep all infrastructure** - README badges, CI workflows, doc structure stay intact
+4. **Adapt, don't delete** - Modify template examples to fit this project, don't start from scratch
+
+### What NOT to do:
+- ❌ Delete README badges because "they don't work yet"
+- ❌ Remove CI/CD workflows because "we're not ready"
+- ❌ Delete template documentation and start over
+- ❌ Remove quality checks because "coverage is too low"
+- ❌ Strip out infrastructure "until we need it"
+
+### Progressive Development Pattern:
+- Template docs marked with `# ⚠️ Template doc: Testing disabled ⚠️` are automatically skipped in tests
+- **Remove the warning heading when doc is ready** - testing automatically enables
+- Coverage threshold starts low (30%), should be increased as code matures
+- All template infrastructure stays in place, just incomplete content gets filled in
+
+### Examples of Correct Approach:
+
+**Wrong:**
+```markdown
+Let me remove these badges since PyPI doesn't exist yet...
+Let me delete this template doc and write a new one...
+This CI workflow is too complex, let me simplify it...
+```
+
+**Right:**
+```markdown
+Let me fill in this template doc with real content for this project...
+Let me use this existing doc as a template for the new feature doc...
+Let me add real test data to these template fixtures...
+```
+
+### Remember:
+The user has invested significant effort designing a complete template. **Respect that work** by filling it in, not replacing it. When in doubt, ask before deleting ANY template infrastructure.
 
 The project is new, all code is new and we need to vet and fix all code for errors and issues that come up.
 There are no 'pre-existing issues'. Avoid overriding any quality checks. When type checking, avoid the `Any` type.
