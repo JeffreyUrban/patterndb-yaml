@@ -39,4 +39,4 @@ placeholder
 
 - [Performance Guide](./performance.md) - Optimization tips
 - [Troubleshooting](./troubleshooting.md) - Solving common issues
-- [Use Cases](../use-cases/) - Detailed scenario-specific examples
+- [Writing Rules](../features/rules/rules.md) - How to write normalization patterns

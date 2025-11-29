@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<patterndb version="6" pub_date="2025-01-18">
+  <ruleset name="normalization" id="normalization">
+    <description>Normalization rules for diff comparison</description>
+    <pattern>claude</pattern>
+    <rules>
+      <rule provider="claude-logging" id="ssh_login_success" class="normalization">
+        <patterns>
+          <pattern>^Accepted @ESTRING:auth_method: for @@ESTRING:user: from @@ESTRING:ip_address:$@</pattern>
+        </patterns>
+        <values>
+          <value name="MESSAGE">[ssh_login_success]|auth_method=$auth_method|user=$user|ip_address=$ip_address|</value>
+        </values>
+      </rule>
+      <rule provider="claude-logging" id="ssh_login_failed" class="normalization">
+        <patterns>
+          <pattern>^Failed password for @ESTRING:user: from @@ESTRING:ip_address:$@</pattern>
+        </patterns>
+        <values>
+          <value name="MESSAGE">[ssh_login_failed]|user=$user|ip_address=$ip_address|</value>
+        </values>
+      </rule>
+    </rules>
+  </ruleset>
+</patterndb>

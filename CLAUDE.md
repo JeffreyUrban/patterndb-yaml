@@ -310,6 +310,98 @@ When implementing or fixing features:
 - Document violations of requirements as "limitations" or "TODO" items
 - **Make unsubstantiated causal claims** - only state what is observed, not assumed causes
 
+### Feature and Use Case Documentation Pattern
+
+**Locations**:
+- Features: `docs/features/[feature-name]/[feature-name].md`
+- Use cases: `docs/use-cases/[use-case-name]/[use-case-name].md`
+
+**Purpose**: User-facing documentation for features and use cases with executable examples.
+
+**Template**: Follow the pattern in `docs/features/placeholder/placeholder.md`
+
+**Key Requirements:**
+
+1. **Tabbed CLI/Python Examples** - Show CLI and Python side-by-side, NOT in separate sections:
+   ```markdown
+   === "CLI"
+       <!-- verify-file: output.txt expected: expected-output.txt -->
+       <!-- termynal -->
+       ```console
+       $ patterndb-yaml --rules rules.yaml input.txt > output.txt
+       ```
+
+   === "Python"
+       <!-- verify-file: output.txt expected: expected-output.txt -->
+       ```python
+       from patterndb_yaml import PatterndbYaml
+       from pathlib import Path
+
+       processor = PatterndbYaml(rules_path=Path("rules.yaml"))
+
+       with open("input.txt") as f:
+           with open("output.txt", "w") as out:
+               processor.process(f, out)
+       ```
+   ```
+
+2. **Output to Files** - Code blocks should write output to files, NOT display output inline:
+   - ✅ Right: `patterndb-yaml ... > output.txt`
+   - ❌ Wrong: `patterndb-yaml ...` (showing output in same block)
+
+3. **Display Output from Fixtures** - Use admonitions with file inclusion:
+   ```markdown
+   ???+ success "Output: Description"
+       ```text
+       --8<-- "features/explain/fixtures/expected-output.txt"
+       ```
+   ```
+
+4. **Test Markers** - Include verify-file markers for executable testing:
+   ```markdown
+   <!-- verify-file: output.txt expected: expected-output.txt -->
+   ```
+
+5. **Annotations for Key Concepts** - Use numbered annotations in code:
+   ```python
+   processor = PatterndbYaml(
+       rules_path=Path("rules.yaml"),
+       explain=True  # (1)!
+   )
+   ```
+
+   Then add explanations after the code block:
+   ```markdown
+   1. Explanations are written to stderr automatically
+   ```
+
+6. **Simplified, Realistic Examples** - Focus on the feature being documented:
+   - Don't overcomplicate with multiple features
+   - Use realistic but simple input/output
+   - Highlight what makes this feature useful
+
+7. **Template Headers** - Template docs (not yet written) have:
+   ```markdown
+   # ⚠️ Template doc: Testing disabled ⚠️
+   ```
+
+**Structure (Features):**
+- **What It Does** - Brief overview
+- **Examples** - Tabbed CLI/Python blocks demonstrating the feature
+- **Common Use Cases** - Practical applications
+- **See Also** - Links to related features/docs
+
+**Structure (Use Cases):**
+- Use case-specific sections (varies by use case)
+- Follow same formatting patterns (tabs, file output, fixtures, etc.)
+- Examples should demonstrate the use case scenario
+
+**DON'T:**
+- Create separate "Python API" sections (use tabs instead)
+- Show output inline in code blocks (write to files, display separately)
+- Duplicate CLI/Python examples (use tabs to show both approaches)
+- Write documentation for features not yet implemented (use template marker)
+
 **Example violations:**
 
 *Requirement violation:*
@@ -347,6 +439,54 @@ This project uses **pytest exclusively** (not unittest).
 1. **Use pytest markers** - `@pytest.mark.unit`, `@pytest.mark.integration`, `@pytest.mark.slow`
 2. Reference `dev-docs/testing/TESTING_STRATEGY.md` and `dev-docs/testing/TEST_COVERAGE.md` to understand test organization and coverage
 3. When tests fail, determine if the change is a fix (regenerate tests) or a regression (fix the code)
+
+### Testable Documentation and Specification Tests
+
+**This project uses documentation as specification through executable examples.**
+
+**Intentional Test Failures:**
+
+Tests SHOULD fail when they document intended behavior that isn't yet implemented:
+
+- **Purpose**: Serve as both specification and test for future implementation
+- **Benefit**: Clear, executable documentation of what SHOULD happen
+- **Identification**: Look for notes in documentation like "specified but not yet fully implemented"
+
+**Example Pattern:**
+```markdown
+???+ success "Expected Output: Feature behavior (specification)"
+    ```text
+    --8<-- "features/example/fixtures/expected-output.txt"
+    ```
+
+    **Expected behavior**: Description of what should happen
+
+    **Note**: This feature is specified but not yet fully implemented.
+    Currently [describe actual behavior].
+```
+
+**When You See Failing Documentation Tests:**
+
+1. **Check if intentional** - Look for specification notes in the documentation
+2. **Intentional failures are CORRECT** - They document requirements, don't "fix" them
+3. **Unintentional failures need fixing** - Missing files, wrong paths, etc. should be resolved
+
+**DO NOT:**
+- ❌ Remove or skip specification tests because they fail
+- ❌ Change expected output to match current (incorrect) behavior
+- ❌ Add workarounds to make specification tests pass when feature isn't implemented
+
+**DO:**
+- ✅ Keep specification tests that document intended behavior
+- ✅ Add notes explaining the gap between expected and actual behavior
+- ✅ Use these tests as implementation guides when building the feature
+
+**Example from this project:**
+
+The sequence follower normalization test (docs/features/rules/rules.md:355) fails because:
+- **Expected**: Follower lines normalized to `[dialog-answer:...]` format
+- **Actual**: Follower lines passed through unchanged as `[A] ...`
+- **Status**: Intentional - documents the specification for future implementation
 
 ## Common Task Checklists
 

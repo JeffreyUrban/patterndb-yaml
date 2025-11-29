@@ -1,7 +1,10 @@
-placeholder
-Processing: input.txt
 {
   "statistics": {
-    "placeholder": placeholder
+    "lines_processed": 10,
+    "lines_matched": 10,
+    "match_rate": 1.0
+  },
+  "configuration": {
+    "rules_path": "rules.yaml"
   }
 }

@@ -1,0 +1,11 @@
+[Q] What is your name?
+- My name is Alice
+[Q] What is your favorite color?
+- Blue
+- Actually, green
+[Q] Where do you live?
+- New York
+Regular log line without question/answer format
+- This line starts with a dash but is not an answer
+[Q] How old are you?
+- 25

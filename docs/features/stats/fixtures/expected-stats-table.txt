@@ -1,9 +1,9 @@
-placeholder
-Processing: input.txt
 
-        placeholder Statistics
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
-┃ Metric                   ┃     Value ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
-│ placeholder                     │      placeholder │
-└──────────────────────────┴───────────┘
+  Normalization Statistics
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃ Metric          ┃  Value ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│ Lines Processed │     10 │
+│ Lines Matched   │     10 │
+│ Match Rate      │ 100.0% │
+└─────────────────┴────────┘

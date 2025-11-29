@@ -1,0 +1,16 @@
+rules:
+  - name: successful_login
+    pattern:
+      - text: "User "
+      - field: username
+      - text: " logged in from "
+      - field: ip_address
+    output: "[login-success:user={username},ip={ip_address}]"
+
+  - name: failed_login
+    pattern:
+      - text: "Failed login attempt for "
+      - field: username
+      - text: " from "
+      - field: ip_address
+    output: "[login-failed:user={username},ip={ip_address}]"

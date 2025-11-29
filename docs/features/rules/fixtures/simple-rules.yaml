@@ -1,0 +1,24 @@
+rules:
+  - name: log_info
+    pattern:
+      - text: "[INFO] "
+      - field: message
+    output: "[info:{message}]"
+
+  - name: log_error
+    pattern:
+      - text: "[ERROR] "
+      - field: message
+    output: "[error:{message}]"
+
+  - name: log_warn
+    pattern:
+      - text: "[WARN] "
+      - field: message
+    output: "[warn:{message}]"
+
+  - name: log_debug
+    pattern:
+      - text: "[DEBUG] "
+      - field: message
+    output: "[debug:{message}]"
