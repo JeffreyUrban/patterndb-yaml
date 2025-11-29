@@ -61,11 +61,7 @@ class PatternMatcher:
         print("DEBUG: FIFOs created successfully", file=sys.stderr, flush=True)
 
         # Write syslog-ng configuration
-        # Use temp_dir for persist file to avoid permission issues
-        persist_file = os.path.join(self.temp_dir, "syslog-ng.persist")
         config = f"""@version: 4.3
-
-@define persist-file "{persist_file}"
 
 source s_pipe {{
     pipe("{self.input_fifo}" flags(no-parse));
@@ -99,6 +95,8 @@ log {{
         print("DEBUG: Config written successfully", file=sys.stderr, flush=True)
 
         # Start syslog-ng process
+        # Use temp_dir for persist file to avoid permission issues
+        persist_file = os.path.join(self.temp_dir, "syslog-ng.persist")
         cmd = [
             "syslog-ng",
             "-f",
@@ -106,6 +104,8 @@ log {{
             "--foreground",
             "--stderr",
             "--no-caps",  # Disable capability management (not available in containers)
+            "--persist-file",
+            persist_file,
         ]
         print(f"DEBUG: Starting syslog-ng: {cmd}", file=sys.stderr, flush=True)
         self.process = subprocess.Popen(
