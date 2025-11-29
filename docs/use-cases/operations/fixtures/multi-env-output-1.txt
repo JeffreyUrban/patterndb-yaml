@@ -1,0 +1,8 @@
+✓ All environments behave identically
+
+Core business flow:
+  [db-connect]
+  [user-login:alice@example.com]
+  [order-created:5001,user:123]
+  [payment-processed:5001,amount:$99.99]
+  [order-shipped:5001]

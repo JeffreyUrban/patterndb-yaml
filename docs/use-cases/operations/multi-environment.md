@@ -85,10 +85,17 @@ Create rules that extract business logic while ignoring environment-specific det
 
 === "Python"
 
+    <!-- verify-file: output.txt expected: multi-env-output-1.txt -->
     ```python
+    import sys
     from patterndb_yaml import PatterndbYaml
     from pathlib import Path
     import subprocess
+
+    # Redirect stdout to file for testing
+    _original_stdout = sys.stdout
+    output_file = open("output.txt", "w")
+    sys.stdout = output_file
 
     # Normalize all three environments
     processor = PatterndbYaml(rules_path=Path("multi-env-rules.yaml"))
@@ -127,6 +134,10 @@ Create rules that extract business logic while ignoring environment-specific det
             print("\nStaging vs Prod differences:")
             print(f"  Staging only: {set(staging_core) - set(prod_core)}")
             print(f"  Prod only: {set(prod_core) - set(staging_core)}")
+
+    # Restore stdout and close output file
+    sys.stdout = _original_stdout
+    output_file.close()
     ```
 
 ## Expected Output
@@ -172,10 +183,17 @@ fi
 
 Detect when environments drift in behavior:
 
+<!-- verify-file: output.txt expected: multi-env-output-2.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 from collections import Counter
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("env-rules.yaml"))
 
@@ -204,6 +222,10 @@ for event in set(prod_events.keys()) | set(staging_events.keys()):
     if variance > 0.10:
         print(f"⚠ Event frequency differs: {event}")
         print(f"  Production: {prod_count}, Staging: {staging_count}")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 3. Feature Flag Verification
@@ -230,9 +252,16 @@ diff dev-flag-norm.log staging-flag-norm.log || {
 
 Verify load test in staging matches production patterns:
 
+<!-- verify-file: output.txt expected: multi-env-output-3.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("env-rules.yaml"))
 
@@ -274,6 +303,10 @@ else:
     print("⚠ Staging has unexpected workflows:")
     for workflow in staging_workflows - prod_workflows:
         print(f"  {' → '.join(workflow)}")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 5. Smoke Test Across Environments

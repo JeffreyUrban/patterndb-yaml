@@ -1,0 +1,5 @@
+2024-11-15T10:15:23.456Z [INFO] api-staging-01.internal:8080 - Connecting to database: postgres@db-staging.internal:5432/myapp
+2024-11-15T10:15:23.789Z [INFO] api-staging-01.internal:8080 - User login: alice@example.com (session: stg-sess-x7y8z9)
+2024-11-15T10:15:25.012Z [INFO] api-staging-01.internal:8080 - Order created: #5001 for user 123
+2024-11-15T10:15:25.345Z [INFO] api-staging-01.internal:8080 - Payment processed: order #5001, amount $99.99
+2024-11-15T10:15:26.678Z [INFO] api-staging-01.internal:8080 - Order shipped: #5001
