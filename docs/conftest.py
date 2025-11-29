@@ -257,8 +257,15 @@ def evaluate_python_block(example):
                     f"File sizes: {len(actual_output)} vs {len(expected_output_content)} bytes"
                 )
             else:
-                actual_output = output_file.read_text().strip()
-                expected_output_content = expected_file_path.read_text().strip()
+                # Normalize output by stripping trailing whitespace from each line
+                # This allows expected files to pass pre-commit hooks while matching
+                # actual output that may have trailing spaces (e.g., from Rich tables)
+                def normalize_text(text: str) -> str:
+                    lines = [line.rstrip() for line in text.splitlines()]
+                    return "\n".join(lines).strip()
+
+                actual_output = normalize_text(output_file.read_text())
+                expected_output_content = normalize_text(expected_file_path.read_text())
 
                 assert actual_output == expected_output_content, (
                     f"\nPython code output mismatch\n"
