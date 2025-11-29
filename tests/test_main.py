@@ -6,6 +6,13 @@ import sys
 import pytest
 
 
+def test_main_module_import():
+    """Test that __main__ module can be imported (for coverage)."""
+    # This test ensures the __main__ module is imported for coverage tracking
+    # The actual execution is tested via subprocess in other tests
+    import patterndb_yaml.__main__  # noqa: F401
+
+
 @pytest.mark.integration
 def test_main_module_execution(tmp_path):
     """Test running patterndb-yaml as a module with python -m."""
