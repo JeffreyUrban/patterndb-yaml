@@ -82,11 +82,18 @@ Create rules that extract events and normalize correlation ID names:
 
 === "Python"
 
+    <!-- verify-file: output.txt expected: distributed-output-0.txt -->
     ```python
+    import sys
     from patterndb_yaml import PatterndbYaml
     from pathlib import Path
     from collections import defaultdict
     import re
+
+    # Redirect stdout to file for testing
+    _original_stdout = sys.stdout
+    output_file = open("output.txt", "w")
+    sys.stdout = output_file
 
     # Combine and normalize all service logs
     processor = PatterndbYaml(rules_path=Path("distributed-rules.yaml"))
@@ -137,6 +144,10 @@ Create rules that extract events and normalize correlation ID names:
             print(f"{prefix} {event['event']}")
 
         print()
+
+    # Restore stdout and close output file
+    sys.stdout = _original_stdout
+    output_file.close()
     ```
 
 ## Expected Output
@@ -180,10 +191,17 @@ Create rules that extract events and normalize correlation ID names:
 
 Trace failed requests to find root cause:
 
+<!-- verify-file: output.txt expected: distributed-output-1.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("distributed-rules.yaml"))
 
@@ -227,16 +245,27 @@ for request_id in sorted(failed_requests):
                 print(f"    {line.strip()}")
 
     print()
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 2. Service Dependency Mapping
 
 Identify service call patterns:
 
+<!-- verify-file: output.txt expected: distributed-output-2.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("distributed-rules.yaml"))
 
@@ -280,6 +309,10 @@ for caller, callees in sorted(dependencies.items()):
     print(f"{caller} →")
     for callee in sorted(callees):
         print(f"    {callee}")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 3. Latency Bottleneck Detection
@@ -308,11 +341,18 @@ grep '^\[req-' normalized.log | \
 
 Calculate error rates for each service:
 
+<!-- verify-file: output.txt expected: distributed-output-3.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 from collections import Counter
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("distributed-rules.yaml"))
 
@@ -348,16 +388,27 @@ for service in sorted(service_events.keys()):
 
     status = "⚠" if rate > 10 else "✓"
     print(f"{status} {service:<18} {total:<10} {errors:<10} {rate:>6.1f}%")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ### 5. Request Correlation Dashboard
 
 Generate summary of all requests:
 
+<!-- verify-file: output.txt expected: distributed-output-4.txt -->
 ```python
+import sys
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 import re
+
+# Redirect stdout to file for testing
+_original_stdout = sys.stdout
+output_file = open("output.txt", "w")
+sys.stdout = output_file
 
 processor = PatterndbYaml(rules_path=Path("distributed-rules.yaml"))
 
@@ -413,6 +464,10 @@ failure_pct = failed / total * 100
 
 print(f"\nSummary: {total} requests, {success} success, "
       f"{failed} failed ({failure_pct:.0f}% failure rate)")
+
+# Restore stdout and close output file
+sys.stdout = _original_stdout
+output_file.close()
 ```
 
 ## Key Benefits

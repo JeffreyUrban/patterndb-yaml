@@ -1,0 +1,7 @@
+Error Rates by Service:
+
+Service              Total      Errors     Rate
+--------------------------------------------------
+✓ gateway            6          0             0.0%
+⚠ order              8          1            12.5%
+⚠ payment            4          1            25.0%

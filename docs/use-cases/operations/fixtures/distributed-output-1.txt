@@ -1,0 +1,11 @@
+Root Cause Analysis:
+
+Request: req-ghi789
+Timeline:
+    [req-ghi789] gateway:request:POST:/orders
+    [req-ghi789] gateway:response:status=500
+    [req-ghi789] order:created:order_id=5002
+    [req-ghi789] order:calling_payment
+  → [req-ghi789] order:payment_failed  <-- ROOT CAUSE
+    [req-ghi789] payment:processing
+  → [req-ghi789] payment:error  <-- ROOT CAUSE
