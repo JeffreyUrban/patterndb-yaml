@@ -1,23 +1,34 @@
 # Explain Mode
 
 The `--explain` flag outputs diagnostic messages to stderr showing how lines are being processed.
-This helps you understand the normalization decisions being made in real-time.
 
 ## What It Does
 
-Explain mode adds diagnostic messages to stderr:
+Explain mode adds diagnostic messages to stderr for every processing decision:
 
-- **Normal mode**: Normalization happens silently
-- **With explain**: Messages show pattern matching, field extraction, transformations, and sequence processing
-- **Use case**: Debugging patterns, understanding transformations, troubleshooting unexpected output
+- **Pattern matching**: Whether a line matched a rule
+- **Field extraction**: What values were extracted
+- **Transformations**: How values were modified
+- **Sequence processing**: Multi-line buffering events
+- **Output generation**: Final normalized output
 
 **Key insight**: Explanations go to stderr, so stdout remains clean for piping normalized output.
 
-## Example: Understanding Pattern Matching
+## Example: Debugging Pattern Matching
+
+This example shows how explain mode helps you understand which patterns are matching and why.
+
+???+ note "Input: Dialog with ANSI codes"
+    ```text hl_lines="1 3"
+    --8<-- "features/explain/fixtures/input.txt"
+    ```
+
+    **Line 1**: Dialog question with ANSI formatting
+    **Line 3**: Dialog answer with ANSI formatting
 
 ### Without Explain: Silent Processing
 
-Without `--explain`, normalization happens without feedback.
+Without `--explain`, normalization happens without feedback:
 
 === "CLI"
 
@@ -42,7 +53,12 @@ Without `--explain`, normalization happens without feedback.
             processor.process(f, out)
     ```
 
-You see the normalized output but don't know what happened internally.
+???+ success "Output: Normalized dialog"
+    ```text
+    --8<-- "features/explain/fixtures/expected-output.txt"
+    ```
+
+    You see the normalized output but don't know what happened internally.
 
 ### With Explain: Documented Decisions
 
@@ -57,11 +73,6 @@ With `--explain`, stderr shows why each line was processed the way it was:
         > output.txt 2> explain.txt
     ```
 
-    Explanation output (`explain.txt`):
-    ```text
-    --8<-- "features/explain/fixtures/expected-explain.txt"
-    ```
-
 === "Python"
 
     <!-- verify-file: explain.txt expected: expected-explain.txt -->
@@ -72,7 +83,7 @@ With `--explain`, stderr shows why each line was processed the way it was:
 
     processor = PatterndbYaml(
         rules_path=Path("rules.yaml"),
-        explain=True  # Explanations go to stderr
+        explain=True  # (1)!
     )
 
     with open("input.txt") as f:
@@ -87,6 +98,18 @@ With `--explain`, stderr shows why each line was processed the way it was:
                     sys.stderr = old_stderr
     ```
 
+    1. Explanations are written to stderr automatically
+
+???+ success "Explanation output"
+    ```text
+    --8<-- "features/explain/fixtures/expected-explain.txt"
+    ```
+
+    **Pattern matching**: Shows which rule matched each line
+    **Field extraction**: Shows extracted field values
+    **Transformations**: Shows how ANSI codes were stripped
+    **Output**: Shows the final normalized output
+
 ## Explanation Message Types
 
 ### 1. Pattern Matching
@@ -94,8 +117,8 @@ With `--explain`, stderr shows why each line was processed the way it was:
 Shows whether a line matched a normalization rule:
 
 ```
-EXPLAIN: [Line 42] Matched rule 'dialog_question'
-EXPLAIN: [Line 43] No pattern matched (passed through unchanged)
+EXPLAIN: [Line 1] Matched rule 'dialog_question'
+EXPLAIN: [Line 2] No pattern matched (passed through unchanged)
 ```
 
 **Why useful**: Quickly see if your patterns are working.
@@ -105,7 +128,7 @@ EXPLAIN: [Line 43] No pattern matched (passed through unchanged)
 Shows extracted field values from matched patterns:
 
 ```
-EXPLAIN: [Line 42] Extracted fields: content='What is your name?', number='1'
+EXPLAIN: [Line 1] Extracted fields: content='What is your name?', number='1'
 ```
 
 **Why useful**: Debug field patterns and delimiters.
@@ -114,17 +137,9 @@ EXPLAIN: [Line 42] Extracted fields: content='What is your name?', number='1'
 
 Shows transformations applied to field values:
 
-```bash
-patterndb-yaml --rules rules.yaml input.txt --explain 2> explain.txt
-cat explain.txt
 ```
-
-Example output:
-```
-EXPLAIN: [Line 42] Applied transform 'strip_ansi' to field
-  'content': '\x1b[1mBold\x1b[0m' → 'Bold'
-EXPLAIN: [Line 42] Applied transform 'normalize_spinner' to
-  field 'prompt': '✻' → '*'
+EXPLAIN: [Line 1] Applied transform 'strip_ansi' to field 'content':
+  '\x1b[1mWhat is your name?\x1b[0m' → 'What is your name?'
 ```
 
 **Why useful**: See exactly how values are being modified.
@@ -134,27 +149,20 @@ EXPLAIN: [Line 42] Applied transform 'normalize_spinner' to
 Shows multi-line sequence buffering:
 
 ```
-EXPLAIN: [Line 10] Started buffering sequence 'dialog_question'
-  (leader line)
-EXPLAIN: [Line 11] Added follower to sequence 'dialog_question'
-  (buffer: 2 lines)
-EXPLAIN: [Line 12] Added follower to sequence 'dialog_question'
-  (buffer: 3 lines)
-EXPLAIN: [Line 13] Line is not a follower - ending sequence
-  'dialog_question'
-EXPLAIN: [Line 13] Flushed sequence 'dialog_question'
-  (3 lines buffered)
+EXPLAIN: [Line 10] Started buffering sequence 'dialog_question' (leader line)
+EXPLAIN: [Line 11] Added follower to sequence 'dialog_question' (buffer: 2 lines)
+EXPLAIN: [Line 12] Line is not a follower - ending sequence 'dialog_question'
+EXPLAIN: [Line 12] Flushed sequence 'dialog_question' (2 lines buffered)
 ```
 
-**Why useful**: Multi-line sequences are complex; see when buffering
-starts/ends.
+**Why useful**: Multi-line sequences are complex; see when buffering starts/ends.
 
 ### 5. Output Formatting
 
 Shows the final normalized output:
 
 ```
-EXPLAIN: [Line 42] Output: [dialog-question:What is your name?]
+EXPLAIN: [Line 1] Output: [dialog-question:What is your name?]
 ```
 
 ### 6. Error Cases
@@ -162,10 +170,8 @@ EXPLAIN: [Line 42] Output: [dialog-question:What is your name?]
 Shows configuration or processing errors:
 
 ```
-EXPLAIN: [Line 42] Rule 'unknown_rule' not found in
-  configuration (returned encoded message)
+EXPLAIN: [Line 42] Rule 'unknown_rule' not found in configuration
 EXPLAIN: [Line 43] Template error - missing field 'nonexistent'
-  (returned encoded message)
 ```
 
 **Why useful**: Helps debug configuration issues.
@@ -216,17 +222,11 @@ patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 \
 Track multi-line sequence processing:
 
 ```bash
-patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 | grep "sequence"
+patterndb-yaml --rules rules.yaml input.txt --explain 2>&1 \
+  | grep "sequence"
 ```
 
 ## Combining with Other Features
-
-### With Progress
-
-```bash
-# Real-time explanations with progress indicator
-patterndb-yaml --rules rules.yaml large.log --explain --progress
-```
 
 ### Separate Output Streams
 
@@ -256,28 +256,6 @@ patterndb-yaml --rules rules.yaml log.txt --explain 2>&1 \
   | grep "No pattern matched"
 ```
 
-## Python API
-
-Enable explain mode programmatically:
-
-<!-- verify-file: output.txt expected: expected-output.txt -->
-```python
-from patterndb_yaml import PatterndbYaml
-from pathlib import Path
-
-# Enable explain mode
-processor = PatterndbYaml(
-    rules_path=Path("rules.yaml"),
-    explain=True  # Explanations go to stderr
-)
-
-with open("input.txt") as f:
-    with open("output.txt", "w") as out:
-        processor.process(f, out)
-```
-
-Explanations are written to `sys.stderr` automatically.
-
 ## Performance Note
 
 Explain mode has minimal overhead:
@@ -295,7 +273,6 @@ Explain mode has minimal overhead:
 - **Debugging**: Understand why a line didn't match or was transformed incorrectly
 - **Pattern development**: Test and refine normalization rules
 - **Troubleshooting**: Diagnose unexpected output
-- **Learning**: Understand how the normalization algorithm works on your data
 
 **Don't use in production** unless actively debugging—the extra output
 can clutter logs and reduce readability.
