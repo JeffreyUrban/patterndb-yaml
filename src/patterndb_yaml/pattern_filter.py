@@ -102,8 +102,6 @@ log {{
             "--foreground",
             "--stderr",
             "--no-caps",  # Disable capability management (not available in containers)
-            "--verbose",
-            "--debug",
         ]
         print(f"DEBUG: Starting syslog-ng: {cmd}", file=sys.stderr, flush=True)
         self.process = subprocess.Popen(
