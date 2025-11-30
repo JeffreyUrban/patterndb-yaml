@@ -15,7 +15,8 @@ MIN_SYSLOG_NG_VERSION = "4.10.1"
 
 # Known working versions (tested in CI)
 KNOWN_WORKING_VERSIONS = [
-    "4.10.1",  # Latest from official repos as of 2024-11-30, tested in CI
+    "4.10.1",  # Official repos version as of 2024-11-30
+    "4.10.2",  # Current CI version
 ]
 
 # Known incompatible versions

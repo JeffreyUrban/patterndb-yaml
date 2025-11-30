@@ -78,6 +78,7 @@ testpaths = ["tests", "docs"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+addopts = "--import-mode=importlib"
 markers = [
     "unit: Unit tests for individual components",
     "integration: Integration tests for multiple components",
