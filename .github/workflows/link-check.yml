@@ -1,0 +1,32 @@
+name: Link Check
+
+on:
+  # Run weekly on Mondays at 8am UTC
+  schedule:
+    - cron: '0 8 * * 1'
+  # Allow manual trigger
+  workflow_dispatch:
+  # Run on PRs that modify docs
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '*.md'
+      - 'mkdocs.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check documentation links
+        uses: byrnereese/github-action-mkdocs-link-check@v1
+        with:
+          use_quiet_mode: 'yes'
+          use_verbose_mode: 'no'
+          check_anchors: 'yes'
