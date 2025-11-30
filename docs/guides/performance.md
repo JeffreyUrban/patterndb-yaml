@@ -111,7 +111,8 @@ patterndb-yaml --rules rules.yaml --progress huge.log > normalized.log
 tail -f /var/log/app.log | patterndb-yaml --rules rules.yaml --quiet
 
 # With filtering
-tail -f /var/log/app.log | patterndb-yaml --rules rules.yaml --quiet | grep '\[ERROR\]'
+tail -f /var/log/app.log | \
+    patterndb-yaml --rules rules.yaml --quiet | grep '\[ERROR\]'
 ```
 
 **Why**:
@@ -126,12 +127,14 @@ tail -f /var/log/app.log | patterndb-yaml --rules rules.yaml --quiet | grep '\[E
 ```bash
 # Serial processing
 for log in logs/*.log; do
-    patterndb-yaml --rules rules.yaml --quiet "$log" > "normalized_$(basename $log)"
+    patterndb-yaml --rules rules.yaml --quiet "$log" > \
+        "normalized_$(basename $log)"
 done
 
 # Parallel processing (4 at a time)
 ls logs/*.log | xargs -P 4 -I {} sh -c \
-    'patterndb-yaml --rules rules.yaml --quiet "{}" > "normalized_$(basename {})"'
+    'patterndb-yaml --rules rules.yaml --quiet "{}" > \
+     "normalized_$(basename {})"'
 ```
 
 **Why**:
@@ -195,7 +198,8 @@ echo "Throughput: ${THROUGHPUT} lines/sec"
 **Diagnosis**:
 ```bash
 # Find unmatched lines
-patterndb-yaml --rules rules.yaml --explain test.log 2>&1 | grep "No pattern matched"
+patterndb-yaml --rules rules.yaml --explain test.log 2>&1 | \
+    grep "No pattern matched"
 ```
 
 **Solutions**:

@@ -212,10 +212,12 @@ patterndb-yaml version 0.1.0
 patterndb-yaml --quiet --rules rules.yaml input.log > output.log
 
 # Debug mode (understanding what matched)
-patterndb-yaml --explain --quiet --rules rules.yaml input.log > output.log 2> explain.log
+patterndb-yaml --explain --quiet --rules rules.yaml input.log \
+    > output.log 2> explain.log
 
 # Progress with JSON stats (monitoring)
-patterndb-yaml --progress --stats-format json --rules rules.yaml input.log > output.log 2> stats.json
+patterndb-yaml --progress --stats-format json --rules rules.yaml \
+    input.log > output.log 2> stats.json
 ```
 
 ### Mutually Exclusive Behaviors
@@ -260,7 +262,8 @@ jq '.match_rate' stats.json
 patterndb-yaml --explain --rules rules.yaml test.log 2>&1 | grep "Matched rule"
 
 # Find unmatched lines
-patterndb-yaml --explain --rules rules.yaml test.log 2>&1 | grep "No pattern matched"
+patterndb-yaml --explain --rules rules.yaml test.log 2>&1 | \
+    grep "No pattern matched"
 ```
 
 ### Stream Processing

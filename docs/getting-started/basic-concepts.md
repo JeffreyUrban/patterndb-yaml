@@ -7,8 +7,10 @@ Understand the core concepts behind `patterndb-yaml`.
 **Problem**: Different systems log the same events in different formats:
 
 ```text
-MySQL: 2024-11-15 10:00:01 [MySQL] Query: SELECT * FROM users | Duration: 0.5ms
-PostgreSQL: 2024-11-15 10:00:01 [PostgreSQL] duration: 0.5ms  statement: SELECT * FROM users
+MySQL: 2024-11-15 10:00:01 [MySQL] Query: SELECT * FROM users
+  Duration: 0.5ms
+PostgreSQL: 2024-11-15 10:00:01 [PostgreSQL] duration: 0.5ms
+  statement: SELECT * FROM users
 ```
 
 **Solution**: Extract what matters (the operation) and ignore what doesn't (timestamps, format):

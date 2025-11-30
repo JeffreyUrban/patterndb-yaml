@@ -1,0 +1,16 @@
+rules:
+  - name: log_info
+    pattern:
+      - text: "["
+      - text: "INFO"
+      - text: "] "
+      - field: message
+    output: "[info:{message}]"
+
+  - name: log_error
+    pattern:
+      - text: "["
+      - text: "ERROR"
+      - text: "] "
+      - field: message
+    output: "[error:{message}]"

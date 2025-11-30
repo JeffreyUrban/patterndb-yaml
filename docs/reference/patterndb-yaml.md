@@ -116,7 +116,8 @@ processor = PatterndbYaml(rules_path=Path("rules.yaml"))
 
 # Process multiple files
 for log_file in ["server1.log", "server2.log", "server3.log"]:
-    with open(log_file) as infile, open(f"{log_file}.normalized", "w") as outfile:
+    with open(log_file) as infile, \
+            open(f"{log_file}.normalized", "w") as outfile:
         processor.process(infile, outfile)
 
     stats = processor.get_stats()

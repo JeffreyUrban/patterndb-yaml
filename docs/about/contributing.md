@@ -354,15 +354,16 @@ python -m cProfile -s cumulative -m patterndb-yaml large-file.log
 
 ### Understanding syslog-ng Integration
 
-patterndb-yaml translates YAML rules to [syslog-ng's pattern database format](https://syslog-ng.github.io/admin-guide/120_Parser/023_db_parser/004_The_syslog-ng_patterndb_format/README.html). syslog-ng provides many pattern parsers that can be used in field extraction.
+patterndb-yaml translates YAML rules to [syslog-ng's pattern database format](https://syslog-ng.github.io/admin-guide/120_Parser/006_db_parser/004_The_syslog-ng_patterndb_format/README). syslog-ng provides many pattern parsers that can be used in field extraction.
 
-**Available parsers**: See [Pattern parsers of syslog-ng OSE](https://syslog-ng.github.io/admin-guide/120_Parser/006_db_parser/003_Creating_pattern_databases/001_Pattern_parsers/)
+**Available parsers**: See [Pattern parsers of syslog-ng OSE](https://syslog-ng.github.io/admin-guide/120_Parser/006_db_parser/003_Creating_pattern_databases/001_Pattern_parsers)
 
-**Note**: patterndb-yaml does not yet support all available syslog-ng parsers.
+**Note**: patterndb-yaml may not yet support all available syslog-ng parsers.
 
 **Contributing parser support**: Check the syslog-ng Pattern parsers page for additional parser types to consider adding.
 
 When adding parser support, ensure:
+
 1. The YAML syntax is intuitive
 2. The generated XML correctly uses the syslog-ng parser
 3. Tests validate the parser works correctly

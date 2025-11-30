@@ -36,7 +36,8 @@ cat -A input.log | head -5
 **Solution**: Patterns must match whitespace exactly. Use `--explain` to see why patterns don't match:
 
 ```bash
-patterndb-yaml --rules rules.yaml --explain test.log 2>&1 | grep "No pattern matched"
+patterndb-yaml --rules rules.yaml --explain test.log 2>&1 | \
+    grep "No pattern matched"
 ```
 
 **Example issue**:
@@ -192,9 +193,11 @@ head -20 unmatched.log
 from patterndb_yaml import PatterndbYaml
 from pathlib import Path
 
-processor = PatterndbYaml(rules_path=Path("rules.yaml"))
+processor = PatterndbYaml(
+    rules_path=Path("docs/guides/fixtures/rules.yaml")
+)
 
-with open("input.log") as f:
+with open("docs/guides/fixtures/input.log") as f:
     from io import StringIO
     output = StringIO()
     processor.process(f, output)
@@ -204,7 +207,8 @@ match_rate = stats['match_rate']
 
 if match_rate < 95:
     print(f"WARNING: Only {match_rate:.1f}% of lines matched")
-    print(f"Missing patterns for {stats['lines_processed'] - stats['lines_matched']} lines")
+    unmatched = stats['lines_processed'] - stats['lines_matched']
+    print(f"Missing patterns for {unmatched} lines")
 ```
 
 ### Problem: Match rate suddenly drops
