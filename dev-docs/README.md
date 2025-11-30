@@ -30,7 +30,7 @@ Test strategy and coverage:
 
 - **[TESTING_STRATEGY.md](testing/TESTING_STRATEGY.md)** - Test organization and approach
   - Test categories and structure
-  - Unit, integration, and oracle testing
+  - Unit and integration testing
   - Testing best practices
   - CI/CD integration
 
