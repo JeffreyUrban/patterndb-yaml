@@ -144,7 +144,7 @@ Pass Through Unchanged
 - Size of pattern/output definitions
 - Multi-line sequence buffer size
 
-This means you can process **gigabyte log files** with **megabytes of memory**.
+Large files can be processed with constant memory due to line-by-line streaming.
 
 ## Multi-Line Support
 
@@ -167,6 +167,7 @@ Some log entries span multiple lines:
 - **Match rate**: Percentage matched (100% ideal)
 
 Low match rates indicate:
+
 - Missing patterns for some log formats
 - Unexpected log format changes
 - Need to add more rules

@@ -6,6 +6,10 @@
 
 - **Python 3.9 or higher** (for pip/pipx installations)
 - **Homebrew** (for macOS/Linux Homebrew installation)
+- **syslog-ng-core** (for pattern matching engine)
+
+!!! todo "syslog-ng Setup"
+    Installation and configuration instructions for syslog-ng-core will be added in a future release.
 
 `patterndb-yaml` works on Linux, macOS, and Windows.
 
@@ -48,6 +52,7 @@ This installs `patterndb-yaml` and its dependencies:
 
 - **typer** - CLI framework
 - **rich** - Terminal formatting and progress display
+- **pyyaml** - YAML parsing
 
 ## Development Installation
 
@@ -65,6 +70,7 @@ Development dependencies include:
 - **pytest-cov** - Code coverage
 - **ruff** - Linting and formatting
 - **mypy** - Type checking
+- **types-pyyaml** - Type stubs for YAML
 - **pre-commit** - Git hooks for code quality
 
 ## Platform-Specific Notes
@@ -111,16 +117,13 @@ patterndb-yaml --version
 patterndb-yaml --help
 ```
 
-Try a quick test:
+Try a quick test with the `--generate-xml` option:
 
 ```bash
-echo -e "placeholder" | patterndb-yaml --placeholder
+echo "rules: []" | patterndb-yaml --rules /dev/stdin --generate-xml
 ```
 
-Expected output:
-```
-placeholder
-```
+This should output valid syslog-ng XML pattern database markup.
 
 ## Upgrading
 
