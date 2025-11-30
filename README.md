@@ -30,7 +30,7 @@ This makes it easier to normalize heterogeneous logs - transforming different lo
 
 > **⚠️ Important:** `patterndb-yaml` requires syslog-ng to be installed from **official repositories** (distro defaults may be incompatible).
 >
-> See **[SYSLOG_NG_INSTALLATION.md](SYSLOG_NG_INSTALLATION.md)** for platform-specific instructions.
+> See **[SYSLOG_NG_INSTALLATION.md](docs/SYSLOG_NG_INSTALLATION.md)** for platform-specific instructions.
 
 ### Via Homebrew (macOS + Linux) - Recommended
 
@@ -46,7 +46,7 @@ brew tap JeffreyUrban/patterndb-yaml && brew install patterndb-yaml
 
 ```bash
 # STEP 1: Install syslog-ng from official repos (REQUIRED)
-# See SYSLOG_NG_INSTALLATION.md for your platform
+# See docs/SYSLOG_NG_INSTALLATION.md for your platform
 
 # STEP 2: Install patterndb-yaml
 pipx install patterndb-yaml
@@ -60,7 +60,7 @@ pipx install patterndb-yaml
 
 ```bash
 # STEP 1: Install syslog-ng from official repos (REQUIRED)
-# See SYSLOG_NG_INSTALLATION.md for your platform
+# See docs/SYSLOG_NG_INSTALLATION.md for your platform
 
 # STEP 2: Install patterndb-yaml
 pip install patterndb-yaml
