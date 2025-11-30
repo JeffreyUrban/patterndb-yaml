@@ -23,7 +23,7 @@ src/patterndb-yaml/
 
 **Separation of Concerns**:
 - `patterndb-yaml.py`: Pure Python logic, no CLI dependencies
-- `cli.py`: User interface, progress display, TODO
+- `cli.py`: User interface, progress display, statistics output
 - Clear API boundary allows embedding in other applications
 
 ---
@@ -47,9 +47,13 @@ src/patterndb-yaml/
 The `PatterndbYaml` class can be used in other Python applications:
 
 ```python
-from patterndb-yaml.patterndb-yaml import PatterndbYaml
-import sys
+from patterndb_yaml.patterndb_yaml import PatterndbYaml
+from pathlib import Path
 
-# Create patterndb-yaml
-processor = PatterndbYaml(TODO)
+# Create processor with rules file
+processor = PatterndbYaml(rules_path=Path("rules.yaml"))
+
+# Process input
+with open("input.log") as infile, open("output.log", "w") as outfile:
+    processor.process(infile, outfile)
 ```

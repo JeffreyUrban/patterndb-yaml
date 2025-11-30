@@ -1,7 +1,6 @@
 """Sybil configuration for testing code examples in documentation."""
 
 import re
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -333,45 +332,10 @@ def pytest_sessionfinish(session, exitstatus):
 
     This pytest hook runs after all tests finish and removes:
     - Transient output files (output.txt, output.log, test-output*.txt, etc.)
-    - Generated placeholder files (*.output in placeholder/ directories)
     - Generated stats files (job-stats.json, etc.)
     """
     # Find docs directory (parent of this conftest.py)
     docs_dir = Path(__file__).parent
-
-    # Clean up metadata directories
-    for metadata_dir in docs_dir.rglob("metadata-*"):
-        if metadata_dir.is_dir() and metadata_dir.parent.name in [
-            "library",
-            "prod-patterns",
-            "production-patterns",
-            "baseline-lib",
-            "test-lib",
-        ]:
-            # Verify it matches the timestamp pattern to avoid accidentally deleting non-test dirs
-            if re.match(r"metadata-\d{8}-\d{6}-\d{6}$", metadata_dir.name):
-                try:
-                    shutil.rmtree(metadata_dir)
-                except OSError:
-                    pass  # Ignore errors during cleanup
-
-    # Clean up directories and their .output files
-    for placeholder_dirs in docs_dir.rglob("placeholder"):
-        if placeholder_dirs.is_dir() and placeholder_dirs.parent.name in [
-            "library",
-            "prod-patterns",
-            "production-patterns",
-            "baseline-lib",
-            "test-lib",
-            "known-patterns",
-            "patterns",
-        ]:
-            # Remove all .output files (these are regenerated during tests)
-            for seq_file in placeholder_dirs.glob("*.output"):
-                try:
-                    seq_file.unlink()
-                except OSError:
-                    pass  # Ignore errors during cleanup
 
     # Clean up transient output files in fixtures directories
     transient_patterns = [
