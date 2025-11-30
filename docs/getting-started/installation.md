@@ -9,7 +9,7 @@
 - **syslog-ng 4.10.1+** (for pattern matching engine)
 
 !!! warning "syslog-ng Dependency"
-    `patterndb-yaml` requires syslog-ng to be installed. See the [syslog-ng Installation Guide](../../SYSLOG_NG_INSTALLATION.md) for platform-specific instructions.
+    `patterndb-yaml` requires syslog-ng to be installed. See the [syslog-ng Installation Guide](../SYSLOG_NG_INSTALLATION.md) for platform-specific instructions.
 
     **Homebrew users:** syslog-ng is installed automatically as a dependency.
 
@@ -30,7 +30,7 @@ brew install patterndb-yaml
 
 !!! warning "Install syslog-ng first"
     Before using pipx, you must install syslog-ng from official repositories.
-    See [syslog-ng Installation Guide](../../SYSLOG_NG_INSTALLATION.md) for detailed instructions.
+    See [syslog-ng Installation Guide](../SYSLOG_NG_INSTALLATION.md) for detailed instructions.
 
 ```bash
 # After installing syslog-ng (see link above):
@@ -43,7 +43,7 @@ pipx install patterndb-yaml
 
 !!! warning "Install syslog-ng first"
     Before using pip, you must install syslog-ng from official repositories.
-    See [syslog-ng Installation Guide](../../SYSLOG_NG_INSTALLATION.md) for detailed instructions.
+    See [syslog-ng Installation Guide](../SYSLOG_NG_INSTALLATION.md) for detailed instructions.
 
 ```bash
 # After installing syslog-ng (see link above):

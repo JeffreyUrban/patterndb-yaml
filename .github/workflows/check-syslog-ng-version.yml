@@ -1,0 +1,133 @@
+name: Check syslog-ng Version
+
+# Run weekly on Mondays at 9 AM UTC, or manually
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly on Monday at 9 AM UTC
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install latest syslog-ng from official repository
+        timeout-minutes: 5
+        run: |
+          # Add syslog-ng official repository
+          wget -qO - https://ose-repo.syslog-ng.com/apt/syslog-ng-ose-pub.asc | sudo gpg --dearmor -o /etc/apt/keyrings/syslog-ng-ose.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/syslog-ng-ose.gpg] https://ose-repo.syslog-ng.com/apt/ stable ubuntu-noble" | sudo tee /etc/apt/sources.list.d/syslog-ng-ose.list
+
+          # Install syslog-ng-core
+          sudo apt-get update
+          sudo apt-get install -y syslog-ng-core
+
+          # Verify installation
+          syslog-ng --version
+
+      - name: Get installed syslog-ng version
+        id: version
+        run: |
+          # Extract version from "syslog-ng 4 (4.10.1)" format
+          VERSION=$(syslog-ng --version | grep -oP 'syslog-ng \d+ \(\K[0-9.]+')
+          echo "Detected syslog-ng version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if version is already in KNOWN_WORKING_VERSIONS
+        id: check
+        run: |
+          if grep -q "\"${{ steps.version.outputs.version }}\"" src/patterndb_yaml/version_check.py; then
+            echo "Version ${{ steps.version.outputs.version }} is already in KNOWN_WORKING_VERSIONS"
+            echo "supported=true" >> $GITHUB_OUTPUT
+          else
+            echo "Version ${{ steps.version.outputs.version }} is NOT in KNOWN_WORKING_VERSIONS - will test"
+            echo "supported=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Python
+        if: steps.check.outputs.supported == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        if: steps.check.outputs.supported == 'false'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run full test suite
+        if: steps.check.outputs.supported == 'false'
+        env:
+          COLUMNS: 120  # Set terminal width for consistent Rich output formatting
+        run: |
+          pytest --cov=src/patterndb_yaml --cov-report=xml --cov-report=term --cov-fail-under=80
+
+      - name: Update version_check.py with new version
+        if: steps.check.outputs.supported == 'false'
+        run: |
+          # Add new version to KNOWN_WORKING_VERSIONS list
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE=$(date +%Y-%m-%d)
+
+          # Use sed to add new version after the existing versions in KNOWN_WORKING_VERSIONS
+          sed -i "/KNOWN_WORKING_VERSIONS = \[/a\\    \"$VERSION\",  # Tested in CI on $DATE" src/patterndb_yaml/version_check.py
+
+          # Show the change
+          echo "Updated KNOWN_WORKING_VERSIONS:"
+          grep -A 5 "KNOWN_WORKING_VERSIONS = \[" src/patterndb_yaml/version_check.py
+
+      - name: Create Pull Request
+        if: steps.check.outputs.supported == 'false'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            Add syslog-ng ${{ steps.version.outputs.version }} to known working versions
+
+            Automatic version check detected syslog-ng ${{ steps.version.outputs.version }}
+            from official repositories. All tests passed successfully.
+
+            🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+            Co-Authored-By: Claude <noreply@anthropic.com>
+          branch: auto/syslog-ng-${{ steps.version.outputs.version }}
+          delete-branch: true
+          title: "Add syslog-ng ${{ steps.version.outputs.version }} to known working versions"
+          body: |
+            ## Summary
+
+            Automatic version check detected a new syslog-ng version from official repositories.
+
+            **Version:** ${{ steps.version.outputs.version }}
+            **Status:** ✅ All tests passed
+            **Coverage:** Met 80% threshold
+
+            ## Changes
+
+            - Added `${{ steps.version.outputs.version }}` to `KNOWN_WORKING_VERSIONS` in `src/patterndb_yaml/version_check.py`
+
+            ## Test Results
+
+            Full test suite ran successfully with syslog-ng ${{ steps.version.outputs.version }}.
+
+            ## Next Steps
+
+            1. Review test results
+            2. Merge this PR to add version to supported list
+            3. Users with syslog-ng ${{ steps.version.outputs.version }} will no longer see "newer than tested" warnings
+
+            ---
+
+            🤖 Auto-generated by weekly version check workflow
+          labels: |
+            dependencies
+            automated
