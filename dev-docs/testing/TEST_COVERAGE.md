@@ -136,12 +136,6 @@ All tests use **pytest exclusively** (not unittest).
 - Large-scale input processing
 - Performance validation
 
-### 2.4 Oracle Testing
-
-**File**: `tests/test_oracle.py`
-- Oracle-based validation (see [ORACLE_TESTING.md](ORACLE_TESTING.md))
-- Consistency checks against known-good outputs
-
 ## 3. Documentation Tests
 
 ### 3.1 Sybil Tests
@@ -320,4 +314,3 @@ def test_main_function():
 ## See Also
 
 - [TESTING_STRATEGY.md](TESTING_STRATEGY.md) - Testing philosophy and best practices
-- [ORACLE_TESTING.md](ORACLE_TESTING.md) - Oracle-based testing approach
