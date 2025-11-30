@@ -63,8 +63,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15  # Prevent jobs from hanging indefinitely
     strategy:
-      matrix:  # TODO Restore full matrix to test all supported versions
-        python-version: ["3.9", "3.14"]
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v6
