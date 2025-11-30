@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 from io import StringIO
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -402,13 +402,13 @@ class TestMainFunction:
     ):
         """Test main() processes stdin line by line."""
         # Setup Path mock to handle Path(__file__).parent / "patterns.xml"
-        mock_pdb_path = Mock()
+        mock_pdb_path = MagicMock()
         mock_pdb_path.exists.return_value = True
 
-        mock_parent = Mock()
-        mock_parent.__truediv__ = Mock(return_value=mock_pdb_path)
+        mock_parent = MagicMock()
+        mock_parent.__truediv__.return_value = mock_pdb_path
 
-        mock_file_path = Mock()
+        mock_file_path = MagicMock()
         mock_file_path.parent = mock_parent
 
         mock_path_class.return_value = mock_file_path
@@ -446,13 +446,13 @@ class TestMainFunction:
     def test_main_handles_keyboard_interrupt(self, mock_path_class, mock_matcher_class, mock_stdin):
         """Test main() handles KeyboardInterrupt gracefully."""
         # Setup Path mock to handle Path(__file__).parent / "patterns.xml"
-        mock_pdb_path = Mock()
+        mock_pdb_path = MagicMock()
         mock_pdb_path.exists.return_value = True
 
-        mock_parent = Mock()
-        mock_parent.__truediv__ = Mock(return_value=mock_pdb_path)
+        mock_parent = MagicMock()
+        mock_parent.__truediv__.return_value = mock_pdb_path
 
-        mock_file_path = Mock()
+        mock_file_path = MagicMock()
         mock_file_path.parent = mock_parent
 
         mock_path_class.return_value = mock_file_path
