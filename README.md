@@ -37,25 +37,29 @@ This makes it easier to normalize heterogeneous logs - transforming different lo
 
 ## Installation
 
-**Requirements:** Python 3.9+, syslog-ng 3.35+
+**Requirements:** Python 3.9+, syslog-ng 4.10.1+
 
-> **📋 Note:** `patterndb-yaml` requires `syslog-ng` to be installed. See [SYSLOG_NG_INSTALLATION.md](SYSLOG_NG_INSTALLATION.md) for detailed platform-specific instructions.
+> **⚠️ Important:** `patterndb-yaml` requires syslog-ng to be installed from **official repositories** (distro defaults may be incompatible).
+>
+> See **[SYSLOG_NG_INSTALLATION.md](SYSLOG_NG_INSTALLATION.md)** for platform-specific instructions.
 
-### Via Homebrew (macOS) - Recommended
+### Via Homebrew (macOS + Linux) - Recommended
 
 ```bash
 brew tap JeffreyUrban/patterndb-yaml && brew install patterndb-yaml
 ```
 
-**Automatically installs syslog-ng** as a dependency. Homebrew manages all dependencies and provides easy updates via `brew upgrade`.
+**✅ Automatically installs syslog-ng** as a dependency. Homebrew manages all dependencies and provides easy updates via `brew upgrade`.
 
-### Via pipx (Linux)
+### Via pipx (Alternative)
+
+> **⚠️ Manual Setup Required:** You must install syslog-ng separately before using pipx.
 
 ```bash
-# First, install syslog-ng for your distribution
-# See SYSLOG_NG_INSTALLATION.md for platform-specific instructions
+# STEP 1: Install syslog-ng from official repos (REQUIRED)
+# See SYSLOG_NG_INSTALLATION.md for your platform
 
-# Then install patterndb-yaml
+# STEP 2: Install patterndb-yaml
 pipx install patterndb-yaml
 ```
 
@@ -63,13 +67,17 @@ pipx install patterndb-yaml
 
 ### Via pip
 
+> **⚠️ Manual Setup Required:** You must install syslog-ng separately before using pip.
+
 ```bash
+# STEP 1: Install syslog-ng from official repos (REQUIRED)
+# See SYSLOG_NG_INSTALLATION.md for your platform
+
+# STEP 2: Install patterndb-yaml
 pip install patterndb-yaml
 ```
 
 Use `pip` if you want to use patterndb-yaml as a library in your Python projects.
-
-**Note:** You must install syslog-ng separately. See [SYSLOG_NG_INSTALLATION.md](SYSLOG_NG_INSTALLATION.md).
 
 ### From Source
 

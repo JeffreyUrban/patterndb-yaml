@@ -2,9 +2,22 @@
 
 Get started with `patterndb-yaml` in 5 minutes.
 
+## Prerequisites
+
+!!! warning "syslog-ng Required"
+    `patterndb-yaml` requires syslog-ng to be installed. See the [Installation Guide](installation.md) for detailed setup instructions.
+
 ## Installation
 
+**Recommended (automatically installs syslog-ng):**
 ```bash
+brew tap jeffreyurban/patterndb-yaml
+brew install patterndb-yaml
+```
+
+**Alternative (requires manual syslog-ng installation):**
+```bash
+# First install syslog-ng (see Installation Guide), then:
 pip install patterndb-yaml
 ```
 
