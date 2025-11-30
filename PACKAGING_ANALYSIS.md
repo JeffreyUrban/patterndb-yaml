@@ -554,12 +554,11 @@ def parse_syslog_ng_version(version_output: str) -> str:
         return match.group(1)
     raise ValueError(f"Cannot parse version from: {version_output}")
 
-def check_syslog_ng_version(allow_override: bool = False, quiet: bool = False):
+def check_syslog_ng_version(allow_override: bool = False):
     """Verify syslog-ng version compatibility.
 
     Args:
         allow_override: If True, only warn on version mismatch instead of failing
-        quiet: If True, suppress informational messages to stderr
     """
     # Get syslog-ng version
     try:
@@ -606,32 +605,12 @@ def check_syslog_ng_version(allow_override: bool = False, quiet: bool = False):
 
     # Check if version is in known working versions
     if version_str not in KNOWN_WORKING_VERSIONS:
-        # Get max known working version to check if newer
-        max_known = max(version.parse(v) for v in KNOWN_WORKING_VERSIONS)
-
-        if ver > max_known:
-            # Newer version than tested - alert user
-            msg = f"""
-NOTICE: syslog-ng {version_str} is NEWER than tested versions
-  Tested versions: {', '.join(KNOWN_WORKING_VERSIONS)}
-  Found: {version_str}
-
-This newer version has not been tested with patterndb-yaml yet.
-It will likely work, but please report any issues at:
-  https://github.com/JeffreyUrban/patterndb-yaml/issues
-
-IMPORTANT: Ensure you installed from official syslog-ng repos (NOT distro defaults).
-Official repo setup:
-  https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions
-
-Use --quiet to suppress this message.
-"""
-        elif ver >= version.parse(MIN_SYSLOG_NG_VERSION):
-            # Between minimum and max known - probably okay
+        # If newer than minimum, it's probably okay (informational warning)
+        if ver >= version.parse(MIN_SYSLOG_NG_VERSION):
             msg = f"""
 INFO: syslog-ng {version_str} has not been explicitly tested with patterndb-yaml
-  Tested versions: {', '.join(KNOWN_WORKING_VERSIONS)}
-  Found: {version_str}
+  Known working versions: {', '.join(KNOWN_WORKING_VERSIONS)}
+  Found: {version_str} (newer than minimum {MIN_SYSLOG_NG_VERSION})
 
 This version will likely work if installed from official syslog-ng repos.
 
@@ -639,38 +618,33 @@ IMPORTANT: Distro-provided syslog-ng packages may be incompatible.
 Ensure you installed from official repos:
   https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions
 
-Use --quiet to suppress this message.
-"""
+Quick setup (Ubuntu/Debian):
+  wget -qO - https://ose-repo.syslog-ng.com/apt/syslog-ng-ose-pub.asc | \\
+    sudo gpg --dearmor -o /etc/apt/keyrings/syslog-ng-ose.gpg
+  echo "deb [signed-by=/etc/apt/keyrings/syslog-ng-ose.gpg] \\
+    https://ose-repo.syslog-ng.com/apt/ stable ubuntu-noble" | \\
+    sudo tee /etc/apt/sources.list.d/syslog-ng-ose.list
+  sudo apt-get update && sudo apt-get install syslog-ng-core
 
-        if not quiet:
+Use --allow-version-mismatch to suppress this message.
+"""
+        if not allow_override:
             print(msg, file=sys.stderr)
 ```
 
 ### CLI Integration
 
-**Add flags to CLI:**
+**Add flag to CLI:**
 ```python
 @click.option(
     '--allow-version-mismatch',
     is_flag=True,
     help='Allow running with untested syslog-ng version (use at own risk)'
 )
-@click.option(
-    '--quiet', '-q',
-    is_flag=True,
-    help='Suppress informational messages'
-)
-def main(allow_version_mismatch: bool, quiet: bool, ...):
-    check_syslog_ng_version(allow_override=allow_version_mismatch, quiet=quiet)
+def main(allow_version_mismatch: bool, ...):
+    check_syslog_ng_version(allow_override=allow_version_mismatch)
     # ... rest of main
 ```
-
-**Version check behavior:**
-- Always fails on incompatible versions (4.3) - no override
-- Always fails on versions < 4.10.1 (minimum)
-- Shows NOTICE for newer untested versions (suppressible with --quiet)
-- Shows INFO for versions between min and max (suppressible with --quiet)
-- `--quiet` suppresses informational messages, not errors
 
 ### Benefits
 
