@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 from io import StringIO
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -396,22 +396,25 @@ class TestMainFunction:
     @patch("builtins.print")
     @patch("sys.stdin")
     @patch("patterndb_yaml.pattern_filter.PatternMatcher")
-    @patch("patterndb_yaml.pattern_filter.Path")
-    def test_main_processes_stdin(
-        self, mock_path_class, mock_matcher_class, mock_stdin, mock_print
-    ):
+    def test_main_processes_stdin(self, mock_matcher_class, mock_stdin, mock_print, tmp_path):
         """Test main() processes stdin line by line."""
-        # Setup Path mock to handle Path(__file__).parent / "patterns.xml"
-        mock_pdb_path = MagicMock()
-        mock_pdb_path.exists.return_value = True
-
-        mock_parent = MagicMock()
-        mock_parent.__truediv__.return_value = mock_pdb_path
-
-        mock_file_path = MagicMock()
-        mock_file_path.parent = mock_parent
-
-        mock_path_class.return_value = mock_file_path
+        # Create a temporary patterns.xml file
+        patterns_xml = tmp_path / "patterns.xml"
+        patterns_xml.write_text(
+            """<?xml version="1.0"?>
+            <patterndb version="6" pub_date="2025-01-01">
+              <ruleset name="test" id="test">
+                <pattern>test</pattern>
+                <rules>
+                  <rule provider="test" id="test" class="test">
+                    <patterns>
+                      <pattern>test</pattern>
+                    </patterns>
+                  </rule>
+                </rules>
+              </ruleset>
+            </patterndb>"""
+        )
 
         # Setup stdin with explicit iteration
         mock_stdin.__iter__.return_value = iter(["line 1\n", "line 2\n", "line 3\n"])
@@ -421,11 +424,13 @@ class TestMainFunction:
         mock_matcher.match.side_effect = lambda line: f"[normalized:{line}]"
         mock_matcher_class.return_value = mock_matcher
 
-        # Run main
-        main()
+        # Patch __file__ to point to tmp_path
+        with patch("patterndb_yaml.pattern_filter.__file__", str(tmp_path / "pattern_filter.py")):
+            # Run main
+            main()
 
-        # Verify matcher was created
-        mock_matcher_class.assert_called_once()
+        # Verify matcher was created with the patterns.xml path
+        mock_matcher_class.assert_called_once_with(patterns_xml)
 
         # Verify lines were matched
         assert mock_matcher.match.call_count == 3
@@ -442,20 +447,25 @@ class TestMainFunction:
 
     @patch("sys.stdin")
     @patch("patterndb_yaml.pattern_filter.PatternMatcher")
-    @patch("patterndb_yaml.pattern_filter.Path")
-    def test_main_handles_keyboard_interrupt(self, mock_path_class, mock_matcher_class, mock_stdin):
+    def test_main_handles_keyboard_interrupt(self, mock_matcher_class, mock_stdin, tmp_path):
         """Test main() handles KeyboardInterrupt gracefully."""
-        # Setup Path mock to handle Path(__file__).parent / "patterns.xml"
-        mock_pdb_path = MagicMock()
-        mock_pdb_path.exists.return_value = True
-
-        mock_parent = MagicMock()
-        mock_parent.__truediv__.return_value = mock_pdb_path
-
-        mock_file_path = MagicMock()
-        mock_file_path.parent = mock_parent
-
-        mock_path_class.return_value = mock_file_path
+        # Create a temporary patterns.xml file
+        patterns_xml = tmp_path / "patterns.xml"
+        patterns_xml.write_text(
+            """<?xml version="1.0"?>
+            <patterndb version="6" pub_date="2025-01-01">
+              <ruleset name="test" id="test">
+                <pattern>test</pattern>
+                <rules>
+                  <rule provider="test" id="test" class="test">
+                    <patterns>
+                      <pattern>test</pattern>
+                    </patterns>
+                  </rule>
+                </rules>
+              </ruleset>
+            </patterndb>"""
+        )
 
         # Setup stdin with explicit iteration
         mock_stdin.__iter__.return_value = iter(["line 1\n", "line 2\n"])
@@ -464,8 +474,10 @@ class TestMainFunction:
         mock_matcher.match.side_effect = KeyboardInterrupt()
         mock_matcher_class.return_value = mock_matcher
 
-        # Should not raise
-        main()
+        # Patch __file__ to point to tmp_path
+        with patch("patterndb_yaml.pattern_filter.__file__", str(tmp_path / "pattern_filter.py")):
+            # Should not raise
+            main()
 
         # Matcher should be closed
         mock_matcher.close.assert_called_once()
