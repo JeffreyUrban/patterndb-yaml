@@ -25,8 +25,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Check documentation links
-        uses: byrnereese/github-action-mkdocs-link-check@v1
+        uses: lycheeverse/lychee-action@v2
         with:
-          use_quiet_mode: 'yes'
-          use_verbose_mode: 'no'
-          check_anchors: 'yes'
+          args: --verbose --no-progress --accept 200,403 --timeout 30 '**/*.md' 'docs/**/*.md' 'mkdocs.yml'
+          fail: true
