@@ -1,9 +1,9 @@
 name: Link Check
 
 on:
-  # Run weekly on Mondays at 8am UTC
+  # Run weekly on Wednesdays at 2:37am UTC (off-peak, non-standard time)
   schedule:
-    - cron: '0 8 * * 1'
+    - cron: '37 2 * * 3'
   # Allow manual trigger
   workflow_dispatch:
   # Run on PRs that modify docs
