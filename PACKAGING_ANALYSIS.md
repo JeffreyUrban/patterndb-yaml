@@ -528,14 +528,38 @@ Requires: syslog-ng >= 3.35
 
 **Runtime version check:**
 ```python
+import re
 import subprocess
 import sys
+from packaging import version
 
-def check_syslog_ng_version(allow_override: bool = False):
+# Version requirements
+MIN_SYSLOG_NG_VERSION = "4.10.1"  # Minimum tested version
+KNOWN_WORKING_VERSIONS = [
+    "4.10.1",  # Latest from official repos as of 2024-11-30, tested in CI
+]
+KNOWN_INCOMPATIBLE_VERSIONS = [
+    "4.3",  # Distro default, incompatible - failed in CI
+]
+
+def parse_syslog_ng_version(version_output: str) -> str:
+    """Parse version from 'syslog-ng --version' output.
+
+    Example output: "syslog-ng 4 (4.10.1)"
+    Returns: "4.10.1"
+    """
+    # Match pattern: "syslog-ng X (X.Y.Z)"
+    match = re.search(r'syslog-ng\s+\d+\s+\(([0-9.]+)\)', version_output)
+    if match:
+        return match.group(1)
+    raise ValueError(f"Cannot parse version from: {version_output}")
+
+def check_syslog_ng_version(allow_override: bool = False, quiet: bool = False):
     """Verify syslog-ng version compatibility.
 
     Args:
         allow_override: If True, only warn on version mismatch instead of failing
+        quiet: If True, suppress informational messages to stderr
     """
     # Get syslog-ng version
     try:
@@ -545,65 +569,108 @@ def check_syslog_ng_version(allow_override: bool = False):
             text=True,
             check=True
         )
-        version_line = result.stdout.split('\n')[0]
-        # Parse version (e.g., "syslog-ng 4.0.1")
-        version = version_line.split()[1]
+        version_str = parse_syslog_ng_version(result.stdout)
+        ver = version.parse(version_str)
+        major_version = ver.major
+    except FileNotFoundError:
+        print("ERROR: syslog-ng not found in PATH", file=sys.stderr)
+        print("\nInstall syslog-ng from official repositories:", file=sys.stderr)
+        print("  https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions", file=sys.stderr)
+        sys.exit(1)
     except Exception as e:
         print(f"ERROR: Cannot determine syslog-ng version: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # Version tested in CI (should match CI environment)
-    TESTED_VERSION = "4.0.1"  # Update this to match CI
-    MIN_VERSION = "3.35.0"
-    MAX_VERSION = "4.9.9"  # Upper bound for known compatibility
+    # Check for known incompatible versions (always enforced)
+    if version_str in KNOWN_INCOMPATIBLE_VERSIONS:
+        print(f"ERROR: syslog-ng {version_str} is known to be INCOMPATIBLE with patterndb-yaml", file=sys.stderr)
+        print(f"  This version failed in CI testing", file=sys.stderr)
+        print(f"\nKnown incompatible versions: {', '.join(KNOWN_INCOMPATIBLE_VERSIONS)}", file=sys.stderr)
+        print("\nInstall from official syslog-ng repositories (NOT distro defaults):", file=sys.stderr)
+        print("  https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions", file=sys.stderr)
+        print("\nQuick setup (Ubuntu/Debian):", file=sys.stderr)
+        print("  wget -qO - https://ose-repo.syslog-ng.com/apt/syslog-ng-ose-pub.asc | \\", file=sys.stderr)
+        print("    sudo gpg --dearmor -o /etc/apt/keyrings/syslog-ng-ose.gpg", file=sys.stderr)
+        print("  echo \"deb [signed-by=/etc/apt/keyrings/syslog-ng-ose.gpg] \\", file=sys.stderr)
+        print("    https://ose-repo.syslog-ng.com/apt/ stable ubuntu-noble\" | \\", file=sys.stderr)
+        print("    sudo tee /etc/apt/sources.list.d/syslog-ng-ose.list", file=sys.stderr)
+        print("  sudo apt-get update && sudo apt-get install syslog-ng-core", file=sys.stderr)
+        sys.exit(1)
 
-    if version != TESTED_VERSION:
-        msg = f"""
-WARNING: syslog-ng version mismatch
-  Found: {version}
-  Tested: {TESTED_VERSION}
+    # Check minimum version (always enforced)
+    if ver < version.parse(MIN_SYSLOG_NG_VERSION):
+        print(f"ERROR: syslog-ng {version_str} is too old (minimum tested: {MIN_SYSLOG_NG_VERSION})", file=sys.stderr)
+        print("\nInstall from official syslog-ng repositories:", file=sys.stderr)
+        print("  https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions", file=sys.stderr)
+        sys.exit(1)
 
-This version has not been tested with patterndb-yaml.
-Use --allow-version-mismatch to proceed anyway.
+    # Check if version is in known working versions
+    if version_str not in KNOWN_WORKING_VERSIONS:
+        # Get max known working version to check if newer
+        max_known = max(version.parse(v) for v in KNOWN_WORKING_VERSIONS)
 
-IMPORTANT: Distro-provided syslog-ng packages may be incompatible.
-Install from official syslog-ng repositories:
+        if ver > max_known:
+            # Newer version than tested - alert user
+            msg = f"""
+NOTICE: syslog-ng {version_str} is NEWER than tested versions
+  Tested versions: {', '.join(KNOWN_WORKING_VERSIONS)}
+  Found: {version_str}
+
+This newer version has not been tested with patterndb-yaml yet.
+It will likely work, but please report any issues at:
+  https://github.com/JeffreyUrban/patterndb-yaml/issues
+
+IMPORTANT: Ensure you installed from official syslog-ng repos (NOT distro defaults).
+Official repo setup:
   https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions
 
-Quick setup (Ubuntu/Debian):
-  wget -qO - https://ose-repo.syslog-ng.com/apt/syslog-ng-ose-pub.asc | \\
-    sudo gpg --dearmor -o /etc/apt/keyrings/syslog-ng-ose.gpg
-  echo "deb [signed-by=/etc/apt/keyrings/syslog-ng-ose.gpg] \\
-    https://ose-repo.syslog-ng.com/apt/ stable ubuntu-noble" | \\
-    sudo tee /etc/apt/sources.list.d/syslog-ng-ose.list
-  sudo apt-get update && sudo apt-get install syslog-ng-core
+Use --quiet to suppress this message.
 """
-        if allow_override:
-            print(msg, file=sys.stderr)
-        else:
-            print(msg, file=sys.stderr)
-            sys.exit(1)
+        elif ver >= version.parse(MIN_SYSLOG_NG_VERSION):
+            # Between minimum and max known - probably okay
+            msg = f"""
+INFO: syslog-ng {version_str} has not been explicitly tested with patterndb-yaml
+  Tested versions: {', '.join(KNOWN_WORKING_VERSIONS)}
+  Found: {version_str}
 
-    # Check minimum version
-    if version < MIN_VERSION:
-        print(f"ERROR: syslog-ng {version} too old (minimum: {MIN_VERSION})",
-              file=sys.stderr)
-        sys.exit(1)
+This version will likely work if installed from official syslog-ng repos.
+
+IMPORTANT: Distro-provided syslog-ng packages may be incompatible.
+Ensure you installed from official repos:
+  https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions
+
+Use --quiet to suppress this message.
+"""
+
+        if not quiet:
+            print(msg, file=sys.stderr)
 ```
 
 ### CLI Integration
 
-**Add flag to CLI:**
+**Add flags to CLI:**
 ```python
 @click.option(
     '--allow-version-mismatch',
     is_flag=True,
     help='Allow running with untested syslog-ng version (use at own risk)'
 )
-def main(allow_version_mismatch: bool, ...):
-    check_syslog_ng_version(allow_override=allow_version_mismatch)
+@click.option(
+    '--quiet', '-q',
+    is_flag=True,
+    help='Suppress informational messages'
+)
+def main(allow_version_mismatch: bool, quiet: bool, ...):
+    check_syslog_ng_version(allow_override=allow_version_mismatch, quiet=quiet)
     # ... rest of main
 ```
+
+**Version check behavior:**
+- Always fails on incompatible versions (4.3) - no override
+- Always fails on versions < 4.10.1 (minimum)
+- Shows NOTICE for newer untested versions (suppressible with --quiet)
+- Shows INFO for versions between min and max (suppressible with --quiet)
+- `--quiet` suppresses informational messages, not errors
 
 ### Benefits
 
@@ -613,13 +680,119 @@ def main(allow_version_mismatch: bool, ...):
 - **CI alignment:** Runtime version matches CI-tested version
 - **User awareness:** Users know when they're in unsupported territory
 
-### CI Integration
+### CI Integration and Automatic Version Tracking
 
-**CI should:**
-1. Pin syslog-ng version explicitly (e.g., `syslog-ng==4.0.1`)
-2. Test against this specific version
-3. Update `TESTED_VERSION` constant when upgrading CI version
-4. Consider testing against min/max versions periodically
+**Current CI behavior:**
+- Installs latest syslog-ng from official repos (unpinned)
+- Gets whatever version is current (4.10.1 as of 2024-11-30)
+
+**Proposed automatic version tracking mechanism:**
+
+#### Option 1: Semi-automatic with PR automation (Recommended)
+
+**GitHub Actions workflow (`check-syslog-ng-version.yml`):**
+```yaml
+name: Check syslog-ng Version
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Weekly on Monday at 9am UTC
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install latest syslog-ng
+        run: |
+          wget -qO - https://ose-repo.syslog-ng.com/apt/syslog-ng-ose-pub.asc | sudo gpg --dearmor -o /etc/apt/keyrings/syslog-ng-ose.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/syslog-ng-ose.gpg] https://ose-repo.syslog-ng.com/apt/ stable ubuntu-noble" | sudo tee /etc/apt/sources.list.d/syslog-ng-ose.list
+          sudo apt-get update
+          sudo apt-get install -y syslog-ng-core
+
+      - name: Get installed version
+        id: version
+        run: |
+          VERSION=$(syslog-ng --version | grep -oP 'syslog-ng \d+ \(\K[0-9.]+')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Found syslog-ng version: $VERSION"
+
+      - name: Check if version is already supported
+        id: check
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if grep -q "\"$VERSION\"" src/patterndb_yaml/version_check.py; then
+            echo "supported=true" >> $GITHUB_OUTPUT
+            echo "Version $VERSION already in KNOWN_WORKING_VERSIONS"
+          else
+            echo "supported=false" >> $GITHUB_OUTPUT
+            echo "Version $VERSION is NEW - needs testing"
+          fi
+
+      - name: Run full test suite
+        if: steps.check.outputs.supported == 'false'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pytest --cov=src/patterndb_yaml
+
+      - name: Update version list
+        if: steps.check.outputs.supported == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE=$(date +%Y-%m-%d)
+
+          # Add version to KNOWN_WORKING_VERSIONS list
+          sed -i "/KNOWN_WORKING_VERSIONS = \[/a\\    \"$VERSION\",  # Tested in CI on $DATE" src/patterndb_yaml/version_check.py
+
+      - name: Create Pull Request
+        if: steps.check.outputs.supported == 'false'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: "Add syslog-ng ${{ steps.version.outputs.version }} to known working versions"
+          title: "Add syslog-ng ${{ steps.version.outputs.version }} to known working versions"
+          body: |
+            Automatic version tracking detected new syslog-ng version from official repos.
+
+            - **Version:** ${{ steps.version.outputs.version }}
+            - **Tested:** All tests passed in CI
+            - **Date:** $(date +%Y-%m-%d)
+
+            This PR adds the new version to `KNOWN_WORKING_VERSIONS` list.
+
+            Review and merge to approve this version for production use.
+          branch: auto/syslog-ng-${{ steps.version.outputs.version }}
+          delete-branch: true
+```
+
+**Benefits:**
+- ✅ Automatic weekly checks for new versions
+- ✅ Runs full test suite before adding to list
+- ✅ Creates PR for human review before merging
+- ✅ Maintains audit trail of when versions were tested
+- ✅ Manual approval step ensures safety
+
+**Implementation location:**
+- File: `src/patterndb_yaml/version_check.py`
+- Workflow: `.github/workflows/check-syslog-ng-version.yml`
+
+#### Option 2: Fully automatic (Not recommended - less safe)
+
+- Auto-merge PR if tests pass
+- No human review step
+- Risk: untested breaking changes could slip through
+
+**Recommendation:** Use Option 1 (semi-automatic) for safety while reducing manual effort.
+
+**Maintenance:**
+1. GitHub Actions runs weekly
+2. Detects new syslog-ng version from official repos
+3. Runs full test suite
+4. Creates PR if tests pass
+5. Human reviews and merges PR
+6. Version automatically added to supported list
 
 ---
 
@@ -735,22 +908,35 @@ syslog-ng --version  # Verify version
 **Location:** `src/patterndb_yaml/` (new module or in CLI)
 
 **Components:**
-1. **Version list constant** (single entry for now):
+1. **Version requirements** (conservative approach):
    ```python
-   VETTED_SYSLOG_NG_VERSIONS = [
-       "4.0.1",  # Tested in CI as of 2024-XX-XX
+   # Minimum tested version (no assumptions below this)
+   MIN_SYSLOG_NG_VERSION = "4.10.1"
+
+   # Known working versions (tested in development/CI)
+   # CI installs latest from official repos (currently 4.10.1 as of 2024-11)
+   KNOWN_WORKING_VERSIONS = [
+       "4.10.1",  # Latest from official repos as of 2024-11-30, tested in CI
+   ]
+
+   # Known incompatible versions (hard failures in CI)
+   KNOWN_INCOMPATIBLE_VERSIONS = [
+       "4.3",  # Distro default, incompatible - failed in CI
    ]
    ```
 
 2. **Version checker function**:
    - Check syslog-ng binary exists
-   - Parse version from `syslog-ng --version`
-   - Compare against vetted versions list
+   - Parse version from `syslog-ng --version` (format: "syslog-ng 4 (4.10.1)")
+   - **Check for known incompatible versions (hard failure, cannot override)**
+   - Check minimum version requirement (>= 4.10.1, hard failure)
+   - Warn if not in KNOWN_WORKING_VERSIONS but >= minimum (informational)
    - Provide helpful error with official repo setup instructions
 
 3. **CLI flag**:
    - Add `--allow-version-mismatch` flag
-   - Bypasses version check for advanced users
+   - Bypasses version warnings for advanced users
+   - Still enforces minimum version check
 
 **Error message content:**
 - Current version vs vetted versions
@@ -759,11 +945,18 @@ syslog-ng --version  # Verify version
 - Instruction to use `--allow-version-mismatch` flag
 
 **Deliverables:**
-- [ ] Create version checking module
+- [ ] Create `src/patterndb_yaml/version_check.py` module
 - [ ] Integrate into CLI entry point
 - [ ] Add `--allow-version-mismatch` flag
-- [ ] Write unit tests for version checking
+- [ ] Write unit tests for version parsing and checking
+- [ ] Create `.github/workflows/check-syslog-ng-version.yml` for automation
 - [ ] Document in README.md
+
+**Automatic version tracking:**
+- [ ] Set up weekly GitHub Actions workflow
+- [ ] Configure version detection and testing
+- [ ] Enable automatic PR creation for new versions
+- [ ] Document review process for version PRs
 
 #### 1.3 Documentation Updates (~1 hour)
 **Files to update:**
@@ -881,7 +1074,8 @@ syslog-ng --version  # Verify version
    - Runtime version checking (~2 hours implementation)
    - Helpful error messages with official repo setup instructions
    - `--allow-version-mismatch` flag for advanced users
-   - Vetted versions list (single entry for now: "4.0.1")
+   - Known working versions list (currently: "4.10.1")
+   - Automatic weekly testing of new versions via GitHub Actions
 
 **Deferred for future:**
 - Snap packaging (Linux) - ~3-5 hours if demand warrants
