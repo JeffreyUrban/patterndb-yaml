@@ -39,6 +39,7 @@ dependencies = [
     "typer>=0.9.0",
     "rich>=13.0.0",
     "pyyaml>=6.0.0",
+    "packaging>=23.0",
 ]
 
 [project.optional-dependencies]
@@ -81,6 +82,7 @@ markers = [
     "unit: Unit tests for individual components",
     "integration: Integration tests for multiple components",
     "slow: Slow tests (skipped by default)",
+    "no_cover: Skip coverage for this test (used for tests that conflict with coverage instrumentation)",
 ]
 
 [tool.black]

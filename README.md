@@ -37,25 +37,43 @@ This makes it easier to normalize heterogeneous logs - transforming different lo
 
 ## Installation
 
-### Via Homebrew (macOS/Linux)
+**Requirements:** Python 3.9+, syslog-ng 4.10.1+
+
+> **⚠️ Important:** `patterndb-yaml` requires syslog-ng to be installed from **official repositories** (distro defaults may be incompatible).
+>
+> See **[SYSLOG_NG_INSTALLATION.md](SYSLOG_NG_INSTALLATION.md)** for platform-specific instructions.
+
+### Via Homebrew (macOS + Linux) - Recommended
 
 ```bash
 brew tap JeffreyUrban/patterndb-yaml && brew install patterndb-yaml
 ```
 
-Homebrew manages the Python dependency and provides easy updates via `brew upgrade`.
+**✅ Automatically installs syslog-ng** as a dependency. Homebrew manages all dependencies and provides easy updates via `brew upgrade`.
 
-### Via pipx (Cross-platform)
+### Via pipx (Alternative)
+
+> **⚠️ Manual Setup Required:** You must install syslog-ng separately before using pipx.
 
 ```bash
+# STEP 1: Install syslog-ng from official repos (REQUIRED)
+# See SYSLOG_NG_INSTALLATION.md for your platform
+
+# STEP 2: Install patterndb-yaml
 pipx install patterndb-yaml
 ```
 
-[pipx](https://pipx.pypa.io/) installs in an isolated environment with global CLI access. Works on macOS, Linux, and Windows. Update with `pipx upgrade patterndb-yaml`.
+[pipx](https://pipx.pypa.io/) installs in an isolated environment with global CLI access. Update with `pipx upgrade patterndb-yaml`.
 
 ### Via pip
 
+> **⚠️ Manual Setup Required:** You must install syslog-ng separately before using pip.
+
 ```bash
+# STEP 1: Install syslog-ng from official repos (REQUIRED)
+# See SYSLOG_NG_INSTALLATION.md for your platform
+
+# STEP 2: Install patterndb-yaml
 pip install patterndb-yaml
 ```
 
@@ -69,6 +87,10 @@ git clone https://github.com/JeffreyUrban/patterndb-yaml
 cd patterndb-yaml
 pip install -e ".[dev]"
 ```
+
+### Windows
+
+Windows is not currently supported. Consider using WSL2 (Windows Subsystem for Linux) and following the Linux installation instructions.
 
 **Requirements:** Python 3.9+, syslog-ng (installed automatically with Homebrew)
 

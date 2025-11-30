@@ -89,11 +89,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,docs]"
 
-      - name: Run tests with coverage
+      - name: Run version_check tests without coverage
         env:
           COLUMNS: 120  # Set terminal width for consistent Rich output formatting
         run: |
-          pytest --cov=src/patterndb_yaml --cov-report=xml --cov-report=term --cov-fail-under=30
+          # Run version_check tests without coverage to avoid mock/coverage conflicts
+          pytest tests/test_version_check.py -v
+
+      - name: Run all other tests with coverage
+        env:
+          COLUMNS: 120  # Set terminal width for consistent Rich output formatting
+        run: |
+          pytest --cov=src/patterndb_yaml --cov-report=xml --cov-report=term --cov-fail-under=30 --ignore=tests/test_version_check.py
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.14'

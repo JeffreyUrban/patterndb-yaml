@@ -5,26 +5,35 @@
 ## Requirements
 
 - **Python 3.9 or higher** (for pip/pipx installations)
-- **Homebrew** (for macOS/Linux Homebrew installation)
-- **syslog-ng-core** (for pattern matching engine)
+- **Homebrew** (for macOS/Linux Homebrew installation - automatically installs syslog-ng)
+- **syslog-ng 4.10.1+** (for pattern matching engine)
 
-!!! todo "syslog-ng Setup"
-    Installation and configuration instructions for syslog-ng-core will be added in a future release.
+!!! warning "syslog-ng Dependency"
+    `patterndb-yaml` requires syslog-ng to be installed. See the [syslog-ng Installation Guide](../SYSLOG_NG_INSTALLATION.md) for platform-specific instructions.
 
-`patterndb-yaml` works on Linux, macOS, and Windows.
+    **Homebrew users:** syslog-ng is installed automatically as a dependency.
 
-## Via Homebrew (macOS/Linux)
+    **pip/pipx users:** You must install syslog-ng separately from official repositories before using patterndb-yaml.
+
+`patterndb-yaml` works on Linux, macOS, and Windows (via WSL2).
+
+## Via Homebrew (macOS/Linux) - Recommended
 
 ```bash
 brew tap jeffreyurban/patterndb-yaml
 brew install patterndb-yaml
 ```
 
-Homebrew manages the Python dependency and provides easy updates via `brew upgrade`.
+**Automatically installs syslog-ng** as a dependency. Homebrew manages all dependencies and provides easy updates via `brew upgrade`.
 
 ## Via pipx (Cross-platform)
 
+!!! warning "Install syslog-ng first"
+    Before using pipx, you must install syslog-ng from official repositories.
+    See [syslog-ng Installation Guide](../SYSLOG_NG_INSTALLATION.md) for detailed instructions.
+
 ```bash
+# After installing syslog-ng (see link above):
 pipx install patterndb-yaml
 ```
 
@@ -32,7 +41,12 @@ pipx install patterndb-yaml
 
 ## Via pip
 
+!!! warning "Install syslog-ng first"
+    Before using pip, you must install syslog-ng from official repositories.
+    See [syslog-ng Installation Guide](../SYSLOG_NG_INSTALLATION.md) for detailed instructions.
+
 ```bash
+# After installing syslog-ng (see link above):
 pip install patterndb-yaml
 ```
 

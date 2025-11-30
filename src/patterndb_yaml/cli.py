@@ -22,6 +22,7 @@ from .pattern_generator import generate_from_yaml
 from .patterndb_yaml import (
     PatterndbYaml,
 )
+from .version_check import SyslogNgVersionError, check_syslog_ng_version
 
 app = typer.Typer(
     name="patterndb-yaml",
@@ -91,7 +92,7 @@ def main(
         False,
         "--quiet",
         "-q",
-        help="Suppress statistics output to stderr",
+        help="Suppress statistics and version warnings to stderr",
         rich_help_panel="StdErr Control",
     ),
     progress: bool = typer.Option(
@@ -120,6 +121,13 @@ def main(
         "--generate-xml",
         help="Generate syslog-ng XML from rules file and output to stdout (no processing)",
         rich_help_panel="XML Generation",
+    ),
+    # Version Checking
+    allow_version_mismatch: bool = typer.Option(
+        False,
+        "--allow-version-mismatch",
+        help="Allow running with untested syslog-ng versions (use at your own risk)",
+        rich_help_panel="Version Checking",
     ),
 ) -> None:
     """
@@ -164,6 +172,17 @@ def main(
     validate_arguments(
         stats_format,
     )
+
+    # Check syslog-ng version (unless generating XML only)
+    if not generate_xml:
+        try:
+            check_syslog_ng_version(
+                allow_version_mismatch=allow_version_mismatch,
+                quiet=quiet,
+            )
+        except SyslogNgVersionError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1) from e
 
     # Disable progress if outputting to a pipe
     show_progress = progress and sys.stdout.isatty()
