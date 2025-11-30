@@ -41,14 +41,15 @@ self.process = subprocess.Popen(cmd, ...)
 
 ## Packaging Method Analysis
 
-### 1. Homebrew (macOS) ✅ Works Well
+### 1. Homebrew (macOS + Linux) ✅ Recommended
 
 **Current situation:**
-- Homebrew only has the full `syslog-ng` formula
+- Homebrew has the full `syslog-ng` formula (version 3.38.1+, updated to 4.0.1)
+- Works on macOS and Linux
 - No separate `syslog-ng-core` package available
 - Formula already has 21 dependencies (abseil, glib, grpc, hiredis, ivykis, json-c, libdbi, libmaxminddb, libnet, libpaho-mqtt, librdkafka, mongo-c-driver, net-snmp, openssl@3, pcre2, protobuf, python@3.14, rabbitmq-c, riemann-client, gettext, pkgconf)
 
-**Recommendation:** **Use `depends_on "syslog-ng"`**
+**Recommendation:** **Use `depends_on "syslog-ng"` in Homebrew formula**
 
 ```ruby
 class PatterndbYaml < Formula
@@ -69,44 +70,66 @@ end
 - Automatic installation and updates
 - Well-tested by Homebrew community
 - db-parser module included
+- **Cross-platform:** Works on both macOS and Linux
 
 **Cons:**
 - Installs 122MB when we only need ~20-30MB functionality
 - Includes modules we don't use (Kafka, MQTT, etc.)
 
-**Verdict:** Trade-off accepted - user experience trumps disk space on macOS systems.
+**Verdict:** Trade-off accepted - user experience trumps disk space. Homebrew on Linux provides same automatic dependency management as macOS.
+
+**Source:** [Syslog-ng in Homebrew](https://www.syslog-ng.com/community/b/blog/posts/syslog-ng-is-now-available-in-homebrew), [Homebrew Formula](https://formulae.brew.sh/formula/syslog-ng)
 
 ---
 
-### 2. Linux (apt/dnf) 🎯 Use syslog-ng-core
+### 2. Linux Native Packages (apt/dnf) ⚠️ Manual Installation Required
+
+**IMPORTANT:** Must use official syslog-ng repositories, not distro defaults (distro versions have compatibility issues).
 
 **For Debian/Ubuntu (apt):**
 ```bash
-# User installs syslog-ng-core
+# Add official syslog-ng repository (required - distro versions incompatible)
+wget -qO - https://ose-repo.syslog-ng.com/apt/syslog-ng-ose-pub.asc | \
+  sudo gpg --dearmor -o /etc/apt/keyrings/syslog-ng-ose.gpg
+echo "deb [signed-by=/etc/apt/keyrings/syslog-ng-ose.gpg] \
+  https://ose-repo.syslog-ng.com/apt/ stable ubuntu-noble" | \
+  sudo tee /etc/apt/sources.list.d/syslog-ng-ose.list
+sudo apt-get update
+
+# Install syslog-ng-core (minimal)
 sudo apt-get install syslog-ng-core
 
-# Then installs patterndb-yaml
+# Then install patterndb-yaml
 pipx install patterndb-yaml
 ```
 
 **For RHEL/Fedora (dnf):**
 ```bash
-# syslog-ng package (no separate core)
+# Add official repository (required)
+sudo dnf config-manager --add-repo https://ose-repo.syslog-ng.com/yum/nightly/rhel9/
+sudo rpm --import https://ose-repo.syslog-ng.com/yum/nightly/rhel9/repodata/repomd.xml.key
+
+# Install syslog-ng
 sudo dnf install syslog-ng
 
-# Then installs patterndb-yaml
+# Then install patterndb-yaml
 pipx install patterndb-yaml
 ```
 
-**Note:** Debian/Ubuntu have `syslog-ng-core` package, RHEL/Fedora typically just have `syslog-ng`.
+**Pros:**
+- Minimal installation (syslog-ng-core ~20-30MB)
+- Native package management integration
+- Well-understood by system administrators
 
-**Recommendation:** **Document platform-specific minimal packages**
+**Cons:**
+- **Requires manual setup** before installing patterndb-yaml
+- **Multi-step process** (add repo, install syslog-ng, then install patterndb-yaml)
+- Users may forget to add official repos and install incompatible distro versions
+- Different commands per distro
 
-Update installation docs to specify:
-- **Debian/Ubuntu**: Install `syslog-ng-core` (minimal)
-- **RHEL/Fedora**: Install `syslog-ng` (only option available)
+**Verdict:** Works but requires careful documentation. Users must understand they need official repos, not distro defaults.
 
-**Source:** [Debian syslog-ng-core](https://packages.debian.org/sid/syslog-ng-core)
+**Source:** [Installing syslog-ng on Ubuntu](https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions)
 
 ---
 
@@ -191,54 +214,111 @@ Consider using Docker or WSL2:
 
 ---
 
-### 4. Docker 🎯 Best for Cross-Platform
+### 4. Snap Packages 📦 Potential for Auto-Install
 
-**Dockerfile:**
-```dockerfile
-FROM python:3.11-slim
+**What is Snap:**
+- Universal Linux package format from Ubuntu
+- Bundles all dependencies including system libraries
+- Automatic updates
+- Works across most Linux distributions
 
-# Install syslog-ng-core (minimal package)
-RUN apt-get update && apt-get install -y \
-    wget gnupg2 \
-    && wget -qO - https://ose-repo.syslog-ng.com/apt/syslog-ng-ose-pub.asc | \
-       gpg --dearmor -o /etc/apt/keyrings/syslog-ng-ose.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/syslog-ng-ose.gpg] \
-       https://ose-repo.syslog-ng.com/apt/ stable ubuntu-noble" | \
-       tee /etc/apt/sources.list.d/syslog-ng-ose.list \
-    && apt-get update \
-    && apt-get install -y syslog-ng-core \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install patterndb-yaml
-RUN pip install --no-cache-dir patterndb-yaml
-
-ENTRYPOINT ["patterndb-yaml"]
+**How it could work for patterndb-yaml:**
+```bash
+# Single command installs both patterndb-yaml and syslog-ng
+sudo snap install patterndb-yaml
 ```
 
-**Usage:**
-```bash
-# Process logs
-cat app.log | docker run -i jeffreyurban/patterndb-yaml:latest --rules rules.yaml
+**Technical approach:**
+- Bundle syslog-ng binary and libraries inside the snap
+- Use `stage-packages` to include syslog-ng from Ubuntu repos
+- All dependencies automatically resolved and bundled
 
-# With volume mount for rules
-docker run -i -v $(pwd)/rules.yaml:/rules.yaml \
-    jeffreyurban/patterndb-yaml:latest --rules /rules.yaml < app.log
+**Pros:**
+- **Automatic dependency bundling** - snap includes syslog-ng automatically
+- Works across many Linux distributions
+- Automatic updates via snapd
+- Single installation command
+- Could use official syslog-ng repos via build process
+
+**Cons:**
+- Requires snapd installed (not universal on all Linux distros)
+- Larger package size (bundles all dependencies)
+- Snap confinement may complicate running syslog-ng subprocess
+- Need to maintain snap packaging
+- Not available on macOS/Windows
+
+**Verdict:** **Worth investigating further** - could provide automatic syslog-ng installation on Linux without requiring Homebrew.
+
+**Source:** [Snapcraft Documentation](https://snapcraft.io/docs)
+
+---
+
+### 5. Flatpak 📦 Limited Applicability
+
+**What is Flatpak:**
+- Desktop application sandboxing and distribution
+- Bundles dependencies in runtimes
+- Focused on GUI applications
+
+**Applicability to patterndb-yaml:**
+
+**Pros:**
+- Can bundle dependencies automatically
+- Runtime-based dependency sharing
+
+**Cons:**
+- **Primarily for desktop GUI apps** - not CLI tools
+- Single-file bundles don't include dependencies (defeats purpose)
+- **Not suitable for CLI tools or daemon processes**
+- Sandboxing may interfere with subprocess execution
+- Need to maintain flatpak packaging
+
+**Verdict:** **Not recommended** - Flatpak is designed for desktop applications, not CLI tools that run system daemons as subprocesses.
+
+**Source:** [Flatpak Dependencies](https://docs.flatpak.org/en/latest/dependencies.html), [Single-file bundles](https://docs.flatpak.org/en/latest/single-file-bundles.html)
+
+---
+
+### 6. AppImage 📦 Promising for Bundling
+
+**What is AppImage:**
+- Self-contained executable for Linux
+- Bundles all dependencies (including system libraries)
+- No installation required - just download and run
+- Works across Linux distributions
+
+**How it could work for patterndb-yaml:**
+- Bundle patterndb-yaml + syslog-ng binary + all shared libraries
+- Single executable file users can download and run
+- Use `appimage-builder` to automatically resolve and bundle dependencies
+
+**Technical approach:**
+```bash
+# User downloads single file
+wget https://github.com/JeffreyUrban/patterndb-yaml/releases/download/v1.0.0/patterndb-yaml-x86_64.AppImage
+chmod +x patterndb-yaml-x86_64.AppImage
+
+# Run directly - syslog-ng bundled inside
+./patterndb-yaml-x86_64.AppImage --rules rules.yaml < app.log
 ```
 
 **Pros:**
-- Includes syslog-ng-core automatically
-- Works on Windows (via Docker Desktop/WSL2)
-- Consistent environment across all platforms
-- Only need to install syslog-ng once in the image
-- Perfect for CI/CD pipelines
+- **Complete bundling** - includes syslog-ng binary and all dependencies
+- No installation required
+- Works across Linux distributions
+- Can create "full bundle" with all system libraries (~30MB overhead)
+- Single file distribution
+- **No package manager required** - just download and run
 
 **Cons:**
-- Requires Docker installed
-- Slightly more complex usage for simple tasks
-- Larger initial download
+- Linux only (no macOS/Windows)
+- Larger file size (~50-60MB with full bundle)
+- Need to maintain AppImage builds for multiple architectures
+- Users must manually download and manage updates
 
-**Recommendation:** **Provide as official distribution method** - especially valuable for Windows users and CI/CD.
+**Verdict:** **Worth investigating** - could provide true "batteries included" distribution for Linux without requiring any system packages.
+
+**Source:** [AppImage Full Bundle](https://appimage-builder.readthedocs.io/en/latest/advanced/full_bundle.html), [Packaging Native Binaries](https://docs.appimage.org/packaging-guide/from-source/native-binaries.html)
 
 ---
 
@@ -280,6 +360,97 @@ Requires: syslog-ng >= 3.35
 
 ---
 
+## Version Compatibility and Runtime Checks
+
+**Critical requirement:** When relying on external package manager installs (Homebrew, apt, dnf), we must verify the syslog-ng version matches what we've tested in CI.
+
+### Implementation Approach
+
+**Runtime version check:**
+```python
+import subprocess
+import sys
+
+def check_syslog_ng_version(allow_override: bool = False):
+    """Verify syslog-ng version compatibility.
+
+    Args:
+        allow_override: If True, only warn on version mismatch instead of failing
+    """
+    # Get syslog-ng version
+    try:
+        result = subprocess.run(
+            ["syslog-ng", "--version"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        version_line = result.stdout.split('\n')[0]
+        # Parse version (e.g., "syslog-ng 4.0.1")
+        version = version_line.split()[1]
+    except Exception as e:
+        print(f"ERROR: Cannot determine syslog-ng version: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Version tested in CI (should match CI environment)
+    TESTED_VERSION = "4.0.1"  # Update this to match CI
+    MIN_VERSION = "3.35.0"
+    MAX_VERSION = "4.9.9"  # Upper bound for known compatibility
+
+    if version != TESTED_VERSION:
+        msg = f"""
+WARNING: syslog-ng version mismatch
+  Found: {version}
+  Tested: {TESTED_VERSION}
+
+This version has not been tested with patterndb-yaml.
+Use --allow-version-mismatch to proceed anyway.
+"""
+        if allow_override:
+            print(msg, file=sys.stderr)
+        else:
+            print(msg, file=sys.stderr)
+            sys.exit(1)
+
+    # Check minimum version
+    if version < MIN_VERSION:
+        print(f"ERROR: syslog-ng {version} too old (minimum: {MIN_VERSION})",
+              file=sys.stderr)
+        sys.exit(1)
+```
+
+### CLI Integration
+
+**Add flag to CLI:**
+```python
+@click.option(
+    '--allow-version-mismatch',
+    is_flag=True,
+    help='Allow running with untested syslog-ng version (use at own risk)'
+)
+def main(allow_version_mismatch: bool, ...):
+    check_syslog_ng_version(allow_override=allow_version_mismatch)
+    # ... rest of main
+```
+
+### Benefits
+
+- **Safety:** Ensures tested configuration in production
+- **Flexibility:** Advanced users can override for newer versions
+- **Debugging:** Clear error messages when version incompatibilities occur
+- **CI alignment:** Runtime version matches CI-tested version
+- **User awareness:** Users know when they're in unsupported territory
+
+### CI Integration
+
+**CI should:**
+1. Pin syslog-ng version explicitly (e.g., `syslog-ng==4.0.1`)
+2. Test against this specific version
+3. Update `TESTED_VERSION` constant when upgrading CI version
+4. Consider testing against min/max versions periodically
+
+---
+
 ## What We DON'T Need (Clarification)
 
 ### pdbtool
@@ -299,36 +470,80 @@ Requires: syslog-ng >= 3.35
 
 ## Recommendations by Platform
 
-| Platform | Package | Installation Method | Handles syslog-ng? |
-|----------|---------|-------------------|-------------------|
-| **macOS** | syslog-ng | Homebrew formula dependency | ✅ Automatic |
-| **Debian/Ubuntu** | syslog-ng-core | apt (manual) + pipx | ⚠️ Manual first |
-| **RHEL/Fedora** | syslog-ng | dnf (manual) + pipx | ⚠️ Manual first |
-| **Windows** | N/A | Docker or WSL2 | ✅ Via Docker |
-| **CI/CD** | syslog-ng-core | Docker | ✅ Pre-installed |
+| Platform | Primary Method | Installation | Handles syslog-ng? | Notes |
+|----------|---------------|--------------|-------------------|-------|
+| **macOS** | Homebrew | `brew install patterndb-yaml` | ✅ Automatic | Recommended |
+| **Linux (any)** | Homebrew | `brew install patterndb-yaml` | ✅ Automatic | Recommended |
+| **Linux** | Snap | `snap install patterndb-yaml` | ✅ Automatic | Worth investigating |
+| **Linux** | AppImage | Download single file | ✅ Bundled | Worth investigating |
+| **Linux (Debian/Ubuntu)** | apt + pipx | Manual multi-step | ⚠️ Manual | Requires careful docs |
+| **Linux (RHEL/Fedora)** | dnf + pipx | Manual multi-step | ⚠️ Manual | Requires careful docs |
+| **Windows** | WSL2 | Follow Linux instructions | Via WSL2 | Nice-to-have only |
+| **CI/CD** | Official repos | Direct install | ⚠️ Manual | Version pinning required |
+
+### Priority Order
+
+1. **Homebrew (macOS + Linux)** - ✅ Ready to implement
+   - Works now, just needs `depends_on "syslog-ng"` in formula
+   - Cross-platform (macOS and Linux)
+   - Zero user configuration
+
+2. **Snap (Linux)** - 🔍 Investigate further
+   - Could provide automatic syslog-ng bundling on Linux
+   - Single command installation
+   - Needs research on confinement issues with subprocess
+
+3. **AppImage (Linux)** - 🔍 Investigate further
+   - Complete bundling solution
+   - No package manager required
+   - Larger file size but truly portable
+
+4. **Native packages (apt/dnf)** - ⚠️ Usable but problematic
+   - Requires careful documentation
+   - Users must remember official repos
+   - Multi-step process error-prone
+
+5. **Windows** - ❌ Low priority
+   - WSL2 works but adds complexity
+   - Native Windows support deferred
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: Current Release ✅
+### Phase 1: Immediate (Homebrew) ✅
 1. **Homebrew formula**: Add `depends_on "syslog-ng"`
-2. **Runtime check**: Add `check_syslog_ng_binary()` in Python code
-3. **Documentation**: Update SYSLOG_NG_INSTALLATION.md with correct package names:
-   - Linux: syslog-ng-core (Debian/Ubuntu)
-   - Linux: syslog-ng (RHEL/Fedora)
-   - macOS: syslog-ng (Homebrew)
+   - Works for macOS and Linux
+   - Zero user configuration required
+   - Automatic dependency management
+2. **Version checking**: Implement runtime version verification
+   - Add `--allow-version-mismatch` flag
+   - Fail on version mismatch by default
+   - Match CI-tested version
+3. **Documentation**:
+   - Recommend Homebrew as primary installation method for macOS and Linux
+   - Document official syslog-ng repos for manual installations
+   - Add version compatibility notes
 
-### Phase 2: Next Release 🎯
-1. **Docker image**: Create official image with syslog-ng-core
-2. **Docker Hub**: Publish to Docker Hub
-3. **Documentation**: Add Docker usage guide
-4. **CI/CD**: Use Docker for consistent testing
+### Phase 2: Linux Bundling Options (Investigation) 🔍
+1. **Snap package**: Investigate feasibility
+   - Test subprocess execution with snap confinement
+   - Evaluate if official syslog-ng repos can be used in build
+   - Determine if this provides better UX than Homebrew on Linux
+2. **AppImage**: Investigate feasibility
+   - Test bundling syslog-ng binary with dependencies
+   - Evaluate build automation for multiple architectures
+   - Compare file size vs convenience trade-off
 
-### Phase 3: Future 📋
-1. **Native packages**: Create .deb/.rpm if demand warrants
-2. **Conda**: Evaluate conda-forge submission
-3. **Optimization**: Consider contributing syslog-ng-core formula to Homebrew
+### Phase 3: Future Enhancements 📋
+1. **Native packages (.deb/.rpm)**: If demand warrants
+   - Could declare syslog-ng as dependency
+   - Integration with official package managers
+2. **Pre-built binaries**: Consider shipping multiple formats
+   - Homebrew (implemented)
+   - Snap (if investigation shows value)
+   - AppImage (if investigation shows value)
+   - Native packages (if community requests)
 
 ---
 
@@ -396,29 +611,65 @@ Requires: syslog-ng >= 3.35
 
 ## Conclusion
 
-**Corrected understanding:**
-- We run the `syslog-ng` binary as a subprocess
-- We need the binary with `db-parser()` module
-- Both `syslog-ng-core` and `syslog-ng` provide this
-- Prefer `syslog-ng-core` where available (Debian/Ubuntu) for minimal install
+**What we need:**
+- The `syslog-ng` binary (runs as subprocess, see `src/patterndb_yaml/pattern_filter.py:90`)
+- With `db-parser()` module (built-in to all packages)
+- From official syslog-ng repositories (distro defaults have incompatibility issues)
 
-**Recommended approach:**
+**Recommended approach (priority order):**
 
-1. **Homebrew (macOS):** `depends_on "syslog-ng"` - automatic, uses full package
-2. **Linux apt:** Recommend `syslog-ng-core` for minimal install
-3. **Linux dnf:** Use `syslog-ng` (core not separated)
-4. **pip/pipx:** Runtime check with platform-specific installation guidance
-5. **Docker:** Official image with `syslog-ng-core` pre-installed
-6. **Windows:** Docker or WSL2 only
+1. **Homebrew (macOS + Linux):** `depends_on "syslog-ng"` - ✅ Ready to implement
+   - Automatic dependency management
+   - Works cross-platform
+   - Zero user configuration
+   - Primary recommendation for all platforms
 
-This provides the best balance of user experience, platform support, and maintenance burden.
+2. **Snap (Linux):** 🔍 Investigate further
+   - Could provide automatic bundling alternative to Homebrew
+   - Single command installation
+   - Needs feasibility testing
+
+3. **AppImage (Linux):** 🔍 Investigate further
+   - Complete bundling without package manager
+   - Portable single-file distribution
+   - Needs build automation setup
+
+4. **Native packages (apt/dnf):** ⚠️ Available but problematic
+   - Requires manual setup of official repos
+   - Multi-step installation error-prone
+   - Document for advanced users only
+
+5. **Windows:** ❌ Low priority
+   - WSL2 works but adds complexity
+   - Not focusing on native Windows support
+
+**Critical additions:**
+- **Version checking:** Runtime verification with `--allow-version-mismatch` flag
+- **CI alignment:** Match runtime version to CI-tested version
+- **Clear documentation:** Emphasize Homebrew as primary method, document alternatives
+
+This provides excellent user experience via Homebrew while keeping options open for Linux-specific bundling approaches.
 
 ---
 
 ## References
 
+### syslog-ng Documentation
 - [syslog-ng db-parser documentation](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.21/administration-guide/db-parser-process-message-content-with-a-pattern-database-patterndb/)
+- [Installing syslog-ng on Ubuntu](https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions)
+- [Syslog-ng in Homebrew announcement](https://www.syslog-ng.com/community/b/blog/posts/syslog-ng-is-now-available-in-homebrew)
+
+### Packaging Resources
 - [Debian syslog-ng-core package](https://packages.debian.org/sid/syslog-ng-core)
+- [Homebrew syslog-ng Formula](https://formulae.brew.sh/formula/syslog-ng)
 - [Homebrew Formula Cookbook](https://docs.brew.sh/Formula-Cookbook)
 - [Bundling binary tools in Python wheels](https://simonwillison.net/2022/May/23/bundling-binary-tools-in-python-wheels/)
 - [PEP 725 - External Dependencies](https://peps.python.org/pep-0725/)
+
+### Linux Distribution Formats
+- [Snapcraft Documentation](https://snapcraft.io/docs)
+- [Flatpak Dependencies](https://docs.flatpak.org/en/latest/dependencies.html)
+- [Flatpak Single-file Bundles](https://docs.flatpak.org/en/latest/single-file-bundles.html)
+- [AppImage Full Bundle](https://appimage-builder.readthedocs.io/en/latest/advanced/full_bundle.html)
+- [AppImage Packaging Native Binaries](https://docs.appimage.org/packaging-guide/from-source/native-binaries.html)
+- [AppImage Concepts](https://docs.appimage.org/introduction/concepts.html)
