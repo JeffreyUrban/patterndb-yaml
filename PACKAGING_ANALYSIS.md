@@ -681,41 +681,122 @@ def main(allow_version_mismatch: bool, ...):
 
 ---
 
+## Final Implementation Decision
+
+**Approved installation methods:**
+
+1. **Homebrew (Recommended)** - macOS + Linux
+   - Primary installation method
+   - Automatic syslog-ng dependency management
+   - ~1 hour implementation effort
+
+2. **pip/pipx (Alternative)** - All platforms
+   - For users who prefer pip or need library access
+   - Requires manual syslog-ng installation from official repos
+   - Runtime version checking with helpful error messages
+   - ~2 hours implementation effort (version checking + docs)
+
+**Deferred for future consideration:**
+- Snap packaging (Linux)
+- AppImage (Linux)
+- Native .deb/.rpm packages
+- Docker images
+
+---
+
 ## Implementation Plan
 
-### Phase 1: Immediate (Homebrew) ✅
-1. **Homebrew formula**: Add `depends_on "syslog-ng"`
-   - Works for macOS and Linux
-   - Zero user configuration required
-   - Automatic dependency management
-2. **Version checking**: Implement runtime version verification
+### Phase 1: Immediate Implementation (Current Priority)
+
+#### 1.1 Homebrew Formula Update (~1 hour)
+**Location:** `homebrew-patterndb-yaml` repository
+
+**Changes required:**
+```ruby
+# In Formula/patterndb-yaml.rb
+depends_on "syslog-ng"  # Add this line after license declaration
+```
+
+**Testing:**
+```bash
+# Local testing
+brew install --build-from-source ./Formula/patterndb-yaml.rb
+brew list syslog-ng  # Verify syslog-ng installed
+syslog-ng --version  # Verify version
+```
+
+**Deliverables:**
+- [ ] Update formula with `depends_on "syslog-ng"`
+- [ ] Test local installation
+- [ ] Push to homebrew-patterndb-yaml repo
+- [ ] Update README.md to emphasize Homebrew as primary method
+
+#### 1.2 Version Checking Implementation (~2 hours)
+**Location:** `src/patterndb_yaml/` (new module or in CLI)
+
+**Components:**
+1. **Version list constant** (single entry for now):
+   ```python
+   VETTED_SYSLOG_NG_VERSIONS = [
+       "4.0.1",  # Tested in CI as of 2024-XX-XX
+   ]
+   ```
+
+2. **Version checker function**:
+   - Check syslog-ng binary exists
+   - Parse version from `syslog-ng --version`
+   - Compare against vetted versions list
+   - Provide helpful error with official repo setup instructions
+
+3. **CLI flag**:
    - Add `--allow-version-mismatch` flag
-   - Fail on version mismatch by default
-   - Match CI-tested version
-3. **Documentation**:
-   - Recommend Homebrew as primary installation method for macOS and Linux
-   - Document official syslog-ng repos for manual installations
-   - Add version compatibility notes
+   - Bypasses version check for advanced users
 
-### Phase 2: Linux Bundling Options (Investigation) 🔍
-1. **Snap package**: Investigate feasibility
-   - Test subprocess execution with snap confinement
-   - Evaluate if official syslog-ng repos can be used in build
-   - Determine if this provides better UX than Homebrew on Linux
-2. **AppImage**: Investigate feasibility
-   - Test bundling syslog-ng binary with dependencies
-   - Evaluate build automation for multiple architectures
-   - Compare file size vs convenience trade-off
+**Error message content:**
+- Current version vs vetted versions
+- Link to official syslog-ng installation guide
+- Copy-paste commands for Ubuntu/Debian repo setup
+- Instruction to use `--allow-version-mismatch` flag
 
-### Phase 3: Future Enhancements 📋
-1. **Native packages (.deb/.rpm)**: If demand warrants
-   - Could declare syslog-ng as dependency
-   - Integration with official package managers
-2. **Pre-built binaries**: Consider shipping multiple formats
-   - Homebrew (implemented)
-   - Snap (if investigation shows value)
-   - AppImage (if investigation shows value)
-   - Native packages (if community requests)
+**Deliverables:**
+- [ ] Create version checking module
+- [ ] Integrate into CLI entry point
+- [ ] Add `--allow-version-mismatch` flag
+- [ ] Write unit tests for version checking
+- [ ] Document in README.md
+
+#### 1.3 Documentation Updates (~1 hour)
+**Files to update:**
+- `README.md`: Emphasize Homebrew as primary, pip/pipx as alternative
+- `SYSLOG_NG_INSTALLATION.md`: Update with official repo instructions
+- Add version compatibility section
+
+**Content:**
+- Homebrew installation (recommended)
+- pip/pipx installation with official repo setup
+- Version compatibility notes
+- Troubleshooting common issues
+
+**Deliverables:**
+- [ ] Update README.md installation section
+- [ ] Update SYSLOG_NG_INSTALLATION.md
+- [ ] Add version compatibility documentation
+- [ ] Add troubleshooting section
+
+### Phase 2: Future Enhancements (Deferred)
+
+**Only if demand warrants:**
+1. **Snap package** (~3-5 hours)
+   - If Homebrew adoption low on Linux
+   - Need to test confinement/subprocess compatibility
+
+2. **AppImage** (~5-8 hours)
+   - For edge cases (air-gapped, unusual distros)
+   - Supplementary distribution method
+
+3. **Native packages** (.deb/.rpm)
+   - If project gains significant Linux server adoption
+   - Requires ongoing maintenance
 
 ---
 
@@ -788,39 +869,38 @@ def main(allow_version_mismatch: bool, ...):
 - With `db-parser()` module (built-in to all packages)
 - From official syslog-ng repositories (distro defaults have incompatibility issues)
 
-**Recommended approach (priority order):**
+**Approved implementation (Phase 1):**
 
-1. **Homebrew (macOS + Linux):** `depends_on "syslog-ng"` - ✅ Ready to implement
+1. **Homebrew (Primary method)** - macOS + Linux
+   - Add `depends_on "syslog-ng"` to formula (~1 hour)
    - Automatic dependency management
-   - Works cross-platform
    - Zero user configuration
-   - Primary recommendation for all platforms
+   - Recommended for all users
 
-2. **Snap (Linux):** 🔍 Investigate further
-   - Could provide automatic bundling alternative to Homebrew
-   - Single command installation
-   - Needs feasibility testing
+2. **pip/pipx (Alternative method)** - All platforms
+   - Runtime version checking (~2 hours implementation)
+   - Helpful error messages with official repo setup instructions
+   - `--allow-version-mismatch` flag for advanced users
+   - Vetted versions list (single entry for now: "4.0.1")
 
-3. **AppImage (Linux):** 🔍 Investigate further
-   - Complete bundling without package manager
-   - Portable single-file distribution
-   - Needs build automation setup
+**Deferred for future:**
+- Snap packaging (Linux) - ~3-5 hours if demand warrants
+- AppImage (Linux) - ~5-8 hours for supplementary distribution
+- Native .deb/.rpm packages - if significant Linux server adoption
+- Windows native support - WSL2 works, low priority
 
-4. **Native packages (apt/dnf):** ⚠️ Available but problematic
-   - Requires manual setup of official repos
-   - Multi-step installation error-prone
-   - Document for advanced users only
+**Total immediate effort:** ~4 hours
+- Homebrew formula update: ~1 hour
+- Version checking implementation: ~2 hours
+- Documentation updates: ~1 hour
 
-5. **Windows:** ❌ Low priority
-   - WSL2 works but adds complexity
-   - Not focusing on native Windows support
-
-**Critical additions:**
-- **Version checking:** Runtime verification with `--allow-version-mismatch` flag
-- **CI alignment:** Match runtime version to CI-tested version
-- **Clear documentation:** Emphasize Homebrew as primary method, document alternatives
-
-This provides excellent user experience via Homebrew while keeping options open for Linux-specific bundling approaches.
+**Key benefits:**
+- ✅ Minimal implementation effort (4 hours total)
+- ✅ Excellent user experience via Homebrew
+- ✅ Safety via version checking for pip/pipx users
+- ✅ Clear migration path from distro packages to official repos
+- ✅ Flexibility for advanced users with override flag
+- ✅ Keeps options open for Linux-specific formats if needed later
 
 ---
 
