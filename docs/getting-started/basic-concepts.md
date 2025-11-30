@@ -156,7 +156,7 @@ Some log entries span multiple lines:
   at com.example.App.start(App.java:15)
 ```
 
-`patterndb-yaml` can recognize and group these into single normalized outputs. See the [Rules documentation](../features/rules/rules.md#sequences) for details on sequence patterns.
+`patterndb-yaml` can recognize and group these into single normalized outputs. See the [Rules documentation](../features/rules/rules.md#sequences-multi-line-pattern-matching) for details on sequence patterns.
 
 ## Statistics
 

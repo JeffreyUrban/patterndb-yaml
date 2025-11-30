@@ -413,8 +413,6 @@ patterndb-yaml's algorithm is validated against an **oracle implementation** - a
 
 All edge cases and complex scenarios are verified to match oracle behavior exactly.
 
-See [Testing Strategy](../../dev-docs/testing/TESTING_STRATEGY.md) for details.
-
 ## Implementation Details
 
 ### Hybrid Architecture
