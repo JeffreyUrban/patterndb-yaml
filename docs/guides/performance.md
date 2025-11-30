@@ -233,7 +233,7 @@ patterndb-yaml --rules rules.yaml --explain test.log 2>&1 | \
 
 ## See Also
 
-- [syslog-ng Pattern Database Documentation](https://syslog-ng.github.io/admin-guide/120_Parser/023_db_parser/004_The_syslog-ng_patterndb_format/README.html) - Details on the radix tree algorithm
+- [syslog-ng Pattern Database Documentation](https://syslog-ng.github.io/admin-guide/120_Parser/006_db_parser/004_The_syslog-ng_patterndb_format/README) - Details on the radix tree algorithm
 - [Algorithm Details](../about/algorithm.md) - How patterndb-yaml works internally
 - [Troubleshooting](./troubleshooting.md) - Solving performance problems
 - [Common Patterns](./common-patterns.md) - Efficient pattern examples

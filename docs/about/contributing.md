@@ -499,9 +499,9 @@ pip freeze > requirements.txt
 
 ### Resources
 
-- **Documentation**: https://github.com/JeffreyUrban/patterndb-yaml/docs
+- **Documentation**: https://patterndb-yaml.readthedocs.io/
 - **Issue Tracker**: https://github.com/JeffreyUrban/patterndb-yaml/issues
-- **Discussions**: https://github.com/JeffreyUrban/patterndb-yaml/discussions
+- **Discussions**: Use issue tracker for now (Discussions not yet enabled)
 
 ### Ask Questions
 

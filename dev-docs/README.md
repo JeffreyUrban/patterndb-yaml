@@ -40,11 +40,6 @@ Test strategy and coverage:
   - Gap analysis and priorities
   - Historical testing milestones
 
-- **[ORACLE_TESTING.md](testing/ORACLE_TESTING.md)** - Oracle-based testing
-  - Reference implementation testing
-  - Correctness validation approach
-  - Oracle compatibility guarantees
-
 ### Deployment Documentation (`deployment/`)
 
 Distribution and release processes:
