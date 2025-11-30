@@ -240,8 +240,7 @@ pip install --upgrade patterndb-yaml  # If installed via pip
 ## References
 
 ### Official Documentation
-- [syslog-ng Documentation](https://syslog-ng.github.io/admin-guide/)
-- [syslog-ng Installation Guide](https://syslog-ng.github.io/admin-guide/030_Installing_syslog-ng/README.html)
+- [syslog-ng Pattern Database Documentation](https://syslog-ng.github.io/admin-guide/120_Parser/006_db_parser/004_The_syslog-ng_patterndb_format/README)
 - [Homebrew Formula Cookbook](https://docs.brew.sh/Formula-Cookbook)
 
 ### Platform-Specific
