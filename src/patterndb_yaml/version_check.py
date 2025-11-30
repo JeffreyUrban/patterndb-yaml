@@ -8,7 +8,7 @@ import re
 import subprocess
 import sys
 
-from packaging.version import Version  # type: ignore[import-not-found]
+from packaging.version import Version
 
 # Minimum tested version - do not lower without adding tests for older versions
 MIN_SYSLOG_NG_VERSION = "4.10.1"
