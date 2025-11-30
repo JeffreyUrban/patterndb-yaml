@@ -80,7 +80,6 @@ python_functions = ["test_*"]
 markers = [
     "unit: Unit tests for individual components",
     "integration: Integration tests for multiple components",
-    "property: Property-based tests (invariants)",
     "slow: Slow tests (skipped by default)",
 ]
 

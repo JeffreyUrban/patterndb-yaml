@@ -72,13 +72,6 @@ All tests use **pytest exclusively** (not unittest).
 - Boundary conditions
 - Special characters
 
-### 1.6 Invariants
-
-**File**: `tests/test_invariants.py`
-- Algorithm correctness guarantees
-- Consistency checks
-- Determinism verification
-
 ## 2. Integration Tests
 
 ### 2.1 CLI End-to-End
@@ -128,13 +121,6 @@ All tests use **pytest exclusively** (not unittest).
 **File**: `tests/test_integration_webserver.py`
 - Web server log processing
 - Access log normalization
-
-### 2.3 Comprehensive Scenarios
-
-**File**: `tests/test_comprehensive.py`
-- Complex multi-rule scenarios
-- Large-scale input processing
-- Performance validation
 
 ## 3. Documentation Tests
 
@@ -188,9 +174,9 @@ All tests use **pytest exclusively** (not unittest).
 # pyproject.toml
 [tool.pytest.ini_options]
 markers = [
-    "unit: Unit tests for specific components",
-    "integration: End-to-end integration tests",
-    "slow: Tests that take >1 second",
+    "unit: Unit tests for individual components",
+    "integration: Integration tests for multiple components",
+    "slow: Slow tests (skipped by default)",
 ]
 ```
 
