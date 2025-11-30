@@ -13,11 +13,6 @@ Technical architecture and design decisions:
   - Data structures and processing phases
   - Key implementation details
 
-- **[ALGORITHM_DESIGN.md](design/ALGORITHM_DESIGN.md)** - Detailed algorithm design
-  - placeholder
-  - Memory management and data structures
-  - Performance characteristics
-
 - **[DESIGN_RATIONALE.md](design/DESIGN_RATIONALE.md)** - Design decisions and trade-offs
   - Why certain approaches were chosen
   - Alternatives considered

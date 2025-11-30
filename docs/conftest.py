@@ -332,7 +332,6 @@ def pytest_sessionfinish(session, exitstatus):
     """Clean up test artifacts after test session completes.
 
     This pytest hook runs after all tests finish and removes:
-    - placeholder
     - Transient output files (output.txt, output.log, test-output*.txt, etc.)
     - Generated placeholder files (*.output in placeholder/ directories)
     - Generated stats files (job-stats.json, etc.)
