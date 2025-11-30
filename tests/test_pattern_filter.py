@@ -394,14 +394,13 @@ class TestMainFunction:
     """Tests for main() function."""
 
     @patch("builtins.print")
+    @patch("sys.stdin")
     @patch("patterndb_yaml.pattern_filter.PatternMatcher")
-    @patch("sys.stdin", new_callable=StringIO)
     @patch("pathlib.Path.exists", return_value=True)
-    def test_main_processes_stdin(self, mock_exists, mock_stdin, mock_matcher_class, mock_print):
+    def test_main_processes_stdin(self, mock_exists, mock_matcher_class, mock_stdin, mock_print):
         """Test main() processes stdin line by line."""
-        # Setup stdin
-        mock_stdin.write("line 1\nline 2\nline 3\n")
-        mock_stdin.seek(0)
+        # Setup stdin with explicit iteration
+        mock_stdin.__iter__.return_value = iter(["line 1\n", "line 2\n", "line 3\n"])
 
         # Setup matcher mock
         mock_matcher = Mock()
@@ -427,13 +426,13 @@ class TestMainFunction:
         print_calls = [str(call) for call in mock_print.call_args_list]
         assert any("[normalized:line 1]" in str(call) for call in print_calls)
 
+    @patch("sys.stdin")
     @patch("patterndb_yaml.pattern_filter.PatternMatcher")
-    @patch("sys.stdin", new_callable=StringIO)
     @patch("pathlib.Path.exists", return_value=True)
-    def test_main_handles_keyboard_interrupt(self, mock_exists, mock_stdin, mock_matcher_class):
+    def test_main_handles_keyboard_interrupt(self, mock_exists, mock_matcher_class, mock_stdin):
         """Test main() handles KeyboardInterrupt gracefully."""
-        mock_stdin.write("line 1\nline 2\n")
-        mock_stdin.seek(0)
+        # Setup stdin with explicit iteration
+        mock_stdin.__iter__.return_value = iter(["line 1\n", "line 2\n"])
 
         mock_matcher = Mock()
         mock_matcher.match.side_effect = KeyboardInterrupt()
