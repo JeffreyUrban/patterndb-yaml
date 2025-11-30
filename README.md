@@ -9,9 +9,9 @@
 > - No releases published yet
 > - Not accepting contributions at this time
 >
-> **Star/watch the repo to be notified when v0.1.0 is released.**
+> **Star/watch the repo to be notified when the first release is available.**
 
-**YAML-driven syslog-ng patterndb wrapper with multi-line capabilities**
+**YAML-based pattern matching with multi-line capabilities for log normalization using syslog-ng patterndb**
 
 [![PyPI version](https://img.shields.io/pypi/v/patterndb-yaml.svg)](https://pypi.org/project/patterndb-yaml/)
 [![Tests](https://github.com/JeffreyUrban/patterndb-yaml/actions/workflows/test.yml/badge.svg)](https://github.com/JeffreyUrban/patterndb-yaml/actions/workflows/test.yml)
@@ -19,6 +19,21 @@
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Documentation](https://img.shields.io/readthedocs/patterndb-yaml)](https://patterndb-yaml.readthedocs.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## What is patterndb-yaml?
+
+`patterndb-yaml` brings intuitive YAML pattern definitions to [syslog-ng's proven patterndb engine](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.38/administration-guide/56#TOPIC-1829130). Instead of writing complex XML patterns, you define rules in readable YAML and let patterndb-yaml handle the translation to syslog-ng's efficient pattern matcher.
+
+This makes it easier to normalize heterogeneous logs - transforming different log formats into standardized output for comparison, analysis, or filtering.
+
+## Features
+
+- **YAML rules** - Readable pattern definitions instead of syslog-ng XML
+- **Field extraction** - Pull specific data (table names, IDs, etc.) from matched lines
+- **Pattern matching** - Powered by syslog-ng's efficient C implementation
+- **Multi-line sequences** - Handle log entries spanning multiple lines
+- **Explain mode** - Debug which patterns matched and why
+- **CLI and Python API** - Use as a command-line tool or library
 
 ## Installation
 
@@ -55,44 +70,83 @@ cd patterndb-yaml
 pip install -e ".[dev]"
 ```
 
-**Requirements:** Python 3.9+
+**Requirements:** Python 3.9+, syslog-ng (installed automatically with Homebrew)
 
 ## Quick Start
 
 ### Command Line
 
+Create a YAML rules file (`rules.yaml`):
+
+```yaml
+rules:
+  - name: log_info
+    pattern:
+      - text: "["
+      - text: "INFO"
+      - text: "] "
+      - field: message
+    output: "[info:{message}]"
+
+  - name: log_error
+    pattern:
+      - text: "["
+      - text: "ERROR"
+      - text: "] "
+      - field: message
+    output: "[error:{message}]"
+```
+
+Process your logs:
+
 ```bash
-patterndb-yaml
+# Process from stdin
+cat app.log | patterndb-yaml --rules rules.yaml
+
+# Process a file
+patterndb-yaml --rules rules.yaml --input app.log
+
+# Get statistics
+patterndb-yaml --rules rules.yaml --input app.log --stats
 ```
 
 ### Python API
 
 ```python
-from patterndb-yaml import PatterndbYaml
+from patterndb_yaml import PatterndbYaml
+from pathlib import Path
 
-# Initialize with configuration
-placeholder = PatterndbYaml(
-    placeholder=placeholder
-)
+# Initialize with rules
+processor = PatterndbYaml(rules_path=Path("rules.yaml"))
 
-# Process stream
+# Process logs
 with open("app.log") as infile, open("clean.log", "w") as outfile:
-    for line in infile:
-        placeholder.placeholder(placeholder, outfile)
-    placeholder.flush(outfile)
+    processor.process(infile, outfile)
+
+# Get statistics
+stats = processor.get_stats()
+print(f"Matched {stats['lines_matched']} of {stats['lines_processed']} lines")
+print(f"Match rate: {stats['match_rate']:.1%}")
 ```
 
 ## Use Cases
 
-- **placeholder** - placeholder
+- **Log Normalization** - Transform heterogeneous log formats into standardized output
+- **Data Extraction** - Pull structured data from unstructured log lines
+- **Log Filtering** - Identify and process specific log patterns
+- **Format Standardization** - Convert legacy log formats to modern structured formats
+- **Compliance** - Normalize logs for security analysis and auditing
 
 ## How It Works
 
-`patterndb-yaml` uses placeholder:
+`patterndb-yaml` uses syslog-ng's patterndb engine for efficient pattern matching:
 
-1. **placeholder** - placeholder
+1. **YAML → XML** - Converts your readable YAML rules into syslog-ng's XML patterndb format
+2. **Pattern Matching** - Uses syslog-ng's C implementation for fast, memory-efficient matching
+3. **Field Extraction** - Pulls named fields from matched patterns
+4. **Output Transformation** - Applies output templates to normalize log format
 
-placeholder.
+The system processes logs line-by-line with constant memory usage, making it suitable for large files and streaming data.
 
 ## Documentation
 
@@ -101,7 +155,7 @@ placeholder.
 Key sections:
 - **Getting Started** - Installation and quick start guide
 - **Use Cases** - Real-world examples across different domains
-- **Guides** - placeholder selection, performance tips, common patterns
+- **Guides** - Pattern design, performance tips, common patterns
 - **Reference** - Complete CLI and Python API documentation
 
 ## Development
@@ -118,15 +172,20 @@ pip install -e ".[dev]"
 pytest
 
 # Run with coverage
-pytest --cov=patterndb-yaml --cov-report=html
+pytest --cov=patterndb_yaml --cov-report=html
+
+# Build documentation
+cd docs && mkdocs build
 ```
 
 ## Performance
 
-- **Time complexity:** O(placeholder)
-- **Space complexity:** O(placeholder)
-- **Throughput:** placeholder
-- **Memory:** placeholder
+- **Time complexity:** O(n) where n is number of log lines
+- **Space complexity:** O(1) constant memory for processing
+- **Throughput:** Processes logs line-by-line with streaming support
+- **Memory:** Minimal memory footprint, suitable for large files
+
+Performance is determined by syslog-ng's patterndb engine, which uses efficient C implementations for pattern matching.
 
 ## License
 
@@ -138,4 +197,4 @@ Jeffrey Urban
 
 ---
 
-**[Star on GitHub](https://github.com/JeffreyUrban/patterndb-yaml)** | **[Report Issues](https://github.com/JeffreyUrban/patterndb-yaml/issues)**
+**[Star on GitHub](https://github.com/JeffreyUrban/patterndb-yaml)** | **[Report Issues](https://github.com/JeffreyUrban/patterndb-yaml/issues)** | **[Documentation](https://patterndb-yaml.readthedocs.io/)**

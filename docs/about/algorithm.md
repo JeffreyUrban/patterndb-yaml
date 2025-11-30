@@ -108,4 +108,4 @@ If ordered incorrectly (general before specific), the specific pattern will neve
 
 - **[Performance Guide](../guides/performance.md)** - Optimization strategies
 - **[Basic Concepts](../getting-started/basic-concepts.md)** - User-focused overview
-- **[syslog-ng Pattern Database](https://syslog-ng.github.io/admin-guide/120_Parser/023_db_parser/004_The_syslog-ng_patterndb_format/README.html)** - Underlying pattern matching engine
+- **[syslog-ng Pattern Database](https://syslog-ng.github.io/admin-guide/120_Parser/006_db_parser/004_The_syslog-ng_patterndb_format/README)** - Underlying pattern matching engine

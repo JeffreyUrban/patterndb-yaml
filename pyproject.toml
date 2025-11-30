@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "patterndb_yaml"
 # Version is automatically determined from git tags via hatch-vcs
 dynamic = ["version"]
-description = "YAML-driven syslog-ng patterndb wrapper with multi-line capabilities"
+description = "YAML-based pattern matching with multi-line capabilities for log normalization using syslog-ng patterndb"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
