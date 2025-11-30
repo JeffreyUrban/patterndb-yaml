@@ -494,6 +494,177 @@ Right: "Full-line matching required per user specification. Performance issue un
 - If no supporting evidence is found, acknowledge the assumption and ask for clarification
 - Example: "I assumed X based on the comment at normalization_engine.py:117 which states '...'"
 
+### User-Facing Documentation Best Practices
+
+**CRITICAL: Avoid common documentation mistakes that create low-quality, misleading docs.**
+
+#### 1. Never Make Unsubstantiated Numeric Claims
+
+**DON'T make specific performance claims without evidence:**
+- ❌ "Processes 10k-100k lines/sec"
+- ❌ "Cache hit rate of 30-70%"
+- ❌ "Uses ~20-50 MB of memory"
+- ❌ "3-5× faster than alternative"
+
+**DO provide general guidance with measurement tools:**
+- ✅ "Performance depends on pattern complexity and input"
+- ✅ "Measure your throughput with: `time patterndb-yaml ...`"
+- ✅ "Monitor cache effectiveness with `cache_info()` method"
+
+**Why**: Specific numbers without benchmarks become outdated and misleading. Users' environments vary widely.
+
+#### 2. Credit External Tools and Libraries Properly
+
+**ALWAYS credit the underlying implementation:**
+- ✅ Link to official documentation: `[syslog-ng's patterndb](https://syslog-ng.com/...)`
+- ✅ Explain the relationship: "patterndb-yaml translates YAML to syslog-ng's XML format"
+- ✅ Credit their algorithms: "syslog-ng uses a radix tree for pattern matching"
+
+**DON'T:**
+- ❌ Present external algorithms as your own
+- ❌ Claim performance characteristics that belong to the external tool
+- ❌ Describe implementation details without crediting the actual implementer
+
+**Example**:
+```markdown
+# ❌ Wrong
+patterndb-yaml uses sequential pattern matching with O(rules) complexity
+
+# ✅ Right
+patterndb-yaml uses [syslog-ng's patterndb engine](link), which implements
+radix tree pattern matching. Performance scales independently of pattern count.
+```
+
+#### 3. Keep Documentation Concise
+
+**Follow proven patterns** (e.g., uniqseq):
+- Index pages: ~200 words maximum
+- Focus on what users need, not everything you know
+- One concept per section
+- Link to details rather than duplicating content
+
+**DON'T:**
+- ❌ Write 500-word index pages that duplicate other sections
+- ❌ Explain every implementation detail in user docs
+- ❌ Include content that belongs in other sections
+
+**Example**:
+```markdown
+# ❌ Wrong (492 words)
+Lengthy explanation of features, architecture, memory management, performance...
+
+# ✅ Right (163 words)
+Brief overview, key features list, links to detailed docs
+```
+
+#### 4. Eliminate Redundancy Across Files
+
+**Each topic gets ONE authoritative location:**
+- Performance details → `guides/performance.md` ONLY
+- Algorithm details → `about/algorithm.md` ONLY
+- API reference → `reference/patterndb-yaml.md` ONLY
+
+**DON'T duplicate across files:**
+- ❌ Memory architecture in both performance.md and algorithm.md
+- ❌ Performance tips in both API reference and performance guide
+- ❌ Integration examples in both library.md and API reference
+
+**Example structure:**
+```markdown
+# reference/patterndb-yaml.md (API reference)
+- Class documentation
+- Method signatures
+- Basic usage examples
+- Link to: performance.md, guides/
+
+# reference/library.md (minimal landing page)
+- Quick start example
+- Link to: patterndb-yaml.md
+
+# guides/performance.md (performance details)
+- Optimization strategies
+- Benchmarking approaches
+- Architecture that affects performance
+```
+
+#### 5. API Reference Should Focus on API Only
+
+**Include in API reference:**
+- ✅ Class/method documentation
+- ✅ Basic usage examples
+- ✅ Parameter descriptions
+- ✅ Return value specifications
+
+**Move to guides or delete:**
+- ❌ Performance considerations (→ guides/performance.md)
+- ❌ Integration examples (→ guides/ or delete)
+- ❌ Error handling patterns (→ guides/troubleshooting.md)
+- ❌ "Advanced Features" sections (just call it "Features")
+
+#### 6. Replace All Placeholders
+
+**Systematically find and replace:**
+```bash
+# Find placeholder content
+grep -r "placeholder" docs/
+grep -r "TODO" docs/
+grep -r "⚠️" docs/
+```
+
+**Replace with real content:**
+- ❌ "placeholder for installation instructions"
+- ✅ Actual installation commands and dependency lists
+
+#### 7. Fix Markdown Formatting
+
+**Common formatting errors to avoid:**
+- ❌ No blank line before lists → list doesn't render
+- ❌ No blank line before code blocks → code doesn't render
+- ❌ Line ending with `:` followed by `-` → add blank line between
+
+**Example**:
+```markdown
+# ❌ Wrong
+Low match rates indicate:
+- Missing patterns
+- Format changes
+
+# ✅ Right
+Low match rates indicate:
+
+- Missing patterns
+- Format changes
+```
+
+#### 8. Structure Matches Proven Patterns
+
+**For Reference section** (following uniqseq pattern):
+```
+reference/
+  cli.md           # CLI reference
+  [project].md     # API reference (comprehensive)
+  library.md       # Minimal landing page with quick start
+```
+
+**DON'T:**
+- ❌ Create custom structures without consulting user
+- ❌ Add files that don't match the established pattern
+- ❌ Use different naming conventions than proven examples
+
+#### Pre-Release Documentation Checklist
+
+Before documentation is considered complete, verify:
+
+- [ ] No unsubstantiated numeric claims (throughput, memory, percentages)
+- [ ] External tools properly credited with official documentation links
+- [ ] Index pages are concise (~200 words)
+- [ ] No redundant content across files
+- [ ] API reference focuses on API only (no performance/integration details)
+- [ ] All placeholder content replaced with real content
+- [ ] All lists have blank line before them
+- [ ] Reference section structure matches uniqseq pattern
+- [ ] Proper attribution for algorithms/implementations
+
 ## Testing
 
 This project uses **pytest exclusively** (not unittest).

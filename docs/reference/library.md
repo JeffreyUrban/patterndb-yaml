@@ -1,77 +1,33 @@
 # Library Usage
 
-Guide to using patterndb-yaml as a Python library in your applications.
+Using patterndb-yaml as a Python library.
 
 ## Installation
 
 ```bash
-pip install patterndb_yaml
+pip install patterndb-yaml
 ```
 
 ## Quick Start
 
-### Basic Usage
-
 ```python
-placeholder
-```
+from patterndb_yaml import PatterndbYaml
+from pathlib import Path
 
-### placeholder
+# Create processor
+processor = PatterndbYaml(rules_path=Path("rules.yaml"))
 
-```python
-placeholder
-```
+# Process logs
+with open("input.log") as infile, open("output.log", "w") as outfile:
+    processor.process(infile, outfile)
 
-## Core API
-
-### PatterndbYaml
-
-The main placeholder class. See [PatterndbYaml API](patterndb-yaml.md) for complete reference.
-
-```python
-placeholder
-```
-
-### Complete Library Workflow
-
-```python
-placeholder
-```
-
-## Advanced Features
-
-### placeholder
-
-```python
-placeholder
-```
-
-## Integration Examples
-
-### placeholder Application
-
-```python
-placeholder
-```
-
-### placeholder Integration
-
-```python
-placeholder
-```
-
-## Library Functions Reference
-
-### placeholder()
-
-placeholder:
-
-```python
-placeholder
+# Get statistics
+stats = processor.get_stats()
+print(f"Match rate: {stats['match_rate']:.1%}")
 ```
 
 ## See Also
 
 - [PatterndbYaml API](patterndb-yaml.md) - Complete API reference
-- [CLI Reference](cli.md) - Command-line usage
-- [Algorithm Details](../about/algorithm.md) - How it works
+- [CLI Reference](cli.md) - Command-line interface
+- [Rules Documentation](../features/rules/rules.md) - Pattern syntax
