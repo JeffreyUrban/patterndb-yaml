@@ -6,7 +6,7 @@ Checklist for preparing the first PyPI release of patterndb-yaml.
 
 ### Code Quality
 - [ ] All tests passing in CI
-- [ ] Test coverage >= 30% (current requirement)
+- [ ] Test coverage >= 80% (current requirement)
 - [ ] No critical linting errors
 - [ ] Type checking passes (mypy)
 - [ ] No security vulnerabilities
