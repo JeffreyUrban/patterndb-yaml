@@ -11,7 +11,7 @@
 >
 > **Star/watch the repo to be notified when the first release is available.**
 
-**YAML-based pattern matching for log normalization using syslog-ng patterndb**
+**YAML-based pattern matching with multi-line capabilities for log normalization using syslog-ng patterndb**
 
 [![PyPI version](https://img.shields.io/pypi/v/patterndb-yaml.svg)](https://pypi.org/project/patterndb-yaml/)
 [![Tests](https://github.com/JeffreyUrban/patterndb-yaml/actions/workflows/test.yml/badge.svg)](https://github.com/JeffreyUrban/patterndb-yaml/actions/workflows/test.yml)

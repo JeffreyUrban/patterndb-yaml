@@ -11,6 +11,14 @@ No unreleased changes yet.
 
 ---
 
+## [0.0.0] - 1970-01-01
+
+### Placeholder
+
+Special thanks to the Python community and the developers of the excellent tools that made this project possible.
+
+---
+
 ## Release Process
 
 Releases are automated via GitHub Actions when a version tag is pushed:
