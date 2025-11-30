@@ -276,58 +276,7 @@ pattern:
 output: "{message}"  # Don't include {timestamp}
 ```
 
-## Section 4: Performance Issues
-
-### Problem: Processing is slow
-
-**Symptom**: Takes too long to process large files
-
-**Solutions**:
-
-#### Solution 1: Simplify patterns
-
-Complex patterns with many alternatives slow processing:
-
-```yaml
-# Slow: many alternatives
-pattern:
-  - text: "Level: "
-  - alternatives:
-      - [{ text: "TRACE" }]
-      - [{ text: "DEBUG" }]
-      - [{ text: "INFO" }]
-      - [{ text: "WARN" }]
-      - [{ text: "ERROR" }]
-      - [{ text: "FATAL" }]
-
-# Faster: extract as field
-pattern:
-  - text: "Level: "
-  - field: level
-```
-
-#### Solution 2: Order rules by frequency
-
-Put most common patterns first:
-
-```yaml
-rules:
-  # Most common - 80% of lines
-  - name: info_log
-    pattern: [...]
-
-  # Less common - 15% of lines
-  - name: warn_log
-    pattern: [...]
-
-  # Rare - 5% of lines
-  - name: error_log
-    pattern: [...]
-```
-
-See [Performance Guide](./performance.md) for detailed optimization tips.
-
-## Section 5: Rules File Issues
+## Section 4: Rules File Issues
 
 ### Problem: YAML syntax error
 
@@ -397,7 +346,7 @@ patterndb-yaml --rules ./rules.yaml input.log
 patterndb-yaml --rules /path/to/rules.yaml input.log
 ```
 
-## Section 6: Field Extraction Issues
+## Section 5: Field Extraction Issues
 
 ### Problem: Field extracts wrong value
 
@@ -412,19 +361,18 @@ patterndb-yaml --rules /path/to/rules.yaml input.log
 # Input: "User: alice status: active"
 pattern:
   - text: "User: "
-  - field: username  # Extracts "alice status: active"
-  - text: " status: "
-  - field: status
+  - field: username  # Extracts "alice status: active" - too much!
+  - field: status    # Never gets to extract anything
 ```
 
 **Fix**:
 ```yaml
-# Add delimiter
+# Add delimiter to stop username extraction
 pattern:
   - text: "User: "
   - field: username
-  - text: " status: "  # Delimiter for username
-  - field: status
+  - text: " status: "  # Delimiter stops username at "alice"
+  - field: status      # Now extracts "active"
 ```
 
 ### Problem: NUMBER parser doesn't match

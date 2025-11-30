@@ -4,9 +4,9 @@
 
 ## Overview
 
-`patterndb-yaml` brings intuitive YAML pattern definitions to [syslog-ng's proven patterndb engine](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.38/administration-guide/56#TOPIC-1829130). Instead of writing complex XML patterns, you define rules in readable YAML and let patterndb-yaml handle the translation to syslog-ng's battle-tested pattern matcher.
+`patterndb-yaml` brings intuitive YAML pattern definitions to [syslog-ng's proven patterndb engine](https://www.syslog-ng.com/technical-documents/doc/syslog-ng-open-source-edition/3.38/administration-guide/56#TOPIC-1829130). Instead of writing complex XML patterns, you define rules in readable YAML and let patterndb-yaml handle the translation to syslog-ng's proven pattern matcher.
 
-This makes it easy to normalize heterogeneous logs - transforming different log formats into standardized output for comparison, analysis, or filtering.
+This makes it easier to normalize heterogeneous logs - transforming different log formats into standardized output for comparison, analysis, or filtering.
 
 ## Features
 
