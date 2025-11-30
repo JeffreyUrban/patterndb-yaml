@@ -343,7 +343,10 @@ class SequenceProcessor:
 
 class PatterndbYaml:
     """
-    placeholder processor
+    Log normalization processor using YAML-defined pattern rules.
+
+    Transforms heterogeneous log formats into normalized output for comparison.
+    Processes input streams line-by-line with constant memory usage.
     """
 
     def __init__(

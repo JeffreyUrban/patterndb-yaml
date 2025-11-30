@@ -1,0 +1,10 @@
+[INFO] Application started
+[ERROR] Database connection failed
+[WARN] Retrying connection
+[DEBUG] Loading configuration
+Unmatched log line without standard format
+[INFO] Connection successful
+Another unmatched line
+[ERROR] Authentication failed
+Yet another unmatched line
+[INFO] Process complete
