@@ -92,6 +92,8 @@ pip install -e ".[dev]"
 
 Windows is not currently supported. Consider using WSL2 (Windows Subsystem for Linux) and following the Linux installation instructions.
 
+**Requirements:** Python 3.9+, syslog-ng (installed automatically with Homebrew)
+
 ## Quick Start
 
 ### Command Line

@@ -30,5 +30,5 @@ Releases are automated via GitHub Actions when a version tag is pushed:
    - Publishes to PyPI (when configured)
 4. Version number is automatically derived from Git tag
 
-[Unreleased]: https://github.com/JeffreyUrban/patterndb-yaml/compare/v0.1.1...HEAD
-[0.0.0]: https://github.com/JeffreyUrban/patterndb-yaml/releases/tag/v0.1.0
+[Unreleased]: https://github.com/JeffreyUrban/patterndb-yaml/commits/main
+[0.0.0]: https://github.com/JeffreyUrban/patterndb-yaml/tree/main
