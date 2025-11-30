@@ -37,21 +37,29 @@ This makes it easier to normalize heterogeneous logs - transforming different lo
 
 ## Installation
 
-### Via Homebrew (macOS/Linux)
+**Requirements:** Python 3.9+, syslog-ng 3.35+
+
+> **📋 Note:** `patterndb-yaml` requires `syslog-ng` to be installed. See [SYSLOG_NG_INSTALLATION.md](SYSLOG_NG_INSTALLATION.md) for detailed platform-specific instructions.
+
+### Via Homebrew (macOS) - Recommended
 
 ```bash
 brew tap JeffreyUrban/patterndb-yaml && brew install patterndb-yaml
 ```
 
-Homebrew manages the Python dependency and provides easy updates via `brew upgrade`.
+**Automatically installs syslog-ng** as a dependency. Homebrew manages all dependencies and provides easy updates via `brew upgrade`.
 
-### Via pipx (Cross-platform)
+### Via pipx (Linux)
 
 ```bash
+# First, install syslog-ng for your distribution
+# See SYSLOG_NG_INSTALLATION.md for platform-specific instructions
+
+# Then install patterndb-yaml
 pipx install patterndb-yaml
 ```
 
-[pipx](https://pipx.pypa.io/) installs in an isolated environment with global CLI access. Works on macOS, Linux, and Windows. Update with `pipx upgrade patterndb-yaml`.
+[pipx](https://pipx.pypa.io/) installs in an isolated environment with global CLI access. Update with `pipx upgrade patterndb-yaml`.
 
 ### Via pip
 
@@ -60,6 +68,8 @@ pip install patterndb-yaml
 ```
 
 Use `pip` if you want to use patterndb-yaml as a library in your Python projects.
+
+**Note:** You must install syslog-ng separately. See [SYSLOG_NG_INSTALLATION.md](SYSLOG_NG_INSTALLATION.md).
 
 ### From Source
 
@@ -70,7 +80,9 @@ cd patterndb-yaml
 pip install -e ".[dev]"
 ```
 
-**Requirements:** Python 3.9+, syslog-ng (installed automatically with Homebrew)
+### Windows
+
+Windows is not currently supported. Consider using WSL2 (Windows Subsystem for Linux) and following the Linux installation instructions.
 
 ## Quick Start
 
