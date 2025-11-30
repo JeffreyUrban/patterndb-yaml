@@ -233,23 +233,66 @@ sudo snap install patterndb-yaml
 - Use `stage-packages` to include syslog-ng from Ubuntu repos
 - All dependencies automatically resolved and bundled
 
+**Effort estimation:**
+
+*Setup (one-time):*
+- Create `snapcraft.yaml` configuration file (~30-60 minutes)
+- Set up GitHub Actions for automated builds (~30-60 minutes)
+- Test snap confinement with subprocess execution (~1-2 hours)
+- Register snap name on Snapcraft store (~15 minutes)
+
+*Example snapcraft.yaml for patterndb-yaml:*
+```yaml
+name: patterndb-yaml
+summary: YAML-based pattern matching for log normalization
+description: |
+  YAML-based pattern matching with multi-line capabilities for log
+  normalization using syslog-ng patterndb
+base: core22
+confinement: classic  # Likely needed for subprocess execution
+grade: stable
+
+apps:
+  patterndb-yaml:
+    command: bin/patterndb-yaml
+    plugs: [home, network]
+
+parts:
+  patterndb-yaml:
+    plugin: python
+    source: .
+    stage-packages:
+      - syslog-ng-core  # Bundled automatically from Ubuntu repos
+```
+
+*Ongoing maintenance:*
+- Automatic builds via GitHub Actions (zero effort after setup)
+- Snap store automatically updates users
+- May need to adjust confinement if subprocess issues arise
+
 **Pros:**
 - **Automatic dependency bundling** - snap includes syslog-ng automatically
 - Works across many Linux distributions
 - Automatic updates via snapd
 - Single installation command
-- Could use official syslog-ng repos via build process
+- Minimal ongoing maintenance once set up
 
 **Cons:**
 - Requires snapd installed (not universal on all Linux distros)
 - Larger package size (bundles all dependencies)
-- Snap confinement may complicate running syslog-ng subprocess
-- Need to maintain snap packaging
-- Not available on macOS/Windows
+- **Classic confinement likely required** for subprocess execution
+- Classic snaps require manual approval for Snapcraft store publication
+- May bundle Ubuntu's syslog-ng (need to verify version compatibility)
 
-**Verdict:** **Worth investigating further** - could provide automatic syslog-ng installation on Linux without requiring Homebrew.
+**Estimated total effort:** ~3-5 hours initial setup, minimal ongoing
 
-**Source:** [Snapcraft Documentation](https://snapcraft.io/docs)
+**Verdict:** **Low-to-moderate effort, worth investigating** - could provide automatic syslog-ng installation on Linux without requiring Homebrew. Main unknown is confinement/subprocess compatibility.
+
+**Sources:**
+- [Craft a Python app - Snapcraft](https://snapcraft.io/docs/python-apps)
+- [Classic confinement](https://snapcraft.io/docs/classic-confinement)
+- [Example Python CLI snap](https://dmnfarrell.github.io/software/python-snap)
+- [Complete working snapcraft.yaml examples](https://github.com/jhenstridge/python-snap-pkg/blob/master/examples/hello-world/snap/snapcraft.yaml)
 
 ---
 
@@ -302,23 +345,103 @@ chmod +x patterndb-yaml-x86_64.AppImage
 ./patterndb-yaml-x86_64.AppImage --rules rules.yaml < app.log
 ```
 
+**Effort estimation:**
+
+*Setup (one-time):*
+- Create `AppImageBuilder.yml` recipe file (~1-2 hours)
+- Set up GitHub Actions for automated builds (~1-2 hours)
+- Test full bundle with syslog-ng on multiple distros (~2-3 hours)
+- Configure multi-architecture builds (x86_64, aarch64) (~1-2 hours)
+
+*Example AppImageBuilder.yml for patterndb-yaml:*
+```yaml
+version: 1
+
+script:
+  - rm -rf AppDir | true
+  - mkdir -p AppDir/usr/src
+  - cp -r src tests AppDir/usr/src/
+  - python3 -m pip install --system --ignore-installed --prefix=/usr --root=AppDir .
+
+AppDir:
+  path: ./AppDir
+  app_info:
+    id: com.github.jeffreyurban.patterndb-yaml
+    name: patterndb-yaml
+    icon: utilities-terminal
+    version: latest
+    exec: usr/bin/python3
+    exec_args: "$APPDIR/usr/bin/patterndb-yaml $@"
+
+  apt:
+    arch: amd64
+    sources:
+      - sourceline: 'deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ focal main universe'
+    include:
+      - python3
+      - python3-pip
+      - syslog-ng-core  # Bundled automatically
+
+  runtime:
+    env:
+      PATH: '${APPDIR}/usr/bin:${PATH}'
+
+  test:
+    fedora:
+      image: appimagecrafters/tests-env:fedora-35
+    debian:
+      image: appimagecrafters/tests-env:debian-stable
+    ubuntu:
+      image: appimagecrafters/tests-env:ubuntu-focal
+
+AppImage:
+  update-information: guess
+  sign-key: None
+  arch: x86_64
+```
+
+*GitHub Actions integration:*
+```yaml
+- name: Build AppImage
+  uses: AppImageCrafters/build-appimage@master
+  with:
+    recipe: AppImageBuilder.yml
+```
+
+*Ongoing maintenance:*
+- Automatic builds via GitHub Actions (zero effort after setup)
+- Manual upload to GitHub Releases
+- Users manually download updates (no auto-update)
+- May need to rebuild for new architectures
+
 **Pros:**
 - **Complete bundling** - includes syslog-ng binary and all dependencies
-- No installation required
+- No installation or package manager required
 - Works across Linux distributions
 - Can create "full bundle" with all system libraries (~30MB overhead)
 - Single file distribution
-- **No package manager required** - just download and run
+- Easy to distribute via GitHub Releases
+- GitHub Actions integration well-documented
 
 **Cons:**
 - Linux only (no macOS/Windows)
-- Larger file size (~50-60MB with full bundle)
-- Need to maintain AppImage builds for multiple architectures
-- Users must manually download and manage updates
+- Larger file size (~50-60MB with full bundle, potentially larger with syslog-ng)
+- Need to build for multiple architectures (x86_64, aarch64)
+- No automatic updates for users
+- More complex build process than snap
+- Need to bundle from Ubuntu repos (may have version compatibility issues)
 
-**Verdict:** **Worth investigating** - could provide true "batteries included" distribution for Linux without requiring any system packages.
+**Estimated total effort:** ~5-8 hours initial setup, ~30 min per release for manual upload
 
-**Source:** [AppImage Full Bundle](https://appimage-builder.readthedocs.io/en/latest/advanced/full_bundle.html), [Packaging Native Binaries](https://docs.appimage.org/packaging-guide/from-source/native-binaries.html)
+**Verdict:** **Moderate effort, very portable** - provides true "batteries included" distribution but requires more setup than snap. Best for users who can't or won't use package managers.
+
+**Sources:**
+- [AppImage Full Bundle](https://appimage-builder.readthedocs.io/en/latest/advanced/full_bundle.html)
+- [Packaging Native Binaries](https://docs.appimage.org/packaging-guide/from-source/native-binaries.html)
+- [Python AppImage Examples](https://github.com/niess/python-appimage)
+- [appimage-builder Python Example](https://github.com/AppImageCrafters/appimage-builder-python-example)
+- [GitHub Actions Integration](https://appimage-builder.readthedocs.io/en/latest/hosted-services/github-actions.html)
+- [Complete Recipe Examples](https://appimage-builder.readthedocs.io/en/latest/examples/pyqt.html)
 
 ---
 
@@ -357,6 +480,43 @@ Requires: syslog-ng >= 3.35
 - Or submit to official repos (lengthy approval process)
 
 **Verdict:** Worth considering if project gains traction on Linux servers.
+
+---
+
+## Packaging Methods Comparison Summary
+
+| Method | Effort (Initial) | Effort (Ongoing) | Auto-bundles syslog-ng? | Cross-platform? | User friction | Best for |
+|--------|-----------------|------------------|------------------------|----------------|---------------|----------|
+| **Homebrew** | Low (~1 hr) | None | ✅ Yes | macOS + Linux | Very low | Primary recommendation |
+| **Snap** | Low-Med (~3-5 hrs) | None | ✅ Yes | Linux only | Low | Linux users without Homebrew |
+| **AppImage** | Medium (~5-8 hrs) | Low (~30 min/release) | ✅ Yes | Linux only | Very low | Users without package managers |
+| **apt/dnf** | Low (~1 hr docs) | None | ❌ No | Linux only | High (manual setup) | Advanced users only |
+| **pip/pipx** | Low (~2 hrs runtime check) | None | ❌ No | All platforms | High (manual syslog-ng install) | Library users |
+
+**Key insights:**
+
+1. **Homebrew wins for effort-to-value ratio:**
+   - Minimal setup (just add `depends_on "syslog-ng"`)
+   - Works on macOS and Linux
+   - Zero ongoing maintenance
+   - Recommended as primary method
+
+2. **Snap is promising alternative for Linux:**
+   - Low-moderate initial effort (~3-5 hours)
+   - Automatic bundling like Homebrew
+   - Main risk: confinement/subprocess compatibility (needs testing)
+   - Worth investigating if Homebrew adoption is low on Linux
+
+3. **AppImage provides maximum portability:**
+   - Higher initial effort (~5-8 hours)
+   - Truly portable - no package manager needed
+   - Good for edge cases (air-gapped systems, unusual distros)
+   - Worth considering as supplementary distribution method
+
+4. **apt/dnf manual install is fallback only:**
+   - High user friction (multi-step, error-prone)
+   - Risk of version incompatibility if users forget official repos
+   - Document for reference but don't emphasize
 
 ---
 
@@ -405,6 +565,18 @@ WARNING: syslog-ng version mismatch
 
 This version has not been tested with patterndb-yaml.
 Use --allow-version-mismatch to proceed anyway.
+
+IMPORTANT: Distro-provided syslog-ng packages may be incompatible.
+Install from official syslog-ng repositories:
+  https://www.syslog-ng.com/community/b/blog/posts/installing-the-latest-syslog-ng-on-ubuntu-and-other-deb-distributions
+
+Quick setup (Ubuntu/Debian):
+  wget -qO - https://ose-repo.syslog-ng.com/apt/syslog-ng-ose-pub.asc | \\
+    sudo gpg --dearmor -o /etc/apt/keyrings/syslog-ng-ose.gpg
+  echo "deb [signed-by=/etc/apt/keyrings/syslog-ng-ose.gpg] \\
+    https://ose-repo.syslog-ng.com/apt/ stable ubuntu-noble" | \\
+    sudo tee /etc/apt/sources.list.d/syslog-ng-ose.list
+  sudo apt-get update && sudo apt-get install syslog-ng-core
 """
         if allow_override:
             print(msg, file=sys.stderr)
