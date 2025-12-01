@@ -34,7 +34,7 @@ jobs:
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
           echo "Tag version: $TAG_VERSION"
           pip install dist/*.whl
-          BUILT_VERSION=$(python -c "import {{ cookiecutter.project_slug }}; print({{ cookiecutter.project_slug }}.__version__)")
+          BUILT_VERSION=$(python -c "import patterndb_yaml; print(patterndb_yaml.__version__)")
           echo "Built version: $BUILT_VERSION"
           if [ "$TAG_VERSION" != "$BUILT_VERSION" ]; then
             echo "❌ Version mismatch: tag=$TAG_VERSION, built=$BUILT_VERSION"
