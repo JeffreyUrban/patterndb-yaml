@@ -36,5 +36,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: context.payload.release.id,
-              body: `🍺 Homebrew formula update triggered for v${version}\n\nThe [homebrew-{{ cookiecutter.project_slug }}](https://github.com/{{ cookiecutter.github_username }}/homebrew-{{ cookiecutter.project_slug }}) repository will create a PR once the PyPI release is confirmed.`
+              body: `🍺 Homebrew formula update triggered for v${version}\n\nThe [homebrew-patterndb-yaml](https://github.com/JeffreyUrban/homebrew-patterndb-yaml) repository will create a PR once the PyPI release is confirmed.`
             });
