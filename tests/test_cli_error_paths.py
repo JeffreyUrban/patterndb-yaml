@@ -313,3 +313,197 @@ class TestCLIValidateArguments:
             )
 
             assert result.exit_code == 0
+
+    def test_invalid_stats_format(self):
+        """Test invalid stats format is rejected."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            rules_file = tmpdir / "rules.yaml"
+            rules_file.write_text("rules: []")
+
+            input_file = tmpdir / "input.log"
+            input_file.write_text("test\n")
+
+            result = runner.invoke(
+                app,
+                [
+                    "--rules",
+                    str(rules_file),
+                    str(input_file),
+                    "--stats-format",
+                    "invalid",
+                ],
+            )
+
+            assert result.exit_code != 0
+
+
+@pytest.mark.unit
+class TestCLIInteractiveMode:
+    """Tests for interactive mode detection."""
+
+    @patch("patterndb_yaml.cli.sys.stdin")
+    def test_no_input_interactive_mode(self, mock_stdin):
+        """Test interactive mode detection when no input provided."""
+        # Mock isatty to return True (interactive terminal)
+        mock_stdin.isatty.return_value = True
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            rules_file = tmpdir / "rules.yaml"
+            rules_file.write_text("rules: []")
+
+            # Run without input file and stdin
+            result = runner.invoke(
+                app,
+                ["--rules", str(rules_file)],
+            )
+
+            # Should exit with 0 and show usage help (output goes to stderr via console.print)
+            assert result.exit_code == 0
+            # With CliRunner, the help text goes to stdout or result output
+            # The important thing is that it exits cleanly without error
+            # We can't easily test isatty behavior with CliRunner since it mocks stdin
+
+
+@pytest.mark.unit
+class TestCLIVersionCheckErrors:
+    """Tests for version check error handling."""
+
+    def test_version_check_error_handling(self):
+        """Test that version check errors are handled properly."""
+        from patterndb_yaml.version_check import SyslogNgVersionError
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            rules_file = tmpdir / "rules.yaml"
+            rules_file.write_text("rules: []")
+
+            input_file = tmpdir / "input.log"
+            input_file.write_text("test\n")
+
+            # Patch version check to raise error
+            with patch("patterndb_yaml.cli.check_syslog_ng_version") as mock_check:
+                mock_check.side_effect = SyslogNgVersionError("Test version error")
+
+                result = runner.invoke(
+                    app,
+                    [
+                        "--rules",
+                        str(rules_file),
+                        str(input_file),
+                        "--quiet",
+                    ],
+                )
+
+                assert result.exit_code == 1
+
+
+@pytest.mark.unit
+class TestCLIKeyboardInterrupt:
+    """Tests for keyboard interrupt handling."""
+
+    def test_keyboard_interrupt_during_processing(self):
+        """Test that KeyboardInterrupt is handled gracefully."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            rules_file = tmpdir / "rules.yaml"
+            rules_file.write_text("rules: []")
+
+            input_file = tmpdir / "input.log"
+            input_file.write_text("test\n")
+
+            # Patch PatterndbYaml.process to raise KeyboardInterrupt
+            with patch("patterndb_yaml.cli.PatterndbYaml") as mock_processor_class:
+                mock_processor = mock_processor_class.return_value
+                mock_processor.process.side_effect = KeyboardInterrupt()
+                mock_processor.flush.return_value = None
+                mock_processor.get_stats.return_value = {
+                    "lines_processed": 10,
+                    "lines_matched": 5,
+                    "match_rate": 0.5,
+                }
+
+                result = runner.invoke(
+                    app,
+                    [
+                        "--rules",
+                        str(rules_file),
+                        str(input_file),
+                        "--quiet",
+                    ],
+                )
+
+                assert result.exit_code == 1
+                # Should call flush on interrupt
+                mock_processor.flush.assert_called_once()
+
+    def test_keyboard_interrupt_with_stats_output(self):
+        """Test that stats are shown after KeyboardInterrupt."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            rules_file = tmpdir / "rules.yaml"
+            rules_file.write_text("rules: []")
+
+            input_file = tmpdir / "input.log"
+            input_file.write_text("test\n")
+
+            # Patch PatterndbYaml.process to raise KeyboardInterrupt
+            with patch("patterndb_yaml.cli.PatterndbYaml") as mock_processor_class:
+                mock_processor = mock_processor_class.return_value
+                mock_processor.process.side_effect = KeyboardInterrupt()
+                mock_processor.flush.return_value = None
+                mock_processor.get_stats.return_value = {
+                    "lines_processed": 10,
+                    "lines_matched": 5,
+                    "match_rate": 0.5,
+                }
+
+                result = runner.invoke(
+                    app,
+                    [
+                        "--rules",
+                        str(rules_file),
+                        str(input_file),
+                    ],
+                )
+
+                assert result.exit_code == 1
+                # Should call flush and get_stats
+                mock_processor.flush.assert_called_once()
+                mock_processor.get_stats.assert_called()
+
+    def test_keyboard_interrupt_with_json_stats(self):
+        """Test that JSON stats are shown after KeyboardInterrupt."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir = Path(tmpdir)
+            rules_file = tmpdir / "rules.yaml"
+            rules_file.write_text("rules: []")
+
+            input_file = tmpdir / "input.log"
+            input_file.write_text("test\n")
+
+            # Patch PatterndbYaml.process to raise KeyboardInterrupt
+            with patch("patterndb_yaml.cli.PatterndbYaml") as mock_processor_class:
+                mock_processor = mock_processor_class.return_value
+                mock_processor.process.side_effect = KeyboardInterrupt()
+                mock_processor.flush.return_value = None
+                mock_processor.get_stats.return_value = {
+                    "lines_processed": 10,
+                    "lines_matched": 5,
+                    "match_rate": 0.5,
+                }
+                mock_processor.rules_path = Path(rules_file)
+
+                result = runner.invoke(
+                    app,
+                    [
+                        "--rules",
+                        str(rules_file),
+                        str(input_file),
+                        "--stats-format",
+                        "json",
+                    ],
+                )
+
+                assert result.exit_code == 1

@@ -55,7 +55,7 @@ jobs:
       - name: Check documentation links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --verbose --no-progress --accept 200,403,404 --timeout 30 --exclude 'github\.com/.*/settings/' '**/*.md' 'docs/**/*.md' 'mkdocs.yml'
+          args: --verbose --no-progress --accept 200,403,404,429 --timeout 30 --exclude 'github\.com/.*/settings/' '**/*.md' 'docs/**/*.md' 'mkdocs.yml'
           fail: true
 
   test:
@@ -63,8 +63,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15  # Prevent jobs from hanging indefinitely
     strategy:
-      matrix:  # TODO Restore full matrix to test all supported versions
-        python-version: ["3.9", "3.14"]
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v6
@@ -100,7 +100,7 @@ jobs:
         env:
           COLUMNS: 120  # Set terminal width for consistent Rich output formatting
         run: |
-          pytest --cov=src/patterndb_yaml --cov-report=xml --cov-report=term --cov-fail-under=30 --ignore=tests/test_version_check.py
+          pytest --cov=src/patterndb_yaml --cov-report=xml --cov-report=term --cov-fail-under=80 --ignore=tests/test_version_check.py
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.14'

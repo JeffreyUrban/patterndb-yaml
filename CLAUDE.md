@@ -126,7 +126,6 @@ The verify-file marker tells Sybil to:
 
 **Design Documentation:**
 - **[dev-docs/design/IMPLEMENTATION.md](./dev-docs/design/IMPLEMENTATION.md)** - Implementation overview and design decisions
-- **[dev-docs/design/ALGORITHM_DESIGN.md](./dev-docs/design/ALGORITHM_DESIGN.md)** - Detailed algorithm design
 - **[dev-docs/design/DESIGN_RATIONALE.md](./dev-docs/design/DESIGN_RATIONALE.md)** - Design rationale and trade-offs
 
 **Testing Documentation:**
@@ -345,7 +344,7 @@ When working on different scopes of work, maintain corresponding documentation:
 | Work Scope | Documentation to Update |
 |------------|------------------------|
 | **Adding/changing features** | `dev-docs/design/IMPLEMENTATION.md`, `dev-docs/user/EXAMPLES.md` |
-| **Modifying algorithm** | `dev-docs/design/ALGORITHM_DESIGN.md`, `dev-docs/design/IMPLEMENTATION.md` |
+| **Modifying algorithm** | `dev-docs/design/IMPLEMENTATION.md` |
 | **Adding tests** | `dev-docs/testing/TESTING_STRATEGY.md` |
 | **CLI changes** | `README.md`, `dev-docs/user/EXAMPLES.md` |
 | **Completing milestones** | `dev-docs/planning/PLANNING.md` |

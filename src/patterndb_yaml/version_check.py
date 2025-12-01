@@ -57,7 +57,7 @@ def get_syslog_ng_version() -> str:
         raise SyslogNgVersionError(
             "syslog-ng not found. Please install syslog-ng 4.10.1 or higher.\n\n"
             "See installation instructions at:\n"
-            "https://github.com/JeffreyUrban/patterndb-yaml/blob/main/SYSLOG_NG_INSTALLATION.md"
+            "https://github.com/JeffreyUrban/patterndb-yaml/blob/main/docs/SYSLOG_NG_INSTALLATION.md"
         ) from e
     except subprocess.CalledProcessError as e:
         raise SyslogNgVersionError(f"Error running syslog-ng --version: {e}") from e
@@ -85,7 +85,7 @@ def check_syslog_ng_version(allow_version_mismatch: bool = False, quiet: bool = 
                 f"syslog-ng version {version_str} is known to be incompatible.\n"
                 f"Please install syslog-ng {MIN_SYSLOG_NG_VERSION} or higher.\n\n"
                 f"See installation instructions at:\n"
-                f"https://github.com/JeffreyUrban/patterndb-yaml/blob/main/SYSLOG_NG_INSTALLATION.md"
+                f"https://github.com/JeffreyUrban/patterndb-yaml/blob/main/docs/SYSLOG_NG_INSTALLATION.md"
             )
             if allow_version_mismatch:
                 print(f"WARNING: {error_msg}", file=sys.stderr)
@@ -103,7 +103,7 @@ def check_syslog_ng_version(allow_version_mismatch: bool = False, quiet: bool = 
                 f"required version {MIN_SYSLOG_NG_VERSION}.\n"
                 f"Please upgrade to syslog-ng {MIN_SYSLOG_NG_VERSION} or higher.\n\n"
                 f"See installation instructions at:\n"
-                f"https://github.com/JeffreyUrban/patterndb-yaml/blob/main/SYSLOG_NG_INSTALLATION.md"
+                f"https://github.com/JeffreyUrban/patterndb-yaml/blob/main/docs/SYSLOG_NG_INSTALLATION.md"
             )
             if allow_version_mismatch:
                 print(f"WARNING: {error_msg}", file=sys.stderr)

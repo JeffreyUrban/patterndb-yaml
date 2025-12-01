@@ -109,7 +109,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["E741", "E501"]  # Allow short var names and long lines in tests
-"tests/generate_fixtures.py" = ["E402"]  # Module imports after sys.path modification
 "*/_version.py" = ["UP", "I001"]  # Auto-generated file by hatch-vcs
 
 [tool.ruff.format]

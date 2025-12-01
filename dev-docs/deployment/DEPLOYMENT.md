@@ -130,7 +130,7 @@ File: `Formula/patterndb-yaml.rb`
 class Uniqseq < Formula
   include Language::Python::Virtualenv
 
-  desc "placeholder"
+  desc "YAML-based pattern matching with multi-line capabilities for log normalization using syslog-ng patterndb"
   homepage "https://github.com/JeffreyUrban/patterndb-yaml"
   url "https://files.pythonhosted.org/packages/.../patterndb-yaml-0.1.1.tar.gz"
   sha256 "..."  # SHA256 hash of the PyPI tarball (get from PyPI)

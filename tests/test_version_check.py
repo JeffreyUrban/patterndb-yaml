@@ -223,7 +223,7 @@ class TestCheckSyslogNgVersion:
         mock_get_version.side_effect = SyslogNgVersionError(
             "syslog-ng not found. Please install syslog-ng 4.10.1 or higher.\n\n"
             "See installation instructions at:\n"
-            "https://github.com/JeffreyUrban/patterndb-yaml/blob/main/SYSLOG_NG_INSTALLATION.md"
+            "https://github.com/JeffreyUrban/patterndb-yaml/blob/main/docs/SYSLOG_NG_INSTALLATION.md"
         )
         with pytest.raises(SyslogNgVersionError) as exc_info:
             check_syslog_ng_version()
