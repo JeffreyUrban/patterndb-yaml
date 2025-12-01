@@ -27,14 +27,22 @@ jobs:
           event-type: update-formula
           client-payload: '{"version": "${{ steps.version.outputs.version }}"}'
 
-      - name: Comment on release
+      - name: Update release description
         uses: actions/github-script@v7
         with:
           script: |
             const version = '${{ steps.version.outputs.version }}';
-            github.rest.repos.createReleaseComment({
+            const release = await github.rest.repos.getRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id
+            });
+
+            const updateNote = `\n\n---\n\n🍺 **Homebrew Update**: Formula update triggered for v${version}. The [homebrew-patterndb-yaml](https://github.com/JeffreyUrban/homebrew-patterndb-yaml) repository will create a PR once the PyPI release is confirmed.`;
+
+            await github.rest.repos.updateRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: context.payload.release.id,
-              body: `🍺 Homebrew formula update triggered for v${version}\n\nThe [homebrew-patterndb-yaml](https://github.com/JeffreyUrban/homebrew-patterndb-yaml) repository will create a PR once the PyPI release is confirmed.`
+              body: release.data.body + updateNote
             });
