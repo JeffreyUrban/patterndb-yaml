@@ -59,6 +59,49 @@ normalized = output_data.read()
 print(normalized)
 ```
 
+### Batch Processing with normalize_lines()
+
+For efficient processing of lines already in memory, use `normalize_lines()` to avoid StringIO overhead:
+
+```python
+from patterndb_yaml import PatterndbYaml
+from pathlib import Path
+
+processor = PatterndbYaml(rules_path=Path("rules.yaml"))
+
+# Process a list of lines directly
+lines = [
+    "2024-11-15 10:00:01 [INFO] User login successful",
+    "2024-11-15 10:00:02 [ERROR] Database connection failed",
+    "2024-11-15 10:00:03 [INFO] User logout",
+]
+
+# Normalize in one batch - returns list of normalized lines
+normalized_lines = processor.normalize_lines(lines)
+
+for original, normalized in zip(lines, normalized_lines):
+    print(f"Original: {original}")
+    print(f"Normalized: {normalized}\n")
+```
+
+**Benefits over StringIO**:
+
+- **No string concatenation overhead** - processes lines directly without join/split operations
+- **Simpler code** - direct list input and output
+- **Better for testing** - easier to work with lists in unit tests
+
+**When to use**:
+
+- Processing lines from `file.readlines()` or `splitlines()`
+- Batch processing in memory (API endpoints, testing)
+- When you need random access to results
+
+**When to use `process()` instead**:
+
+- Streaming large files (constant memory usage)
+- Processing stdin/stdout
+- Files that don't fit in memory
+
 ### Explain Mode for Debugging
 
 ```python
@@ -125,6 +168,43 @@ for log_file in ["server1.log", "server2.log", "server3.log"]:
 ```
 
 **Why reuse**: Processor initialization (loading rules, generating patterns) has overhead. Reusing the instance avoids repeated initialization.
+
+### Batch Processing with Sequences
+
+`normalize_lines()` supports multi-line sequences just like `process()`:
+
+```python
+from patterndb_yaml import PatterndbYaml
+from pathlib import Path
+
+processor = PatterndbYaml(rules_path=Path("rules.yaml"))
+
+# Lines with multi-line sequences (e.g., Q&A format)
+lines = [
+    "Q: What is the server status?",
+    "A: All systems operational",
+    "Q: Any errors in the log?",
+    "A: No errors found",
+]
+
+# Sequences are automatically detected and buffered
+normalized = processor.normalize_lines(lines)
+
+# Each sequence (Q + A) is kept together in output
+for line in normalized:
+    print(line)
+```
+
+**Sequence behavior**:
+
+- Leader lines start buffering a sequence
+- Follower lines are added to the buffer
+- Sequences flush automatically when:
+    - A non-follower line is encountered
+    - End of input is reached
+    - A new sequence leader starts
+
+**State isolation**: Each call to `normalize_lines()` is independent - sequences don't carry over between calls.
 
 ### Flushing Sequences
 

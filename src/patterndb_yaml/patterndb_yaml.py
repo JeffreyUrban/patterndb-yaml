@@ -389,6 +389,66 @@ class PatterndbYaml:
         if self.explain:
             print(f"EXPLAIN: {message}", file=sys.stderr)
 
+    def normalize_lines(self, lines: list[str]) -> list[str]:
+        """
+        Batch normalize lines with sequence support, no StringIO overhead.
+
+        Processes a list of lines directly, avoiding newline addition/removal overhead.
+        Supports multi-line sequences. Use this method when you have lines already
+        loaded in memory. For streaming large files, use process() instead.
+
+        Args:
+            lines: List of input lines (without trailing newlines)
+
+        Returns:
+            List of normalized output lines (without trailing newlines)
+
+        Example:
+            ```python
+            from pathlib import Path
+            processor = PatterndbYaml(rules_path=Path("examples/rules.yaml"))
+            lines = ["ERROR: Connection failed", "INFO: Retrying"]
+            normalized = processor.normalize_lines(lines)
+            # Returns: ['[ERROR:Connection failed]', '[INFO:Retrying]']
+            ```
+        """
+        result: list[str] = []
+
+        for line in lines:
+            # Normalize the line
+            normalized = self.norm_engine.normalize_cached(line)  # type: ignore[attr-defined]
+
+            # Handle sequences (replicate process_line logic but with list output)
+            if self.seq_processor.current_sequence:
+                if self.seq_processor.is_sequence_follower(
+                    line, self.seq_processor.current_sequence
+                ):
+                    normalized_follower = self.seq_processor.normalize_follower(
+                        line, self.seq_processor.current_sequence
+                    )
+                    self.seq_processor.sequence_buffer.append((line, normalized_follower))
+                    continue
+                else:
+                    # Flush buffered sequence to result list
+                    result.extend(norm_line for _, norm_line in self.seq_processor.sequence_buffer)
+                    self.seq_processor.sequence_buffer = []
+                    self.seq_processor.current_sequence = None
+
+            # Check if starting new sequence
+            sequence_leader = self.seq_processor.is_sequence_leader(normalized)
+            if sequence_leader:
+                self.seq_processor.current_sequence = sequence_leader
+                self.seq_processor.sequence_buffer = [(line, normalized)]
+            else:
+                result.append(normalized)
+
+        # Flush any remaining sequence
+        result.extend(norm_line for _, norm_line in self.seq_processor.sequence_buffer)
+        self.seq_processor.sequence_buffer = []
+        self.seq_processor.current_sequence = None
+
+        return result
+
     def process(
         self,
         stream: Union[TextIO, BinaryIO],
