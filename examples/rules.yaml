@@ -1,0 +1,24 @@
+# Simple example rules for getting started
+# This file demonstrates basic pattern matching and field extraction
+
+rules:
+  - name: error
+    description: "Error log messages"
+    pattern:
+      - text: "ERROR: "
+      - field: message
+    output: "[ERROR:{message}]"
+
+  - name: info
+    description: "Info log messages"
+    pattern:
+      - text: "INFO: "
+      - field: message
+    output: "[INFO:{message}]"
+
+  - name: warning
+    description: "Warning log messages"
+    pattern:
+      - text: "WARN: "
+      - field: message
+    output: "[WARN:{message}]"
