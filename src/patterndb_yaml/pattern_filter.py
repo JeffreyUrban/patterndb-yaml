@@ -104,21 +104,34 @@ log {{
             text=True,
         )
 
-        # Give syslog-ng time to start up and open the FIFOs
+        # Wait for syslog-ng to start up and open the FIFOs
+        # Poll with short sleeps instead of fixed 0.5s wait
         import time
 
-        time.sleep(0.5)
+        max_wait = 0.5  # Maximum time to wait (seconds)
+        poll_interval = 0.01  # Check every 10ms
+        elapsed = 0.0
 
-        # Check if process is still running
-        if self.process.poll() is not None:
-            stderr_output = self.process.stderr.read() if self.process.stderr else "No stderr"
-            raise RuntimeError(f"syslog-ng failed to start: {stderr_output}")
+        while elapsed < max_wait:
+            # Check if process is still running
+            if self.process.poll() is not None:
+                stderr_output = self.process.stderr.read() if self.process.stderr else "No stderr"
+                raise RuntimeError(f"syslog-ng failed to start: {stderr_output}")
 
-        # Open FIFOs for reading/writing
-        # IMPORTANT: Open output for reading FIRST (non-blocking), then input for writing
-        # Otherwise we'll deadlock
-        self.output_fd = os.open(self.output_fifo, os.O_RDONLY | os.O_NONBLOCK)
-        self.input_fd = os.open(self.input_fifo, os.O_WRONLY)
+            # Try to open FIFOs (non-blocking for output)
+            try:
+                # IMPORTANT: Open output for reading FIRST (non-blocking), then input for writing
+                # Otherwise we'll deadlock
+                self.output_fd = os.open(self.output_fifo, os.O_RDONLY | os.O_NONBLOCK)
+                self.input_fd = os.open(self.input_fifo, os.O_WRONLY)
+                break  # Success!
+            except (OSError, FileNotFoundError):
+                # FIFOs not ready yet, wait a bit
+                time.sleep(poll_interval)
+                elapsed += poll_interval
+        else:
+            # Timeout
+            raise RuntimeError(f"Timeout waiting for syslog-ng FIFOs (waited {max_wait}s)")
 
     def match(self, line: str) -> str:
         """
