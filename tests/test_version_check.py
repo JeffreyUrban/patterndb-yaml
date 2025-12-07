@@ -1,4 +1,10 @@
-"""Tests for syslog-ng version checking."""
+"""Tests for syslog-ng version checking.
+
+IMPORTANT: These tests patch get_syslog_ng_version to avoid calling the real syslog-ng binary.
+If these tests fail only when run in the full test suite (but pass individually), check for:
+- Tests that modify sys.modules (like test_init.py::test_version_import_fallback)
+- Tests must properly restore sys.modules state to avoid module reload issues affecting patches
+"""
 
 import subprocess
 from unittest.mock import MagicMock, patch

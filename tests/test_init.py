@@ -37,23 +37,35 @@ def test_init_all_exports():
 @pytest.mark.unit
 def test_version_import_fallback():
     """Test version import fallback when _version module is not available."""
-    # Remove patterndb_yaml from sys.modules to force re-import
-    modules_to_remove = [k for k in sys.modules.keys() if k.startswith("patterndb_yaml")]
-    for module in modules_to_remove:
-        del sys.modules[module]
+    # Save the original modules
+    original_modules = {k: v for k, v in sys.modules.items() if k.startswith("patterndb_yaml")}
 
-    # Mock the _version import to raise ImportError
-    with patch.dict("sys.modules", {"patterndb_yaml._version": None}):
-        # This will cause ImportError when trying to import _version
-        import importlib
+    try:
+        # Remove patterndb_yaml from sys.modules to force re-import
+        modules_to_remove = [k for k in sys.modules.keys() if k.startswith("patterndb_yaml")]
+        for module in modules_to_remove:
+            del sys.modules[module]
 
-        # Re-import the __init__ module with the mock
-        import patterndb_yaml
+        # Mock the _version import to raise ImportError
+        with patch.dict("sys.modules", {"patterndb_yaml._version": None}):
+            # This will cause ImportError when trying to import _version
+            import importlib
 
-        importlib.reload(patterndb_yaml)
+            # Re-import the __init__ module with the mock
+            import patterndb_yaml
 
-        # Should fall back to development version
-        # Note: This test is challenging because the import happens at module load time
-        # The actual fallback is tested by the code execution, but coverage may not register
-        # This test ensures the import doesn't fail
-        assert hasattr(patterndb_yaml, "__version__")
+            importlib.reload(patterndb_yaml)
+
+            # Should fall back to development version
+            # Note: This test is challenging because the import happens at module load time
+            # The actual fallback is tested by the code execution, but coverage may not register
+            # This test ensures the import doesn't fail
+            assert hasattr(patterndb_yaml, "__version__")
+    finally:
+        # Restore the original modules to prevent affecting subsequent tests
+        modules_to_remove = [k for k in list(sys.modules.keys()) if k.startswith("patterndb_yaml")]
+        for module in modules_to_remove:
+            del sys.modules[module]
+
+        # Restore original modules
+        sys.modules.update(original_modules)
