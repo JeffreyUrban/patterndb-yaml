@@ -8,16 +8,16 @@ import pytest
 import yaml
 
 from patterndb_yaml import PatterndbYaml
-from patterndb_yaml.patterndb_yaml import (
-    _load_sequence_config,
-    _match_pattern_components,
-    _render_component_sequence,
+from patterndb_yaml.pattern_matching import (
+    match_pattern_components,
+    render_component_sequence,
 )
+from patterndb_yaml.patterndb_yaml import _load_sequence_config
 
 
 @pytest.mark.unit
 class TestMatchPatternComponents:
-    """Tests for _match_pattern_components function."""
+    """Tests for match_pattern_components function."""
 
     def test_match_with_alternatives(self):
         """Test pattern matching with alternatives."""
@@ -33,15 +33,15 @@ class TestMatchPatternComponents:
         ]
 
         # Match first alternative
-        matched, fields = _match_pattern_components("Level: ERROR", pattern)
+        matched, fields = match_pattern_components("Level: ERROR", pattern)
         assert matched is True
 
         # Match second alternative
-        matched, fields = _match_pattern_components("Level: WARN", pattern)
+        matched, fields = match_pattern_components("Level: WARN", pattern)
         assert matched is True
 
         # No match
-        matched, fields = _match_pattern_components("Level: DEBUG", pattern)
+        matched, fields = match_pattern_components("Level: DEBUG", pattern)
         assert matched is False
 
     def test_match_with_number_parser(self):
@@ -52,12 +52,12 @@ class TestMatchPatternComponents:
         ]
 
         # Match number
-        matched, fields = _match_pattern_components("Count: 123", pattern, extract_fields=True)
+        matched, fields = match_pattern_components("Count: 123", pattern, extract_fields=True)
         assert matched is True
         assert fields == {"count": "123"}
 
         # No number
-        matched, fields = _match_pattern_components("Count: abc", pattern, extract_fields=True)
+        matched, fields = match_pattern_components("Count: abc", pattern, extract_fields=True)
         assert matched is False
 
     def test_match_with_number_parser_no_extract(self):
@@ -68,7 +68,7 @@ class TestMatchPatternComponents:
         ]
 
         # Match but don't extract
-        matched, fields = _match_pattern_components("Count: 456", pattern, extract_fields=False)
+        matched, fields = match_pattern_components("Count: 456", pattern, extract_fields=False)
         assert matched is True
         assert fields == {}
 
@@ -81,11 +81,11 @@ class TestMatchPatternComponents:
         ]
 
         # Match with serialized character
-        matched, fields = _match_pattern_components("Start→End", pattern)
+        matched, fields = match_pattern_components("Start→End", pattern)
         assert matched is True
 
         # No match with different character
-        matched, fields = _match_pattern_components("Start->End", pattern)
+        matched, fields = match_pattern_components("Start->End", pattern)
         assert matched is False
 
     def test_match_runs_past_end(self):
@@ -98,7 +98,7 @@ class TestMatchPatternComponents:
         ]
 
         # Line is too short for pattern
-        matched, fields = _match_pattern_components("Short line", pattern)
+        matched, fields = match_pattern_components("Short line", pattern)
         assert matched is False
 
     def test_match_alternatives_no_match(self):
@@ -112,13 +112,13 @@ class TestMatchPatternComponents:
             },
         ]
 
-        matched, fields = _match_pattern_components("BAZ", pattern)
+        matched, fields = match_pattern_components("BAZ", pattern)
         assert matched is False
 
 
 @pytest.mark.unit
 class TestRenderComponentSequence:
-    """Tests for _render_component_sequence function."""
+    """Tests for render_component_sequence function."""
 
     def test_render_text_components(self):
         """Test rendering text components."""
@@ -128,7 +128,7 @@ class TestRenderComponentSequence:
             {"text": "World"},
         ]
 
-        result = _render_component_sequence(components)
+        result = render_component_sequence(components)
         assert result == "Hello World"
 
     def test_render_serialized_components(self):
@@ -139,7 +139,7 @@ class TestRenderComponentSequence:
             {"text": "End"},
         ]
 
-        result = _render_component_sequence(components)
+        result = render_component_sequence(components)
         assert result == "Start→End"
 
     def test_render_mixed_components(self):
@@ -150,7 +150,7 @@ class TestRenderComponentSequence:
             {"text": "B"},
         ]
 
-        result = _render_component_sequence(components)
+        result = render_component_sequence(components)
         assert result == "A•B"
 
     def test_render_ignores_fields(self):
@@ -161,7 +161,7 @@ class TestRenderComponentSequence:
             {"text": "End"},
         ]
 
-        result = _render_component_sequence(components)
+        result = render_component_sequence(components)
         assert result == "StartEnd"
 
 
