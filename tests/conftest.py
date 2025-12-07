@@ -21,20 +21,17 @@ def mock_version_check(request):
     """Automatically mock syslog-ng version check for all tests except version_check tests.
 
     This prevents tests from failing when syslog-ng is not installed or has incompatible version.
-    The version_check tests themselves skip this by using direct patches.
+    The version_check tests handle their own mocking completely.
     """
     # Skip mocking for version_check tests - they handle their own mocking
-    # We need to check the actual file path to be robust across pytest configurations
     test_file = str(request.node.fspath) if hasattr(request.node, "fspath") else ""
 
-    # Skip if this is a version_check test file
     if "test_version_check.py" in test_file:
+        # Don't apply any mocks - version_check tests handle everything themselves
         yield
         return
 
-    # Mock the version check to return a known working version
-    # Note: This mock is at the CLI level, so version_check tests that directly
-    # test the check_syslog_ng_version function aren't affected
+    # For other tests, mock at the CLI level to avoid version checks entirely
     with patch(
         "patterndb_yaml.cli.check_syslog_ng_version",
         return_value="4.10.1",

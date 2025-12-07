@@ -380,6 +380,16 @@ class PatterndbYaml:
         self.lines_processed = 0
         self.lines_matched = 0
 
+    @property
+    def sequence_configs(self) -> dict[str, Any]:
+        """Get sequence configurations for multi-line sequences."""
+        return self.seq_processor.sequence_configs
+
+    @property
+    def sequence_markers(self) -> set[str]:
+        """Get sequence markers for fast leader detection."""
+        return self.seq_processor.sequence_markers
+
     def _print_explain(self, message: str) -> None:
         """Print explanation message to stderr if explain mode is enabled.
 

@@ -445,3 +445,39 @@ class TestPatterndbYamlEdgeCases:
             assert output.getvalue() == ""
         finally:
             rules_path.unlink()
+
+    def test_print_explain_outputs_to_stderr(self, capsys):
+        """Test that _print_explain method outputs to stderr when explain=True."""
+        rules = {"rules": []}
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(rules, f)
+            rules_path = Path(f.name)
+
+        try:
+            # Test with explain=True
+            processor = PatterndbYaml(rules_path=rules_path, explain=True)
+            processor._print_explain("Test explanation message")
+
+            captured = capsys.readouterr()
+            assert "EXPLAIN: Test explanation message" in captured.err
+        finally:
+            rules_path.unlink()
+
+    def test_print_explain_silent_when_disabled(self, capsys):
+        """Test that _print_explain method is silent when explain=False."""
+        rules = {"rules": []}
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(rules, f)
+            rules_path = Path(f.name)
+
+        try:
+            # Test with explain=False (default)
+            processor = PatterndbYaml(rules_path=rules_path, explain=False)
+            processor._print_explain("Test explanation message")
+
+            captured = capsys.readouterr()
+            assert captured.err == ""
+        finally:
+            rules_path.unlink()
