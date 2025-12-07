@@ -114,6 +114,39 @@ class TestPatternMatcherInit:
         with pytest.raises(RuntimeError, match="syslog-ng failed to start"):
             PatternMatcher(mock_pdb_file)
 
+    @patch("builtins.open", create=True)
+    @patch("atexit.register")
+    @patch("os.open")
+    @patch("time.sleep")
+    @patch("subprocess.Popen")
+    @patch("os.mkfifo")
+    @patch("tempfile.mkdtemp")
+    def test_fifo_timeout(
+        self,
+        mock_mkdtemp,
+        mock_mkfifo,
+        mock_popen,
+        mock_sleep,
+        mock_os_open,
+        mock_atexit,
+        mock_file_open,
+        mock_pdb_file,
+    ):
+        """Test timeout when FIFOs cannot be opened."""
+        mock_mkdtemp.return_value = "/tmp/test-dir"
+
+        # Mock process that stays running
+        mock_process = Mock()
+        mock_process.poll.return_value = None  # Still running
+        mock_popen.return_value = mock_process
+
+        # Mock os.open to always raise OSError (FIFOs not ready)
+        mock_os_open.side_effect = OSError("FIFO not ready")
+
+        # Should raise RuntimeError about timeout
+        with pytest.raises(RuntimeError, match="Timeout waiting for syslog-ng FIFOs"):
+            PatternMatcher(mock_pdb_file)
+
 
 @pytest.mark.unit
 class TestPatternMatcherMatch:
@@ -448,44 +481,27 @@ class TestMainFunction:
         print_calls = [str(call) for call in mock_print.call_args_list]
         assert any("[normalized:line 1]" in str(call) for call in print_calls)
 
-    @pytest.mark.skip(
-        reason="Mocking main() is unreliable in CI - covered by CLI integration tests"
-    )
-    @patch("sys.stdin")
+    @patch("pathlib.Path.exists", return_value=True)
     @patch("patterndb_yaml.pattern_filter.PatternMatcher")
-    def test_main_handles_keyboard_interrupt(self, mock_matcher_class, mock_stdin, tmp_path):
+    def test_main_handles_keyboard_interrupt(self, mock_matcher_class, mock_exists):
         """Test main() handles KeyboardInterrupt gracefully."""
-        # Create a temporary patterns.xml file
-        patterns_xml = tmp_path / "patterns.xml"
-        patterns_xml.write_text(
-            """<?xml version="1.0"?>
-            <patterndb version="6" pub_date="2025-01-01">
-              <ruleset name="test" id="test">
-                <pattern>test</pattern>
-                <rules>
-                  <rule provider="test" id="test" class="test">
-                    <patterns>
-                      <pattern>test</pattern>
-                    </patterns>
-                  </rule>
-                </rules>
-              </ruleset>
-            </patterndb>"""
-        )
-
-        # Setup stdin with explicit iteration
-        mock_stdin.__iter__.return_value = iter(["line 1\n", "line 2\n"])
-
         mock_matcher = Mock()
-        mock_matcher.match.side_effect = KeyboardInterrupt()
+        # First call succeeds, second raises KeyboardInterrupt
+        mock_matcher.match.side_effect = [
+            "[normalized:line 1]",
+            KeyboardInterrupt(),
+        ]
         mock_matcher_class.return_value = mock_matcher
 
-        # Patch __file__ to point to tmp_path
-        with patch("patterndb_yaml.pattern_filter.__file__", str(tmp_path / "pattern_filter.py")):
-            # Should not raise
+        # Mock stdin to provide two lines
+        with patch("sys.stdin", new_callable=StringIO) as mock_stdin:
+            mock_stdin.write("line 1\nline 2\n")
+            mock_stdin.seek(0)
+
+            # Should not raise - KeyboardInterrupt handled gracefully
             main()
 
-        # Matcher should be closed
+        # Matcher should be closed even after KeyboardInterrupt
         mock_matcher.close.assert_called_once()
 
     @patch("builtins.print", side_effect=[None, BrokenPipeError()])
